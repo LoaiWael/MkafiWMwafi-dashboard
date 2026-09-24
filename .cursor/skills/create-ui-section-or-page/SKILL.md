@@ -1,6 +1,6 @@
 ---
 name: create-ui-section-or-page
-description: Guide and standard workflow for creating UI pages or sections using the page-shell utility class, semantic design tokens, shadcn tooltips on UI icons, missing/custom icon verification in public/icons, React Router pages in this Vite SPA, and writing formal gender-neutral i18n copy.
+description: Guide and standard workflow for creating UI pages or sections using the page-shell utility class, semantic design tokens, shadcn tooltips on UI icons, missing/custom icon verification in public/icons, React Router pages in this Vite SPA, viewTransition on Link/NavLink/Form/navigate, and writing formal gender-neutral i18n copy.
 ---
 
 # Create UI Section or Page Skill
@@ -47,6 +47,14 @@ Related skills (load when relevant):
    - First check `lucide-react`.
    - If missing, check `public/icons/`.
    - If still missing, **ask the user** for the exact file name/path before inventing an icon.
+
+7. **View Transitions on every in-app navigation**:
+   - Enable the View Transitions API on every React Router navigation. This app uses `createBrowserRouter` (data mode), so the option is supported. Unsupported browsers skip the animation.
+   - Add the boolean `viewTransition` prop to `Link`, `NavLink`, and `Form`.
+   - Pass `{ viewTransition: true }` to `useNavigate()` / `navigate()`.
+   - When composing via a primitive `render` prop (`SidebarMenuButton`, `DropdownMenuItem`, `TooltipTrigger`), put `viewTransition` on the `Link` / `NavLink` you pass in.
+   - Do **not** call `document.startViewTransition()` yourself. Do **not** use a raw `<a href>` for in-app routes.
+   - Default is a page cross-fade. Add named `view-transition-name` / `useViewTransitionState` only when a shared-element morph is required.
 
 ---
 
@@ -136,7 +144,80 @@ import { Heart } from "lucide-react";
 </TooltipProvider>
 ```
 
-When wrapping an existing link or button, use the `render` prop on `TooltipTrigger`.
+When wrapping an existing link or button, use the `render` prop on `TooltipTrigger`. Put `viewTransition` on that `Link` / `NavLink`.
+
+### 4. View Transitions on Links & Navigation
+
+Always opt in. React Router wraps the navigation in `document.startViewTransition()`.
+
+```tsx
+import { Form, Link, NavLink, useNavigate } from "react-router";
+
+<Link to={href} viewTransition>
+  فتح الصفحة
+</Link>
+
+<NavLink to={item.href} viewTransition onClick={handleNavigate}>
+  {item.label}
+</NavLink>
+
+<Form method="post" action="/logout" viewTransition>
+  {/* … */}
+</Form>
+```
+
+Programmatic navigation:
+
+```tsx
+const navigate = useNavigate();
+
+navigate(ROUTES.settings, { viewTransition: true });
+```
+
+When a primitive owns the click target via `render`, the prop still lives on the router component:
+
+```tsx
+<SidebarMenuButton
+  isActive={isActive}
+  tooltip={{ children: item.label, side: "left" }}
+  render={<NavLink to={item.href} viewTransition onClick={handleNavigate} />}
+>
+  <Icon size={18} />
+  <span>{item.label}</span>
+</SidebarMenuButton>
+```
+
+Optional shared-element morph (list → detail). Assign a name only while that route is transitioning:
+
+```tsx
+import { Link, useViewTransitionState } from "react-router";
+
+function StatLink({ href, children }: { href: string; children: React.ReactNode }) {
+  const isTransitioning = useViewTransitionState(href);
+
+  return (
+    <Link
+      to={href}
+      viewTransition
+      style={{ viewTransitionName: isTransitioning ? "stat-card" : "none" }}
+    >
+      {children}
+    </Link>
+  );
+}
+```
+
+Or use `NavLink`'s render state:
+
+```tsx
+<NavLink to={href} viewTransition>
+  {({ isTransitioning }) => (
+    <span style={{ viewTransitionName: isTransitioning ? "stat-card" : "none" }}>
+      {label}
+    </span>
+  )}
+</NavLink>
+```
 
 ---
 
@@ -145,6 +226,7 @@ When wrapping an existing link or button, use the `render` prop on `TooltipTrigg
 - **CSS Utility**: `page-shell` (in `src/index.css`)
 - **Full Bleed Utility**: `full-bleed` (in `src/index.css`)
 - **Animations Skill**: Motion wrappers (`FadeIn`, `ScaleIn`, `StaggerContainer`, etc.)
+- **View Transitions**: `viewTransition` on `Link` / `NavLink` / `Form`; `{ viewTransition: true }` on `navigate()`
 - **Icon Tooltips**: `@/components/ui/tooltip`
 - **Missing / Custom Icons**: Verify `public/icons/` and prompt the user when absent
 - **Copy voice**: Formal + gender-neutral (`ar` / `en` — see i18n principle above)

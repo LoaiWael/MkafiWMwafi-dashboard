@@ -144,14 +144,14 @@
 
   --radius: 0.625rem;
 
-  --sidebar: #ffffff;
-  --sidebar-foreground: #0d2426;
-  --sidebar-primary: #00b2bd;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f5f8f8;
-  --sidebar-accent-foreground: #0d2426;
-  --sidebar-border: #dfeaea;
-  --sidebar-ring: #00b2bd;
+  --sidebar: var(--primary-50);
+  --sidebar-foreground: var(--primary-950);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--primary-100);
+  --sidebar-accent-foreground: var(--primary-900);
+  --sidebar-border: var(--primary-200);
+  --sidebar-ring: var(--primary);
 }
 
 @theme inline {
@@ -342,7 +342,7 @@
 
 /* Scroll-driven radial shadow indicators */
 .scroll-timeline-wrapper {
-  timeline-scope: --pricing-scroll;
+  timeline-scope: --pricing-scroll, --sidebar-scroll, --page-scroll, --scroll-timeline;
 }
 
 .scroll-timeline-y {
@@ -350,37 +350,119 @@
   scroll-timeline-axis: block;
 }
 
-.scroll-shadow-top {
+.sidebar-scroll-timeline-y {
+  scroll-timeline-name: --sidebar-scroll;
+  scroll-timeline-axis: block;
+}
+
+.page-scroll-timeline-y {
+  scroll-timeline-name: --page-scroll;
+  scroll-timeline-axis: block;
+}
+
+.scroll-shadow-top,
+.page-scroll-shadow-top {
   opacity: 0;
   pointer-events: none;
   background: radial-gradient(
     ellipse 75% 100% at 50% 0%,
-    color-mix(in srgb, var(--foreground) 16%, transparent),
+    color-mix(in srgb, var(--foreground) 24%, transparent),
+    transparent
+  );
+  transition: opacity 0.2s ease;
+}
+
+.page-scroll-shadow-top[data-scrolled="true"] {
+  opacity: 1;
+}
+
+.sidebar-scroll-shadow-top {
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 75% 100% at 50% 0%,
+    color-mix(in srgb, var(--sidebar-foreground, var(--foreground)) 20%, transparent),
     transparent
   );
 }
 
-.scroll-shadow-bottom {
+.scroll-shadow-bottom,
+.page-scroll-shadow-bottom {
   opacity: 1;
   pointer-events: none;
   background: radial-gradient(
     ellipse 75% 100% at 50% 100%,
-    color-mix(in srgb, var(--foreground) 16%, transparent),
+    color-mix(in srgb, var(--foreground) 24%, transparent),
     transparent
   );
 }
 
+.sidebar-scroll-shadow-bottom {
+  opacity: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 75% 100% at 50% 100%,
+    color-mix(in srgb, var(--sidebar-foreground, var(--foreground)) 20%, transparent),
+    transparent
+  );
+}
+
+.header-scroll-shadow {
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 75% 100% at 50% 0%,
+    color-mix(in srgb, var(--foreground) 24%, transparent),
+    transparent
+  );
+  transition: opacity 0.2s ease;
+}
+
+.header-scroll-shadow[data-scrolled="true"] {
+  opacity: 1;
+}
+
 @supports (animation-timeline: scroll()) {
+  .header-scroll-shadow {
+    animation: scroll-shadow-fade-in linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0px 32px;
+  }
+
   .scroll-shadow-top {
     animation: scroll-shadow-fade-in linear both;
     animation-timeline: --pricing-scroll;
-    animation-range: 0px 24px;
+    animation-range: 0px 32px;
   }
 
   .scroll-shadow-bottom {
     animation: scroll-shadow-fade-out linear both;
     animation-timeline: --pricing-scroll;
+    animation-range: calc(100% - 32px) 100%;
+  }
+
+  .sidebar-scroll-shadow-top {
+    animation: scroll-shadow-fade-in linear both;
+    animation-timeline: --sidebar-scroll;
+    animation-range: 0px 24px;
+  }
+
+  .sidebar-scroll-shadow-bottom {
+    animation: scroll-shadow-fade-out linear both;
+    animation-timeline: --sidebar-scroll;
     animation-range: calc(100% - 24px) 100%;
+  }
+
+  .page-scroll-shadow-top {
+    animation: scroll-shadow-fade-in linear both;
+    animation-timeline: --page-scroll;
+    animation-range: 0px 32px;
+  }
+
+  .page-scroll-shadow-bottom {
+    animation: scroll-shadow-fade-out linear both;
+    animation-timeline: --page-scroll;
+    animation-range: calc(100% - 32px) 100%;
   }
 
   @keyframes scroll-shadow-fade-in {
@@ -461,14 +543,14 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: #00b2bd;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: #00b2bd;
+  --sidebar: var(--primary-950);
+  --sidebar-foreground: var(--primary-50);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--primary-900);
+  --sidebar-accent-foreground: var(--primary-50);
+  --sidebar-border: var(--primary-800);
+  --sidebar-ring: var(--primary);
 }
 
 @keyframes caret-blink {
