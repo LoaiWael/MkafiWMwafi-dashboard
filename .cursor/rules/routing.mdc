@@ -1,0 +1,45 @@
+---
+description: SPA routing and client-side data-fetching strategy
+alwaysApply: true
+---
+
+# Routing & Data-Fetching Strategy
+
+This app is a **Vite + React SPA**. Every screen is client-rendered. There is
+no RSC, no server prefetch, no `loading.tsx` / `error.tsx` route files.
+
+## 1. Route Tree
+- Define the tree in `src/routes/index.tsx` with React Router.
+- Locale prefix: `/:locale/...` (`ar` default, `en` supported). Changing locale
+  updates `document.documentElement.lang` / `dir` and i18next.
+- **Auth layout** (`src/routes/auth/`): login, forgot/reset — centered card shell.
+- **Dashboard layout** (`src/routes/dashboard/`): wrapped by `DashboardShell`.
+  Assume an authenticated user in these components.
+- Catch-all `*` → not-found page. Route `errorElement` → shared error fallback
+  (translated message, reset / navigate home — no stack traces).
+
+## 2. Data Fetching
+- Fetch in feature hooks via React Query (@react-query.md). Requests go from
+  the browser to the backend through `lib/api-client` so they show up in the
+  Network tab (required for the check-before-type step, @architecture.md §4).
+- Do **not** invent a Next.js-style server hop, Server Action, or BFF for
+  dashboard reads/writes.
+- Route pages do not fetch. They compose feature components that own the hooks.
+
+## 3. Search Params
+- Read/write with React Router `useSearchParams`.
+- Parse filters (`page`, `pageSize`, `sort`, `from`, `to`, …) with a `zod`
+  schema. Reuse that parsed object for the query-key factory.
+- Debounce text search (~300ms) before writing the URL (@performance.md §3).
+
+## 4. Code Splitting & Suspense
+- Lazy-load heavy route modules and charts with `React.lazy` + `<Suspense>`
+  and the matching skeleton as `fallback` (`create-loading-skeletons` skill).
+- Route-level pending UI is the page skeleton, not a spinner.
+
+## 5. Services
+- All API calls live in the feature's `services/` (or `queries/`) folder.
+- Regular `export async function` syntax — no arrow functions, no default export
+  for service functions.
+- A service function does one request and returns typed data; it does not read
+  React context or trigger toasts.

@@ -1,0 +1,48 @@
+---
+description: Auth, route protection, and error boundary conventions
+alwaysApply: true
+---
+
+# Auth, Route Protection & Error Boundaries
+
+## 1. Route Layouts
+- `src/routes/auth/` — unauthenticated screens (login, forgot/reset password).
+  Layout is the centered card shell.
+- `src/routes/dashboard/` — everything behind login; wrapped by
+  `DashboardShell`. Assume an authenticated user in these components.
+- New authed screens go under `dashboard/`; new public/auth screens under `auth/`.
+
+## 2. Route Guard
+- Protect dashboard routes with a `<RequireAuth>` wrapper (or a React Router
+  loader that checks the session) in the route tree — **not** Vite middleware.
+- No session → `navigate` to `/:locale/login` (locale-aware), preserving the
+  intended path as a return-to query when useful.
+- Logged-in users hitting auth screens → redirect into the dashboard.
+
+## 3. Token Handling
+- Access token lives in memory (module singleton + context), refreshed via a
+  refresh token in an httpOnly cookie (set/rotated by the backend). Don't put
+  the access token in `localStorage`.
+- The API client attaches it to every request and handles refresh-on-401
+  (@api-client.md §2).
+- On a hard `401` (refresh failed): clear session once, navigate to `/login`,
+  and drop the React Query cache (`queryClient.clear()`).
+
+## 4. Current User
+- One `useCurrentUser()` hook backed by a long `staleTime` query
+  (`userKeys` / `authKeys.me`). Gate role-specific UI on its data — never on a
+  value duplicated into component state.
+
+## 5. Error & Not-Found
+- Shared `errorElement` on the auth layout and the dashboard layout (reset
+  button, generic translated message — no stack traces).
+- Dashboard errors render **inside** the shell so nav stays usable; auth errors
+  use the plain card shell.
+- Route-level skeletons (`create-loading-skeletons` skill) cover first paint
+  and `isLoading`.
+- Expected data errors surface as inline states from hooks; reserve the route
+  error boundary for render-time / unexpected failures.
+
+## 6. Firebase / Notifications
+- `firebase` here is for FCM push (the `notifications` feature), not the auth
+  provider. Don't wire Firebase Auth unless explicitly asked.

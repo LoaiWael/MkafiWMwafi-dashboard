@@ -1,0 +1,93 @@
+---
+description: TanStack Query v5 standards - query keys, hooks, pagination, mutations
+alwaysApply: true
+---
+
+# TanStack Query Standards (v5)
+
+All dashboard and auth data fetching goes through React Query. There is no
+server prefetch layer in this Vite SPA (@routing.md).
+
+## 1. Global Error Handling & Toasts
+- **Centralized:** All error notifications are handled globally via `QueryCache`
+  and `MutationCache` callbacks when the `QueryClient` is created in
+  `src/providers.tsx`.
+- **Component cleanliness:** DO NOT call `toast.error()` (or any popup) inside
+  components, hooks, `onSuccess`, or `onError`. Mutations may toast *success*
+  locally when it's a direct response to a user action.
+- **Visual feedback:** Components use `isError` / `error` / `isPending` from the
+  hook for inline UI (disabled buttons, red borders, error rows) — never for
+  global notifications.
+
+## 2. Query Keys — the Factory Pattern
+- **Never** use inline string arrays (`['users']`, `['users', id]`).
+- Every feature has a `query-keys.ts` in its root exporting one factory object.
+- List keys **must** fold in the filter/pagination params so each filtered view
+  caches independently.
+
+```typescript
+export const userKeys = {
+  all: ['users'] as const,
+  lists: () => [...userKeys.all, 'list'] as const,
+  list: (params: UserListParams) => [...userKeys.lists(), params] as const,
+  details: () => [...userKeys.all, 'detail'] as const,
+  detail: (id: string) => [...userKeys.details(), id] as const,
+  summary: (range: DateRange) => [...userKeys.all, 'summary', range] as const,
+};
+```
+
+- Pair each key with a `queryOptions({ queryKey, queryFn })` helper (colocated in
+  the feature's `services/` or `queries/` folder) so hooks share one definition.
+
+Data is fetched **in the browser**. Requests and real responses show up in the
+Network tab.
+
+## 3. Custom Hooks
+- Components never call `useQuery` with raw options inline. Each feature
+  exposes hooks from `features/[name]/hooks/`:
+  `use-user-list.ts`, `use-user-detail.ts`, `use-users-summary.ts`.
+- A hook owns: reading URL params, building the key via the factory, passing
+  `queryOptions`, and returning a narrow, typed shape to the component.
+- Regular function syntax: `export function useUserList() { … }`.
+
+## 4. Lists, Pagination & Sorting
+- Server-driven pagination. The query function sends `page`, `pageSize`, `sort`,
+  and filters; the API returns `{ rows, total }`.
+- Set `placeholderData: keepPreviousData` on paginated list queries so the table
+  keeps the previous page visible while the next loads (no collapse / flicker).
+- Derive `pageCount` from `total`; expose `isPlaceholderData` so the UI can
+  disable the "next" control at the last page.
+- For feeds / infinite scroll use `useInfiniteQuery` with `getNextPageParam`.
+
+## 5. Mutations & Invalidation
+- After a successful mutation, `queryClient.invalidateQueries({ queryKey:
+  userKeys.lists() })` (and the affected `detail`). Invalidate the *narrowest*
+  key that covers the change.
+- Use optimistic updates only for fast, low-risk toggles (e.g. status switches);
+  always implement the `onError` rollback via `onMutate` context.
+
+## 6. Defaults
+- Global `staleTime` is 60s (`src/providers.tsx`). Override per-query when data is
+  more or less volatile; don't lower it globally.
+- Global `gcTime` stays at the v5 default (5min) unless a screen holds huge
+  cached payloads worth evicting sooner.
+- Set `refetchInterval` explicitly for live dashboard tiles rather than writing
+  manual polling.
+- `retry`: keep the default (3, exponential backoff) for reads; set
+  `retry: false` (or a small fixed count) on mutations and on queries whose
+  error should surface immediately (auth checks, one-shot validations).
+- One `QueryClient` per browser session (module singleton created in
+  `src/providers.tsx`).
+
+## 7. Forms & Mutations Integration
+- Forms never call `useMutation` inline with ad-hoc options — they call the
+  feature's mutation hook, same as any other mutation (@forms.md §3).
+- Field-level errors from a 422 (`ApiError.fieldErrors`) are mapped onto
+  `react-hook-form` via `form.setError` in the mutation's `onError`
+  (@forms.md §3) — the global `MutationCache` toast (§1) still fires for
+  non-field errors.
+
+## 8. Devtools
+- `@tanstack/react-query-devtools` is mounted once in `src/providers.tsx`,
+  gated behind `import.meta.env.DEV` so it never ships to production.
+  Lazy-import it (`React.lazy`) so it stays out of the prod graph.

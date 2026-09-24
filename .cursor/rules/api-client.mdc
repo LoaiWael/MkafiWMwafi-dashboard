@@ -1,0 +1,54 @@
+---
+description: API client conventions - shared HTTP client, error normalization, auth headers
+alwaysApply: true
+---
+
+# API Client
+
+One shared HTTP client. Feature `services/` functions call it and stay one-liners;
+they never touch `fetch`, headers, base URLs, or error parsing directly.
+
+## 1. Location & Shape
+- `src/lib/api-client.ts` exports a typed `apiClient` (or `apiGet`/`apiPost`/… helpers).
+- Regular functions, no default export.
+- Signature returns **parsed, typed data** on success and **throws a normalized
+  error** otherwise.
+
+## 2. Responsibilities
+- **Base URL** from `env.VITE_API_URL` (@env.md).
+- **Auth:** attach the bearer token on every request. Token lives in memory
+  (module singleton / context) with a refresh path; see @auth.md.
+- **Locale:** send `Accept-Language` from the active i18next locale so the
+  backend can localize messages/validation.
+- **JSON:** set `Content-Type: application/json`, `Accept: application/json`,
+  serialize the body, parse the response.
+- **Query params:** accept an object and serialize (skip `undefined`/`null` — same
+  rule as URL filters).
+- **Errors:** on non-2xx, throw an `ApiError { status, code, message, fieldErrors }`.
+  - `401` → trigger the central sign-out/redirect (once, not per call).
+  - `422` → keep `fieldErrors` so forms can `setError` (@forms.md §3).
+  - Network/timeout → `ApiError` with a synthetic status so the UI can branch.
+- **AbortSignal:** forward React Query's `signal` so cancelled queries cancel the
+  request.
+
+## 3. Usage
+```typescript
+// features/users/services/get-users.ts
+import { apiGet } from '@/lib/api-client';
+import type { UserListParams, UserListResponse } from '../types';
+
+export async function getUsers(params: UserListParams, signal?: AbortSignal) {
+  return apiGet<UserListResponse>('/users', { params, signal });
+}
+```
+
+- The query function in `queryOptions` calls the service and passes `signal`.
+- No `try/catch` in services — let the `ApiError` propagate to React Query, whose
+  `QueryCache`/`MutationCache` handlers own the toast (@react-query.md §1).
+
+## 4. Do Not
+- No `axios` — use `fetch` (native).
+- No per-feature ad-hoc `fetch` wrappers.
+- No reading cookies/tokens inside `services/` — the client handles auth.
+- Don't swallow errors to return `null`; throw so states stay honest.
+- Don't read `import.meta.env` or `process.env` in services — use `env`.

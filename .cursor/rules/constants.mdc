@@ -1,0 +1,55 @@
+---
+description: Constants location, style, and the project prefix convention
+alwaysApply: true
+---
+
+# Constants & Project Prefix
+
+No magic values scattered through the codebase. Constants are named, typed, and
+live in one predictable place per scope.
+
+## 1. Where Constants Live
+- **App-wide:** `src/lib/constants.ts` — values used across features (route paths,
+  pagination defaults, breakpoints, the project prefix, external URLs).
+- **Feature-wide:** `src/features/[name]/constants.ts` — values scoped to one
+  feature (status enums, column ids, filter option lists, polling intervals).
+- **One-file-only values** can stay in that file as a `const` above the component.
+- Query keys are **not** here — they belong in `query-keys.ts` (@react-query.md §2).
+- User-facing strings are **not** here — they belong in `src/messages/*.json`
+  (@i18n.md).
+
+## 2. Style
+- `SCREAMING_SNAKE_CASE` for primitive constants: `export const DEFAULT_PAGE_SIZE = 20;`.
+- Grouped/lookup constants as `as const` objects:
+  `export const REQUEST_STATUS = { pending: 'pending', approved: 'approved' } as const;`
+  then `export type RequestStatus = (typeof REQUEST_STATUS)[keyof typeof REQUEST_STATUS];`.
+- No unexplained numeric/string literals in components (`pageSize={20}`,
+  `staleTime: 300000`, `'active'`) — reference a named constant.
+- Enumerable option lists (select/filter choices) are `as const` arrays of
+  `{ value, labelKey }`, mapped through `t(labelKey)` at render.
+
+## 3. The Project Prefix
+- `src/lib/constants.ts` exports one slug and derives every namespaced string
+  from it:
+
+```typescript
+export const APP_SLUG = 'makfiwamufi';
+
+export const STORAGE_KEYS = {
+  theme: `${APP_SLUG}.theme`,
+  sidebarCollapsed: `${APP_SLUG}.sidebar-collapsed`,
+  tablePageSize: `${APP_SLUG}.table.page-size`,
+} as const;
+
+export const EVENT_NAMES = {
+  sessionExpired: `${APP_SLUG}:session-expired`,
+} as const;
+```
+
+- **Always prefix** and reference these constants for: `localStorage` /
+  `sessionStorage` keys, IndexedDB / cache names, `CustomEvent` /
+  `BroadcastChannel` / `postMessage` names, cookie names, and any other global
+  namespace. Never inline a raw `'theme'` / `'sidebar'` string.
+- This keeps keys collision-free across apps on the same origin and greppable.
+- If a library owns its own key (e.g. a theme provider storage key), configure
+  it with the prefixed value from `STORAGE_KEYS`.

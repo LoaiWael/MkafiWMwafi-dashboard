@@ -1,0 +1,55 @@
+---
+description: Component and UI standards - primitives vs feature components, accessibility
+alwaysApply: true
+---
+
+# Component & UI Standards
+
+## 1. Hierarchy
+- **UI primitive:** shared low-level components (Button, Input, Card, Table,
+  Dialog…) live in `@/components/ui`. This is a local shadcn-style kit on top of
+  `radix-ui` + `@base-ui/react`.
+- **Feature component:** business-logic UI lives in `@/features/[name]/components`.
+- **Composition:** route pages compose feature components; feature components
+  compose UI primitives.
+
+## 2. Do Not Reinvent Primitives
+- Before building any interactive element, check `src/components/ui/` — it
+  already includes table, card, chart, sidebar, dialog, sheet, drawer,
+  dropdown-menu, popover, calendar, combobox, command, pagination, tabs,
+  tooltip, skeleton, empty, badge, progress, and more.
+- Missing one? Add it with the `shadcn` MCP / CLI. Don't hand-roll it and don't
+  edit an existing primitive's internals to fit a single feature — wrap it.
+
+## 3. Accessibility (a11y)
+- Prefer the provided Radix/Base-UI primitives for menus, dialogs, tabs, tooltips —
+  they carry keyboard + screen-reader support.
+- Icons: `lucide-react` only. Use the `size` prop, not arbitrary `w-/h-` classes.
+- Every icon-only button gets an accessible label (translation key).
+- Tables use `<caption>`/`scope` via the `table` primitive; don't fake tables with divs.
+
+## 4. Dashboard Building Blocks
+- **StatCard** — one per feature, built on `Card`.
+- **Charts** — always through `@/components/ui/chart` (`ChartContainer` +
+  typed `ChartConfig`); colors from theme CSS variables. Never import `recharts`
+  into a route file.
+- **Data tables** — `@/components/ui/table` + `@/components/ui/pagination`; table
+  state in a hook.
+- **Loading** — a pixel-perfect skeleton mirroring the real markup, reused for
+  `isLoading` and `<Suspense>`. No spinners for content, no layout shift.
+  Full workflow in the `create-loading-skeletons` skill.
+- **Empty** — `@/components/ui/empty` with a message and optional CTA.
+
+## 5. Container / Presentational Balance
+- Components render UI; data logic lives in the feature's custom hook.
+- A component over **200 lines** must be split into sub-components in the same
+  feature folder.
+
+## 6. Styling & Theming
+- All styling rules live in @styling.md — Tailwind v4, semantic tokens, **no
+  arbitrary values / hex** (`bg-[#F5F5F5]` → `bg-muted`; `p-[15px]` → `p-4`).
+- Pass `className` only for spacing/layout; use a primitive's `variant`/`size`
+  props for everything else.
+- **Dark mode** (theme provider, e.g. `next-themes` — it works in Vite): every
+  new surface must work in light and dark — automatic when you use tokens.
+  Chart colors come from `--chart-*` via `ChartConfig`, so they theme for free.

@@ -1,0 +1,54 @@
+---
+description: Feature-based architecture, directory layout, and TypeScript standards
+alwaysApply: true
+---
+
+# Feature-Based Architecture & TS Standards
+
+## 1. Directory Structure
+- **Routes:** `src/routes/` — React Router pages and layouts. Auth screens under
+  `src/routes/auth/`; dashboard screens under `src/routes/dashboard/` so they
+  inherit `DashboardShell`. Route files stay thin (read search params, compose
+  feature components, set the document title).
+- **Features:** `src/features/[feature-name]/` with:
+  - `components/` — UI units for this feature.
+  - `hooks/` — feature-specific logic (React Query hooks, filter hooks).
+  - `services/` (or `queries/`) — data fetching / business logic.
+  - `query-keys.ts` — the key factory (see @react-query.md §2).
+  - `schemas/` — `zod` schemas, including form schemas (@forms.md §1).
+  - `types/` — feature types/interfaces.
+- **Shared:** `src/components/ui/` (primitive kit, includes `form` — @forms.md
+  §2), `src/components/layout/`, `src/hooks/`, `src/lib/`, `src/i18n/`,
+  `src/messages/`.
+
+## 2. Naming Conventions
+- **Files:** `kebab-case.tsx` / `kebab-case.ts` — including component files.
+- **Components:** PascalCase function name; filename is its kebab-case form
+  (`stat-card.tsx` → `StatCard`).
+- **Hooks:** `use-<thing>.ts` exporting `useThing`.
+
+## 3. Strict Coding Syntax
+- **TypeScript only.** No `.js`. No `any` (use `unknown` + narrowing, or a real type).
+- **Regular functions** for components and top-level service functions —
+  `function Name() {}`, never `const Name = () => {}`.
+- **One component per file.** Helper components move to their own file.
+- **Inline default export** for the primary component:
+  `export default function ComponentName() { … }` — not a bottom-of-file export.
+- Named exports are fine for hooks, `queryOptions`, key factories, types, utils.
+- No `'use client'`, no `async` components, no Server Actions — this is a Vite SPA.
+
+## 4. Verified Service Creation (the "Check-Before-Type" Rule)
+Before writing any interface for a new service:
+1. **Identify the endpoint** (exact backend route).
+2. **Fetch real data** with the `curl` / `fetch` MCP tool against the real or
+   mock server.
+3. **Validate** the response: nullable fields (`string` vs `string | null`),
+   nested objects vs flat IDs, date formats (ISO vs timestamp), and the
+   list envelope shape (`{ rows, total }` vs bare array vs `{ data, meta }`).
+4. **Then** generate the `interface` from what you actually saw.
+
+## 5. Data Flow (see @routing.md)
+- Route page reads search params → feature component → feature hook (key
+  factory) → `lib/api-client` in the browser → React Query cache.
+- **Forms:** `react-hook-form` + `zod` per @forms.md; submit through a feature
+  `useMutation` hook. Never call the API client from the form.

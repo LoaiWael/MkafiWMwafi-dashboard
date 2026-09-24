@@ -1,0 +1,36 @@
+---
+description: react-i18next localization, message files, and copy voice
+alwaysApply: true
+---
+
+# Internationalization
+
+Arabic-first (`ar` default, RTL) and English (`en`, LTR). All user-facing
+strings go through `t()` — never hardcoded copy in JSX.
+
+## 1. Setup
+- Bootstrap i18next + `react-i18next` in `src/i18n/`.
+- Messages live in `src/messages/ar.json` and `src/messages/en.json` (same key
+  tree in both). Add every new key to **both** files in the same change.
+- Locale comes from the `/:locale` route param and syncs to i18next,
+  `document.documentElement.lang`, and `dir` (`rtl` for `ar`, `ltr` for `en`).
+- In components: `const { t } = useTranslation()` (or a namespaced hook).
+  Do not import `next-intl` / `getTranslations` / `useLocale` from Next.
+
+## 2. Keys
+- Dot paths grouped by feature: `auth.login.title`, `users.table.empty`.
+- Chrome only (labels, CTAs, errors, empty states, `aria-label`s, tooltips).
+  API-supplied titles/descriptions render as data.
+
+## 3. Copy Voice (formal, gender-neutral)
+UI copy speaks to an unknown operator who may be a man or a woman. Prefer
+formal tone; never assume feminine-only (or masculine-only) second-person forms.
+
+- **Arabic (`ar`)**: Avoid feminine-only imperatives (تتبعي، أضيفي، احذفي).
+  Prefer impersonal / verbal-noun CTAs (تتبع الطلبات، إضافة مستخدم) or
+  neutral noun phrases.
+- **English (`en`)**: Neutral formal phrasing ("Add a user", "Track contracts"),
+  not gendered or overly casual voice.
+
+Apply this to CTAs, empty states, toasts, tooltips, `aria-label`s, and any new
+or edited message strings.

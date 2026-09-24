@@ -1,0 +1,76 @@
+---
+description: RTL/LTR and responsive rules - logical properties, directional icons
+alwaysApply: true
+---
+
+# RTL / LTR & Responsive
+
+The app runs **RTL by default** (`ar`) and **LTR** (`en`). Every screen,
+component, and primitive must work correctly in both, at every breakpoint.
+
+## 1. Logical Properties — Never Physical
+Use CSS logical (direction-aware) Tailwind utilities. Physical left/right
+utilities are a bug — they don't flip for `ar`.
+
+| ❌ Physical | ✅ Logical |
+|---|---|
+| `ml-*` / `mr-*` | `ms-*` / `me-*` |
+| `pl-*` / `pr-*` | `ps-*` / `pe-*` |
+| `left-*` / `right-*` | `start-*` / `end-*` |
+| `ml-auto` / `mr-auto` | `ms-auto` / `me-auto` |
+| `border-l` / `border-r` | `border-s` / `border-e` |
+| `rounded-l-*` / `rounded-r-*` | `rounded-s-*` / `rounded-e-*` |
+| `text-left` / `text-right` | `text-start` / `text-end` |
+| `inset-l-*` / `inset-r-*` | `inset-s-*` / `inset-e-*` (or `inset-x-*` if symmetric) |
+| `float-left` / `float-right` | `float-start` / `float-end` |
+
+**Allowed physical usage** (symmetric — same in both directions):
+- Centering: `left-1/2 -translate-x-1/2`, `inset-x-0`, `mx-auto`.
+- Radix/vaul-managed animation classes keyed on `data-[side=…]` /
+  `data-[vaul-drawer-direction=…]` — the library sets `data-side` from the
+  *actual* resolved placement, so `data-[side=left]:slide-in-from-right-2` is
+  correct; leave these.
+- `cursor-w-resize` / `cursor-e-resize` on resize handles.
+
+## 2. Directional Icons
+- Chevrons/arrows that imply direction (breadcrumb separator, "next/prev",
+  accordion/submenu carets, back buttons, pagination arrows) must flip in RTL:
+  `className="rtl:rotate-180"` (or `className="rtl:-scale-x-100"`).
+- Icons with no direction meaning (check, X, search, trash, bell) never flip.
+- Chevron-down for dropdowns/accordions does **not** flip (vertical).
+
+## 3. Text & Content
+- No text chosen by locale/direction — always `t()` keys (@i18n.md).
+- `dir="auto"` on inputs/textareas that accept free user text of unknown language.
+- Numbers, code, phone numbers stay LTR: wrap in `<bdi>` or `dir="ltr"` when
+  inline with RTL text.
+
+## 4. Mobile-First & Responsive
+- Design mobile-first: base classes target small screens, add `sm: md: lg: xl:`
+  upward. Don't write desktop styles then undo them at `max-*`.
+- Every page usable from ~360px wide. No horizontal page scroll — wide content
+  (tables, charts, code) scrolls inside its own `overflow-x-auto` container.
+- Touch targets ≥ 40px (`h-10`/`size-10`) for anything tappable on mobile.
+- Sidebar collapses to a sheet on mobile (shell handles it); the sheet opens from
+  the **start** side (right in `ar`, left in `en`).
+- Stat grids stack (`grid-cols-1`) then widen (`sm:grid-cols-2 xl:grid-cols-4`).
+- Use `@/hooks/use-mobile` only when layout must genuinely differ; prefer CSS
+  breakpoints.
+- Test each view at 360 / 768 / 1280 in both `ar` and `en`.
+
+## 5. `components/ui/*` Primitives
+- All primitives in `components/ui/` are kept RTL-safe: logical utilities,
+  flipping directional icons, no physical positioning of adornments (dropdown
+  check marks, select carets, input affixes use `end-*`/`start-*`).
+- When adding or upgrading a primitive (shadcn CLI), immediately convert any
+  physical utilities it ships with to logical ones before committing.
+- `components/ui/direction.tsx` (`DirectionProvider`) is wired at the root from
+  the i18next locale — don't add another.
+
+## 6. Audit Checklist (per component / page)
+1. Render in `ar` — is anything on the wrong side (icons, padding, borders,
+   absolute-positioned elements, menu indicators)?
+2. Grep the file for `\b(ml-|mr-|pl-|pr-|left-|right-|text-left|text-right|border-l|border-r|rounded-l|rounded-r)\b` — each hit is either converted or justified as symmetric (§1).
+3. Do directional icons flip? (§2)
+4. Does it reflow cleanly at 360px? Any horizontal overflow?
+5. Are all strings `t()` keys with `ar` + `en` entries?

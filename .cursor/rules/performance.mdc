@@ -1,0 +1,80 @@
+---
+description: Performance and bundle rules - waterfalls, code splitting, render discipline
+alwaysApply: true
+---
+
+# Performance & Bundle
+
+This is a Vite SPA — the whole UI is client JS. Keep the bundle and re-renders
+in check. React Compiler is enabled; don't add `useMemo` / `useCallback` just
+to "optimize" trivial derived values or stable handlers.
+
+## 0. Eliminate Waterfalls First (highest impact)
+- Independent async calls run in parallel: `Promise.all([...])`, never
+  sequential `await`s for data that doesn't depend on each other.
+- Check cheap synchronous conditions (feature flags, early-return guards)
+  *before* awaiting a remote value — don't pay a network round trip just to
+  discard the result.
+- Wrap slow, independent subtrees in `<Suspense>` so one lazy chunk / query
+  doesn't block the whole page (@routing.md §4).
+
+## 1. Code Splitting
+- **Charts:** `recharts` is large. Load chart components with
+  `React.lazy(() => import('./x-chart'))` and a `<Suspense fallback={<Skeleton />}>`.
+  Never import `recharts` (or a chart wrapper) into a route file directly.
+- Heavy, below-the-fold, or modal-only widgets (rich editors, export dialogs,
+  date-range calendars, data-heavy drawers) → `React.lazy`.
+- Don't lazy-import small always-visible components — the overhead isn't worth it.
+- Import directly from a module's real path, not a package's barrel
+  (`index.ts` re-exporting everything) — barrel imports can pull the whole
+  package into the bundle even when tree-shaking should prevent it.
+- Defer third-party scripts (analytics, chat widgets, error loggers) until
+  after first paint — inject them from a `useEffect` or a small loader, not a
+  blocking `<script>` in `index.html`.
+- Load feature-gated code (behind a flag, a permission, a rarely-used tab)
+  conditionally rather than bundling it for every user.
+- Preload a dynamic import on hover/focus of the control that triggers it
+  (`onMouseEnter`/`onFocus` → call the same `import()`) for perceived-instant
+  opens on dialogs/drawers/routes.
+
+## 2. React Query Efficiency
+- Global `staleTime` 60s; raise it for rarely-changing reference data (roles,
+  lookups, current user) so navigation is instant.
+- `placeholderData: keepPreviousData` on paginated lists (no refetch flash).
+- Show a subtle background-refetch indicator from `isFetching` (not `isLoading`)
+  so stale-while-revalidate doesn't look frozen or flash skeletons.
+- `select` to narrow query results so components re-render only on relevant changes.
+- Consider `useSuspenseQuery` + `<Suspense>` when a view genuinely can't render
+  without the data — cleaner than manual `isLoading` forks.
+
+## 3. Render Discipline
+- Filter/search inputs: keep keystrokes in local state, **debounce** (~300ms)
+  before writing URL params / firing the query. Don't key the query on every char.
+- Memoize only expensive derived data (table row transforms, chart series) when
+  the compiler cannot see the cost — not every callback.
+- Virtualize tables/lists beyond ~100 rows rather than raising the page size.
+- Prefer server-side pagination/sort/filter over shipping large datasets.
+- Don't subscribe a component to state it only reads inside a callback —
+  read the current value via a ref or the callback's own closure.
+- Use functional `setState` (`setX(prev => ...)`) when the new value depends
+  on the previous one.
+- Derive booleans during render (`const isEmpty = rows.length === 0`), not in
+  a `useEffect` that syncs derived state into `useState`.
+- Never define a component inside another component's render body.
+- Split a hook that returns multiple independent pieces of state when consumers
+  only need one piece.
+
+## 4. Assets & Fonts
+- Raster images: `<img>` (or a thin shared wrapper) with explicit `width` /
+  `height` or CSS aspect-ratio. Skip the element when `src` is empty.
+- Load IBM Plex Sans Arabic via `@fontsource` or a CSS `@font-face` in
+  `src/index.css` — don't add a render-blocking `<link>` in `index.html` unless
+  it's a preconnect.
+- Import only the `lucide-react` icons you use (named imports).
+
+## 5. Measure
+- Check the **Network tab** for waterfalls — parallelize independent queries,
+  don't chain hooks.
+- Use `vite-bundle-visualizer` (or rollup-plugin-visualizer) before adding any
+  dependency over ~30 kB.
+- Watch for duplicate data fetching: one query key per logical resource+params.

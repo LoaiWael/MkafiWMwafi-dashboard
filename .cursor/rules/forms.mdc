@@ -1,0 +1,130 @@
+---
+description: Forms with react-hook-form + zod, schema location, and submission wiring
+alwaysApply: true
+---
+
+# Forms — React Hook Form + Zod
+
+Every form (auth, filters that need validation, dashboard create/edit) uses
+`react-hook-form` for state and `zod` for the schema, wired through
+`@hookform/resolvers/zod`. Never hand-roll form state with `useState` per
+field, and never validate manually in an `onSubmit` handler.
+
+## 1. Schema Location & Shape
+
+- Co-locate the schema with the form's feature: `features/[name]/schemas/
+  x-form.schema.ts` (or `schemas.ts` if the feature has few forms).
+- One `z.object({...})` per form; export both the schema and its inferred
+  type:
+
+```typescript
+// features/auth/schemas/login-form.schema.ts
+import { z } from 'zod';
+
+export const loginFormSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+});
+
+export type LoginFormValues = z.infer<typeof loginFormSchema>;
+```
+
+- Validation messages come from `t()` (@i18n.md) via `z.string().min(8, {
+  message: t('auth.password.min') })` when the schema is built inside a
+  component/hook that has access to translations; for schemas used outside
+  React, key off error `code`/`path` and translate at render time instead of
+  baking English strings into the schema.
+- Reuse primitive schemas (`emailSchema`, `phoneSchema`) from a shared
+  `lib/schemas.ts` when the same field shape appears in multiple forms.
+
+## 2. Wiring the Form
+
+```typescript
+// features/auth/components/login-form.tsx
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginFormSchema, type LoginFormValues } from '../schemas/login-form.schema';
+import { useLogin } from '../hooks/use-login';
+
+export default function LoginForm() {
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginFormSchema),
+    defaultValues: { email: '', password: '' },
+    mode: 'onBlur',
+  });
+  const { mutate: login, isPending } = useLogin();
+
+  function onSubmit(values: LoginFormValues) {
+    login(values);
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>{/* fields */}</form>
+    </Form>
+  );
+}
+```
+
+- Use the `components/ui/form` primitive (shadcn-style `Form`,
+  `FormField`, `FormItem`, `FormLabel`, `FormControl`, `FormMessage`) so field
+  errors, labels, and `aria-*` wiring come for free — don't read
+  `form.formState.errors` manually in JSX.
+- `mode: 'onBlur'` by default (validate on blur, revalidate on change after
+  the first error) — don't validate on every keystroke for text/email/password
+  fields; do validate on change for fields with instant feedback value (e.g.
+  password-confirmation match).
+- Regular function syntax for the component (@architecture.md §3); the
+  `onSubmit` handler can stay a nested function.
+
+## 3. Submission & Mutation
+
+- The form's `onSubmit` calls a feature `useMutation` hook
+  (@react-query.md §5) — never `fetch`/the API client directly.
+- Disable the submit control on `isPending`; show inline pending state, not a
+  global spinner.
+- **Server field errors (422):** the API client surfaces `fieldErrors`
+  (@api-client.md §2) on the thrown `ApiError`. In the mutation's `onError`,
+  map them onto the form:
+
+```typescript
+onError(error) {
+  if (error instanceof ApiError && error.fieldErrors) {
+    for (const [field, message] of Object.entries(error.fieldErrors)) {
+      form.setError(field as keyof LoginFormValues, { message });
+    }
+  }
+}
+```
+
+- Non-field errors (network, 500, generic 422 without a field) fall through
+  to the global `MutationCache` toast (@react-query.md §1) — don't duplicate
+  that with a local toast.
+- On success, `form.reset()` only for forms that stay on the page (filters,
+  inline edits); navigation-away forms (login, create → redirect) don't need
+  it.
+
+## 4. Complex Fields
+
+- **Arrays / repeatable groups:** `useFieldArray` — never manually splice
+  `form.getValues()`.
+- **Dependent fields:** watch narrowly with `form.watch('fieldName')` (or
+  `useWatch` to avoid re-rendering the whole form) — don't watch the entire
+  form object unless the whole form genuinely re-renders together.
+- **Async/uniqueness validation** (e.g. "email already taken"): a
+  `superRefine` with an injected checker function for tests, or validate
+  server-side and surface via `fieldErrors` (§3) rather than firing a query
+  per keystroke inside the schema.
+- **Select/combobox/date fields** from `components/ui/*` (@components.md §2)
+  — wire through `FormField`'s `render` prop, not a raw `register()`, since
+  these aren't native inputs.
+
+## 5. Do Not
+
+- No manual `useState` + custom validation function for anything beyond a
+  single uncontrolled search input.
+- No duplicate validation — if the schema encodes "required, email format",
+  don't also hand-write a redundant check in `onSubmit`.
+- Don't put form schemas in `constants.ts` (@constants.md §1) — they live
+  with the feature that owns the form.
+- Don't skip `zodResolver` and validate imperatively inside `onSubmit`.
