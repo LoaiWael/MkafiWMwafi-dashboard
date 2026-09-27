@@ -398,7 +398,7 @@
 }
 
 .sidebar-scroll-shadow-bottom {
-  opacity: 1;
+  opacity: 0;
   pointer-events: none;
   background: radial-gradient(
     ellipse 75% 100% at 50% 100%,

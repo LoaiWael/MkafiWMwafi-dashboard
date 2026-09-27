@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
-import { Bell, LogOut, Menu, Settings, UserRound } from "lucide-react";
+import { ChevronDown, LogOut, Menu, Settings, UserRound } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
-import { getPageTitle } from "@/components/layout/constants";
+import { Bell } from "@/components/animate-ui/icons/bell";
+import { PanelRightClose } from "@/components/animate-ui/icons/panel-right-close";
+import { PanelRightOpen } from "@/components/animate-ui/icons/panel-right-open";
+import { CURRENT_EMPLOYEE, getPageTitle } from "@/components/layout/constants";
 import { ROUTES } from "@/lib/constants";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -13,17 +16,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { AnimateIcon } from "../animate-ui/icons/icon";
 
 export default function Header() {
   const { pathname } = useLocation();
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, open, openMobile, isMobile } = useSidebar();
+  const isSidebarOpen = isMobile ? openMobile : open;
+  const sidebarToggleLabel = isSidebarOpen
+    ? "إغلاق القائمة الجانبية"
+    : "فتح القائمة الجانبية";
   const pageTitle = getPageTitle(pathname);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -52,18 +59,24 @@ export default function Header() {
       <Tooltip>
         <TooltipTrigger
           type="button"
-          aria-label="فتح القائمة الجانبية"
+          aria-label={sidebarToggleLabel}
           className="inline-flex size-10 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted"
           onClick={toggleSidebar}
         >
-          <Menu size={20} />
+          <AnimateIcon animateOnHover className="flex size-full items-center justify-center">
+            {isMobile ? (
+              <Menu size={20} />
+            ) : isSidebarOpen ? (
+              <PanelRightClose size={20} />
+            ) : (
+              <PanelRightOpen size={20} />
+            )}
+          </AnimateIcon>
         </TooltipTrigger>
         <TooltipContent side="bottom" sideOffset={6}>
-          القائمة الجانبية
+          {sidebarToggleLabel}
         </TooltipContent>
       </Tooltip>
-
-      <Separator orientation="vertical" className="h-6" />
 
       <h1 className="truncate text-base font-bold text-foreground sm:text-lg">
         {pageTitle}
@@ -77,12 +90,14 @@ export default function Header() {
                 to={ROUTES.notifications}
                 viewTransition
                 aria-label="الإشعارات"
-                className="relative inline-flex size-10 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted"
+                className="relative inline-flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
               />
             }
           >
-            <Bell size={20} />
-            <span className="absolute top-1.5 inset-e-1.5 size-2 rounded-full bg-secondary" />
+            <AnimateIcon animateOnHover className="flex size-full items-center justify-center">
+              <Bell size={20} />
+              <span className="absolute top-2 end-2 size-2 rounded-full bg-secondary" />
+            </AnimateIcon>
           </TooltipTrigger>
           <TooltipContent side="bottom" sideOffset={6}>
             الإشعارات
@@ -92,31 +107,60 @@ export default function Header() {
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="الحساب"
-            className="inline-flex size-10 items-center justify-center rounded-lg outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex h-10 items-center gap-1 rounded-full border border-border bg-card ps-1 pe-2 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring sm:max-w-60 sm:gap-2 [&[data-popup-open]_svg]:rotate-180"
           >
-            <Avatar className="size-9">
-              <AvatarFallback className="bg-primary-50 text-sm text-primary-700">
-                م
+            <Avatar className="size-8">
+              <AvatarFallback className="bg-primary-50 text-xs text-primary-700">
+                {CURRENT_EMPLOYEE.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
+            <span className="hidden min-w-0 flex-1 text-start sm:block">
+              <span className="block truncate text-sm font-semibold leading-tight text-foreground">
+                {CURRENT_EMPLOYEE.name}
+              </span>
+              <span className="block truncate text-xs leading-tight text-muted-foreground">
+                {CURRENT_EMPLOYEE.role}
+              </span>
+            </span>
+            <ChevronDown
+              size={16}
+              className="shrink-0 text-muted-foreground transition-transform"
+            />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={8} className="min-w-48">
+          <DropdownMenuContent
+            align="end"
+            sideOffset={8}
+            className="min-w-48 [&_[data-slot=dropdown-menu-item]:not([data-variant=destructive])_svg]:text-popover-foreground [&_[data-slot=dropdown-menu-item]:not([data-variant=destructive]):focus_svg]:text-popover-foreground"
+          >
             <DropdownMenuGroup>
-              <DropdownMenuLabel>
-                <span className="block text-sm font-semibold text-foreground">
-                  مدير النظام
-                </span>
-                <span className="block text-xs font-normal text-muted-foreground">
-                  لوحة التشغيل
+              <DropdownMenuLabel className="flex items-center gap-2">
+                <Avatar className="size-8">
+                  <AvatarFallback className="bg-primary-50 text-xs text-primary-700">
+                    {CURRENT_EMPLOYEE.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-foreground">
+                    {CURRENT_EMPLOYEE.name}
+                  </span>
+                  <span className="block truncate text-xs font-normal text-muted-foreground">
+                    {CURRENT_EMPLOYEE.role}
+                  </span>
                 </span>
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem render={<NavLink to={ROUTES.settings} viewTransition />}>
+            <DropdownMenuItem
+              className="focus:bg-primary/10 focus:text-foreground"
+              render={<NavLink to={ROUTES.settings} viewTransition />}
+            >
               <UserRound size={16} />
               الملف الشخصي
             </DropdownMenuItem>
-            <DropdownMenuItem render={<NavLink to={ROUTES.settings} viewTransition />}>
+            <DropdownMenuItem
+              className="focus:bg-primary/10 focus:text-foreground"
+              render={<NavLink to={ROUTES.settings} viewTransition />}
+            >
               <Settings size={16} />
               الإعدادات
             </DropdownMenuItem>

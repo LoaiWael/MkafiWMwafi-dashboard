@@ -1,15 +1,22 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BadgeCheck,
   BarChart3,
   Bell,
   Building2,
   ClipboardList,
+  FileCheck2,
   FileText,
-  Handshake,
-  Headset,
+  Layers,
   LayoutDashboard,
+  MapPin,
+  Pencil,
+  Percent,
+  Scale,
+  ScrollText,
   Settings,
+  Shield,
+  Tag,
+  TicketPercent,
   Users,
   Wallet,
 } from "lucide-react";
@@ -29,7 +36,10 @@ export interface SidebarNavGroup {
 export const SIDEBAR_NAV_GROUPS: readonly SidebarNavGroup[] = [
   {
     title: "الرئيسي",
-    items: [{ href: ROUTES.home, label: "لوحة التحكم", icon: LayoutDashboard }],
+    items: [
+      { href: ROUTES.home, label: "لوحة التحكم", icon: LayoutDashboard },
+      { href: ROUTES.reports, label: "التقارير", icon: BarChart3 },
+    ],
   },
   {
     title: "العمليات",
@@ -40,23 +50,35 @@ export const SIDEBAR_NAV_GROUPS: readonly SidebarNavGroup[] = [
     ],
   },
   {
-    title: "الأطراف",
+    title: "المالية",
     items: [
-      { href: ROUTES.users, label: "العملاء", icon: Users },
-      { href: ROUTES.brokers, label: "الوسطاء", icon: Handshake },
+      { href: ROUTES.payments, label: "المدفوعات", icon: Wallet },
+      { href: ROUTES.pricing, label: "تسعير الخدمات", icon: Tag },
+      { href: ROUTES.coupons, label: "كوبونات الخصم", icon: TicketPercent },
+      { href: ROUTES.taxes, label: "الضرائب والرسوم", icon: Percent },
     ],
   },
   {
-    title: "المالية",
-    items: [{ href: ROUTES.payments, label: "المدفوعات", icon: Wallet }],
+    title: "المستخدمين",
+    items: [
+      { href: ROUTES.users, label: "العملاء", icon: Users },
+      { href: ROUTES.notifications, label: "الإشعارات", icon: Bell },
+    ],
   },
   {
     title: "النظام",
     items: [
-      { href: ROUTES.licenses, label: "التراخيص", icon: BadgeCheck },
-      { href: ROUTES.reports, label: "التقارير", icon: BarChart3 },
-      { href: ROUTES.notifications, label: "الإشعارات", icon: Bell },
-      { href: ROUTES.support, label: "الدعم", icon: Headset },
+      { href: ROUTES.documents, label: "الصكوك", icon: ScrollText },
+      { href: ROUTES.regions, label: "المناطق والمدن", icon: MapPin },
+      { href: ROUTES.unitOptions, label: "خيارات الوحدات", icon: Layers },
+      {
+        href: ROUTES.partyOptions,
+        label: "أنواع التفويض والصفة",
+        icon: FileCheck2,
+      },
+      { href: ROUTES.content, label: "محتوى الموقع", icon: Pencil },
+      { href: ROUTES.terms, label: "الشروط والأحكام", icon: Scale },
+      { href: ROUTES.privacy, label: "سياسة الخصوصية", icon: Shield },
       { href: ROUTES.settings, label: "الإعدادات", icon: Settings },
     ],
   },
@@ -81,3 +103,8 @@ export function getPageTitle(pathname: string) {
 
   return "الصفحة غير موجودة";
 }
+
+export const CURRENT_EMPLOYEE = {
+  name: "عوض",
+  role: "مدير النظام",
+} as const;
