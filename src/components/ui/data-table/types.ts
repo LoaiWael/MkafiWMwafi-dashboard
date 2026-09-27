@@ -7,6 +7,7 @@ export interface DataTableColumn<TData> {
   id: string;
   header: string | ReactNode;
   accessorKey?: keyof TData;
+  sortValue?: (item: TData) => number | string | Date | null | undefined;
   cell?: (item: TData, index: number) => ReactNode;
   sortable?: boolean;
   align?: "start" | "center" | "end";

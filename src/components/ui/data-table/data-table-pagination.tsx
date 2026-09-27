@@ -1,5 +1,12 @@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -24,11 +31,12 @@ export function DataTablePagination({
   onPageSizeChange,
 }: DataTablePaginationProps) {
   const pageCount = Math.max(1, Math.ceil(totalItems / pageSize));
-  const startItem = totalItems === 0 ? 0 : pageIndex * pageSize + 1;
-  const endItem = Math.min((pageIndex + 1) * pageSize, totalItems);
+  const safePageIndex = Math.min(Math.max(0, pageIndex), pageCount - 1);
+  const startItem = totalItems === 0 ? 0 : safePageIndex * pageSize + 1;
+  const endItem = Math.min((safePageIndex + 1) * pageSize, totalItems);
 
-  const canPrevious = pageIndex > 0;
-  const canNext = pageIndex < pageCount - 1;
+  const canPrevious = safePageIndex > 0;
+  const canNext = safePageIndex < pageCount - 1;
 
   return (
     <div className="flex flex-col items-center justify-between gap-4 border-t border-border px-4 py-3 sm:flex-row">
@@ -39,28 +47,36 @@ export function DataTablePagination({
           <strong className="font-semibold text-foreground">{totalItems}</strong> عنصر
         </span>
 
-        <div className="flex items-center gap-1.5 ms-2 border-s border-border ps-3">
-          <label htmlFor="data-table-page-size" className="text-xs text-muted-foreground">
-            لكل صفحة:
-          </label>
-          <select
-            id="data-table-page-size"
-            value={pageSize}
-            onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="h-8 rounded-md border border-input bg-background px-2 text-xs font-medium text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
+        <div className="flex items-center gap-2 ms-2 border-s border-border ps-3">
+          <span className="text-xs text-muted-foreground">لكل صفحة:</span>
+          <Select
+            value={String(pageSize)}
+            onValueChange={(val) => {
+              if (val) {
+                onPageSizeChange(Number(val));
+              }
+            }}
           >
-            {pageSizeOptions.map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              aria-label="عدد العناصر لكل صفحة"
+              className="h-8 min-w-18 bg-background text-xs font-medium"
+            >
+              <SelectValue placeholder={String(pageSize)} />
+            </SelectTrigger>
+            <SelectContent side="bottom" sideOffset={4} align="center" className="min-w-18">
+              {pageSizeOptions.map((size) => (
+                <SelectItem key={size} value={String(size)} className="text-xs">
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       <div className="flex items-center gap-1">
         <span className="me-2 text-xs text-muted-foreground sm:text-sm">
-          الصفحة <strong className="font-semibold text-foreground">{pageIndex + 1}</strong> من{" "}
+          الصفحة <strong className="font-semibold text-foreground">{safePageIndex + 1}</strong> من{" "}
           <strong className="font-semibold text-foreground">{pageCount}</strong>
         </span>
 
@@ -69,7 +85,7 @@ export function DataTablePagination({
             <TooltipTrigger
               type="button"
               aria-label="الصفحة الأولى"
-              className="inline-flex size-8 items-center justify-center rounded-md border border-border text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
+              className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background text-foreground transition-all hover:bg-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-border/40 disabled:bg-muted/10 disabled:text-muted-foreground/30 disabled:opacity-30 data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:border-border/40 data-disabled:bg-muted/10 data-disabled:text-muted-foreground/30 data-disabled:opacity-30 aria-disabled:pointer-events-none aria-disabled:opacity-30"
               disabled={!canPrevious}
               onClick={() => onPageChange(0)}
             >
@@ -84,9 +100,9 @@ export function DataTablePagination({
             <TooltipTrigger
               type="button"
               aria-label="الصفحة السابقة"
-              className="inline-flex size-8 items-center justify-center rounded-md border border-border text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
+              className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background text-foreground transition-all hover:bg-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-border/40 disabled:bg-muted/10 disabled:text-muted-foreground/30 disabled:opacity-30 data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:border-border/40 data-disabled:bg-muted/10 data-disabled:text-muted-foreground/30 data-disabled:opacity-30 aria-disabled:pointer-events-none aria-disabled:opacity-30"
               disabled={!canPrevious}
-              onClick={() => onPageChange(pageIndex - 1)}
+              onClick={() => onPageChange(Math.max(0, safePageIndex - 1))}
             >
               <ChevronRight className="size-4" />
             </TooltipTrigger>
@@ -99,9 +115,13 @@ export function DataTablePagination({
             <TooltipTrigger
               type="button"
               aria-label="الصفحة التالية"
-              className="inline-flex size-8 items-center justify-center rounded-md border border-border text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
+              className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background text-foreground transition-all hover:bg-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-border/40 disabled:bg-muted/10 disabled:text-muted-foreground/30 disabled:opacity-30 data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:border-border/40 data-disabled:bg-muted/10 data-disabled:text-muted-foreground/30 data-disabled:opacity-30 aria-disabled:pointer-events-none aria-disabled:opacity-30"
               disabled={!canNext}
-              onClick={() => onPageChange(pageIndex + 1)}
+              onClick={() => {
+                if (safePageIndex < pageCount - 1) {
+                  onPageChange(Math.min(pageCount - 1, safePageIndex + 1));
+                }
+              }}
             >
               <ChevronLeft className="size-4" />
             </TooltipTrigger>
@@ -114,7 +134,7 @@ export function DataTablePagination({
             <TooltipTrigger
               type="button"
               aria-label="الصفحة الأخيرة"
-              className="inline-flex size-8 items-center justify-center rounded-md border border-border text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
+              className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background text-foreground transition-all hover:bg-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-border/40 disabled:bg-muted/10 disabled:text-muted-foreground/30 disabled:opacity-30 data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:border-border/40 data-disabled:bg-muted/10 data-disabled:text-muted-foreground/30 data-disabled:opacity-30 aria-disabled:pointer-events-none aria-disabled:opacity-30"
               disabled={!canNext}
               onClick={() => onPageChange(pageCount - 1)}
             >

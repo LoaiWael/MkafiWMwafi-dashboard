@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router";
 import RootLayout from "@/components/layout/RootLayout";
 import OverviewPage from "@/routes/dashboard/overview-page";
 import ContractsPage from "@/routes/dashboard/contracts-page";
+import ContractDetailsPage from "@/routes/dashboard/contract-details-page";
 import RequestsPage from "@/routes/dashboard/requests-page";
 import PropertiesPage from "@/routes/dashboard/properties-page";
 import UsersPage from "@/routes/dashboard/users-page";
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: OverviewPage },
       { path: "contracts", Component: ContractsPage },
+      { path: "contracts/:id", Component: ContractDetailsPage },
       { path: "requests", Component: RequestsPage },
       { path: "properties", Component: PropertiesPage },
       { path: "users", Component: UsersPage },

@@ -44,7 +44,7 @@ export function DataTableToolbar<TData>({
   children,
 }: DataTableToolbarProps<TData>) {
   return (
-    <div className="flex flex-col gap-3 p-4">
+    <div className="flex flex-col gap-2.5 border-b border-border px-4 py-2.5 sm:py-3">
       <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
         {/* Search input */}
         <div className="relative flex-1 sm:max-w-xs md:max-w-sm">

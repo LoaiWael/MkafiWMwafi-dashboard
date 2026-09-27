@@ -1,8 +1,10 @@
 import {
   Building2,
+  ChevronLeft,
   Eye,
   FileText,
   MapPin,
+  SaudiRiyal,
   Store,
 } from "lucide-react";
 import { Link } from "react-router";
@@ -28,220 +30,224 @@ import { cn } from "@/lib/utils";
 
 export default function OverviewContractsTable() {
   const columns: DataTableColumn<OverviewContract>[] = [
-      {
-        id: "contractNumber",
-        header: "رقم العقد والتوثيق",
-        accessorKey: "contractNumber",
-        sortable: true,
-        minWidth: "180px",
-        cell: (item) => {
-          const isResidential = item.type === "residential";
+    {
+      id: "contractNumber",
+      header: "رقم العقد والتوثيق",
+      accessorKey: "contractNumber",
+      sortable: true,
+      minWidth: "180px",
+      cell: (item) => {
+        const isResidential = item.type === "residential";
 
-          return (
-            <div className="flex items-start gap-2.5">
-              <div
-                className={cn(
-                  "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg",
-                  isResidential
-                    ? "bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400"
-                    : "bg-secondary-50 text-secondary-600 dark:bg-secondary-950 dark:text-secondary-400",
-                )}
-              >
-                {isResidential ? (
-                  <FileText className="size-4" />
-                ) : (
-                  <Store className="size-4" />
-                )}
-              </div>
-
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-foreground">
-                    {item.contractNumber}
-                  </span>
-                  <CopyButton
-                    value={item.contractNumber}
-                    itemId={`cnt-${item.id}`}
-                    label="نسخ رقم العقد"
-                    successMessage="تم النسخ بنجاح!"
-                  />
-                </div>
-                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <span>شبكة إيجار:</span>
-                  <span className="font-mono font-medium text-foreground/80">
-                    {item.ejarContractId}
-                  </span>
-                  <CopyButton
-                    value={item.ejarContractId}
-                    itemId={`ejr-${item.id}`}
-                    label="نسخ رمز إيجار"
-                    successMessage="تم النسخ بنجاح!"
-                  />
-                </div>
-              </div>
-            </div>
-          );
-        },
-      },
-      {
-        id: "propertyTitle",
-        header: "العقار والوحدة",
-        accessorKey: "propertyTitle",
-        sortable: true,
-        minWidth: "200px",
-        cell: (item) => (
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5 font-medium text-foreground">
-              <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
-              <span>{item.propertyTitle}</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-medium text-foreground">
-                {item.unitNumber}
-              </span>
-              <span className="flex items-center gap-0.5">
-                <MapPin className="size-3 text-muted-foreground" />
-                {item.city} - {item.district}
-              </span>
-            </div>
-          </div>
-        ),
-      },
-      {
-        id: "parties",
-        header: "أطراف العقد",
-        accessorKey: "lessorName",
-        minWidth: "200px",
-        cell: (item) => (
-          <div className="space-y-1 text-xs">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-medium text-muted-foreground">
-                المؤجر:
-              </span>
-              <span className="font-medium text-foreground">
-                {item.lessorName}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-medium text-muted-foreground">
-                المستأجر:
-              </span>
-              <span className="font-medium text-foreground">
-                {item.lesseeName}
-              </span>
-            </div>
-          </div>
-        ),
-      },
-      {
-        id: "type",
-        header: "نوع العقد",
-        accessorKey: "type",
-        sortable: true,
-        align: "center",
-        minWidth: "100px",
-        cell: (item) => {
-          const isResidential = item.type === "residential";
-          return (
-            <Badge
-              variant="outline"
-              className={
+        return (
+          <div className="flex items-start gap-2.5">
+            <div
+              className={cn(
+                "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl",
                 isResidential
-                  ? "border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300"
-                  : "border-secondary-200 bg-secondary-50 text-secondary-800 dark:border-secondary-800 dark:bg-secondary-950 dark:text-secondary-300"
-              }
+                  ? "bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400"
+                  : "bg-secondary-50 text-secondary-600 dark:bg-secondary-950 dark:text-secondary-400",
+              )}
             >
-              {item.typeLabel}
-            </Badge>
-          );
-        },
-      },
-      {
-        id: "rentalAmount",
-        header: "القيمة الإيجارية",
-        accessorKey: "rentalAmount",
-        sortable: true,
-        align: "end",
-        minWidth: "130px",
-        cell: (item) => (
-          <div className="text-end">
-            <span className="font-semibold text-foreground">
-              {item.rentalAmountFormatted}
-            </span>
-            <div className="text-[11px] text-muted-foreground">
-              {item.durationMonths} شهر
+              {isResidential ? (
+                <FileText className="size-4" />
+              ) : (
+                <Store className="size-4" />
+              )}
+            </div>
+
+            <div className="space-y-0.5 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <Link
+                  to={`/contracts/${item.id}`}
+                  viewTransition
+                  className="font-semibold text-foreground hover:text-primary hover:underline truncate"
+                >
+                  {item.contractNumber}
+                </Link>
+                <CopyButton
+                  value={item.contractNumber}
+                  itemId={`cnt-${item.id}`}
+                  label="نسخ رقم العقد"
+                  successMessage="تم النسخ بنجاح!"
+                />
+              </div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span>شبكة إيجار:</span>
+                <span className="font-mono font-medium text-foreground/80">
+                  {item.ejarContractId}
+                </span>
+                <CopyButton
+                  value={item.ejarContractId}
+                  itemId={`ejr-${item.id}`}
+                  label="نسخ رمز إيجار"
+                  successMessage="تم النسخ بنجاح!"
+                />
+              </div>
             </div>
           </div>
-        ),
+        );
       },
-      {
-        id: "status",
-        header: "حالة التوثيق",
-        accessorKey: "status",
-        sortable: true,
-        align: "center",
-        minWidth: "150px",
-        cell: (item) => (
+    },
+    {
+      id: "propertyTitle",
+      header: "العقار والوحدة",
+      accessorKey: "propertyTitle",
+      sortable: true,
+      minWidth: "200px",
+      cell: (item) => (
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+            <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
+            <span className="truncate">{item.propertyTitle}</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs font-medium text-foreground">
+              {item.unitNumber}
+            </span>
+            <span className="flex items-center gap-0.5">
+              <MapPin className="size-3 text-muted-foreground shrink-0" />
+              {item.city} - {item.district}
+            </span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "parties",
+      header: "أطراف العقد",
+      accessorKey: "lessorName",
+      minWidth: "200px",
+      cell: (item) => (
+        <div className="space-y-1 text-xs">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground shrink-0">
+              المؤجر:
+            </span>
+            <span className="font-medium text-foreground truncate">
+              {item.lessorName}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground shrink-0">
+              المستأجر:
+            </span>
+            <span className="font-medium text-foreground truncate">
+              {item.lesseeName}
+            </span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "type",
+      header: "نوع العقد",
+      accessorKey: "type",
+      sortable: true,
+      align: "center",
+      minWidth: "100px",
+      cell: (item) => {
+        const isResidential = item.type === "residential";
+        return (
           <Badge
             variant="outline"
-            className={cn(
-              "gap-1.5 border px-2.5 py-1 text-xs font-medium",
-              item.statusColorClass,
-            )}
+            className={
+              isResidential
+                ? "border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300 text-xs font-medium"
+                : "border-secondary-200 bg-secondary-50 text-secondary-800 dark:border-secondary-800 dark:bg-secondary-950 dark:text-secondary-300 text-xs font-medium"
+            }
           >
-            <span className="size-1.5 rounded-full bg-current" />
-            <span>{item.statusLabel}</span>
+            {item.typeLabel}
           </Badge>
-        ),
+        );
       },
-      {
-        id: "documentedAt",
-        header: "تاريخ التوثيق",
-        accessorKey: "documentedAtDate",
-        sortable: true,
-        align: "end",
-        minWidth: "120px",
-        cell: (item) => (
-          <div className="text-end text-xs">
-            <span className="font-medium text-foreground">
-              {item.documentedAt}
-            </span>
-            <div className="text-[11px] text-muted-foreground">
-              {item.documentedAtDate}
-            </div>
+    },
+    {
+      id: "rentalAmount",
+      header: "القيمة الإيجارية",
+      accessorKey: "rentalAmount",
+      sortable: true,
+      align: "end",
+      minWidth: "130px",
+      cell: (item) => (
+        <div className="text-end">
+          <span className="text-sm font-semibold text-foreground sm:text-base">
+            {item.rentalAmountFormatted}
+          </span>
+          <div className="text-xs text-muted-foreground">
+            {item.durationMonths} شهر
           </div>
-        ),
-      },
-      {
-        id: "actions",
-        header: "الإجراءات",
-        align: "center",
-        minWidth: "100px",
-        cell: (item) => (
-          <div className="flex items-center justify-center gap-1">
-            <TooltipProvider delay={150}>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Link
-                      to={`${ROUTES.contracts}?type=${item.type}`}
-                      viewTransition
-                      className="inline-flex size-8 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-muted"
-                      aria-label="عرض تفاصيل العقد"
-                    />
-                  }
-                >
-                  <Eye className="size-4" />
-                </TooltipTrigger>
-                <TooltipContent side="top" sideOffset={4}>
-                  عرض تفاصيل العقد
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+        </div>
+      ),
+    },
+    {
+      id: "status",
+      header: "حالة التوثيق",
+      accessorKey: "status",
+      sortable: true,
+      align: "center",
+      minWidth: "150px",
+      cell: (item) => (
+        <Badge
+          variant="outline"
+          className={cn(
+            "gap-1.5 border px-2.5 py-1 text-xs font-medium",
+            item.statusColorClass,
+          )}
+        >
+          <span className="size-1.5 rounded-full bg-current" />
+          <span>{item.statusLabel}</span>
+        </Badge>
+      ),
+    },
+    {
+      id: "documentedAt",
+      header: "تاريخ التوثيق",
+      accessorKey: "documentedAtDate",
+      sortable: true,
+      align: "end",
+      minWidth: "120px",
+      cell: (item) => (
+        <div className="text-end text-xs">
+          <span className="font-medium text-foreground">
+            {item.documentedAt}
+          </span>
+          <div className="text-xs text-muted-foreground">
+            {item.documentedAtDate}
           </div>
-        ),
-      },
-    ];
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      header: "الإجراءات",
+      align: "center",
+      minWidth: "100px",
+      cell: (item) => (
+        <div className="flex items-center justify-center gap-1">
+          <TooltipProvider delay={150}>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Link
+                    to={`/contracts/${item.id}`}
+                    viewTransition
+                    className="inline-flex size-8 items-center justify-center rounded-lg border border-border bg-card text-foreground transition-colors hover:bg-muted active:scale-95"
+                    aria-label="عرض تفاصيل العقد"
+                  />
+                }
+              >
+                <Eye className="size-4" />
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={4}>
+                عرض تفاصيل العقد
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      ),
+    },
+  ];
 
   const filterConfigs: DataTableFilterConfig<OverviewContract>[] = [
     {
@@ -280,25 +286,152 @@ export default function OverviewContractsTable() {
   ];
 
   return (
-    <DataTable
-      data={RECENT_CONTRACTS_DATA}
-      columns={columns}
-      title="أحدث عمليات توثيق العقود والعقارات"
-      subtitle="سجل فوري لجميع العقود السكنية والتجارية الموثقة عبر شبكة إيجار والهيئة العامة للعقار."
-      searchPlaceholder="بحث برقم العقد، العقار، المؤجر، المستأجر، أو المدينة..."
-      searchKeys={[
-        "contractNumber",
-        "ejarContractId",
-        "propertyTitle",
-        "unitNumber",
-        "city",
-        "district",
-        "lessorName",
-        "lesseeName",
-      ]}
-      filters={filterConfigs}
-      pageSize={5}
-      pageSizeOptions={[5, 10, 20]}
-    />
+    <div className="space-y-4">
+      {/* Mobile Card List for Small Screens (< md) */}
+      <div className="block md:hidden space-y-3">
+        <div className="flex items-center justify-between pb-1">
+          <div className="space-y-0.5">
+            <h3 className="text-sm font-bold text-foreground">
+              أحدث العقود المسجلة
+            </h3>
+            <p className="text-[11px] text-muted-foreground">
+              سجل فوري للعقود الموثقة عبر شبكة إيجار
+            </p>
+          </div>
+          <Link
+            to={ROUTES.contracts}
+            viewTransition
+            className="text-xs font-semibold text-primary hover:underline flex items-center gap-0.5"
+          >
+            <span>عرض الكل</span>
+            <ChevronLeft className="size-3.5" />
+          </Link>
+        </div>
+
+        <div className="space-y-2.5">
+          {RECENT_CONTRACTS_DATA.slice(0, 5).map((item) => {
+            const isResidential = item.type === "residential";
+            return (
+              <div
+                key={item.id}
+                className="rounded-2xl border border-border bg-card p-3.5 shadow-2xs space-y-2.5 transition-all hover:border-primary/40 active:scale-[0.99]"
+              >
+                {/* Card Header: Icon, Contract number, Status badge */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div
+                      className={cn(
+                        "flex size-8 shrink-0 items-center justify-center rounded-xl",
+                        isResidential
+                          ? "bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400"
+                          : "bg-secondary-50 text-secondary-600 dark:bg-secondary-950 dark:text-secondary-400",
+                      )}
+                    >
+                      {isResidential ? (
+                        <FileText className="size-4" />
+                      ) : (
+                        <Store className="size-4" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <Link
+                        to={`/contracts/${item.id}`}
+                        viewTransition
+                        className="text-xs font-bold text-foreground hover:text-primary block truncate"
+                      >
+                        {item.contractNumber}
+                      </Link>
+                      <span className="text-[10px] font-mono text-muted-foreground block truncate">
+                        إيجار: {item.ejarContractId}
+                      </span>
+                    </div>
+                  </div>
+
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "px-2 py-0.5 text-[10px] font-semibold shrink-0",
+                      item.statusColorClass,
+                    )}
+                  >
+                    {item.statusLabel}
+                  </Badge>
+                </div>
+
+                {/* Property & City */}
+                <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border/40 pt-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate text-foreground font-medium text-[11px]">
+                      {item.propertyTitle} ({item.unitNumber})
+                    </span>
+                  </div>
+                  <span className="text-[10px] shrink-0 font-medium">
+                    {item.city}
+                  </span>
+                </div>
+
+                {/* Parties and Rental Amount */}
+                <div className="flex items-center justify-between border-t border-border/40 pt-2 text-xs">
+                  <div className="space-y-0.5 text-[11px] text-muted-foreground truncate max-w-[60%]">
+                    <span className="block truncate">المؤجر: {item.lessorName}</span>
+                    <span className="block truncate">المستأجر: {item.lesseeName}</span>
+                  </div>
+
+                  <div className="text-end">
+                    <div className="flex items-center justify-end gap-0.5 font-bold text-foreground text-xs">
+                      <span>{item.rentalAmount.toLocaleString("en-US")}</span>
+                      <SaudiRiyal className="size-3 text-muted-foreground" />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      {item.durationMonths} شهر
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action Link Footer */}
+                <div className="border-t border-border/50 pt-2 flex items-center justify-between text-[11px]">
+                  <span className="text-muted-foreground text-[10px]">
+                    {item.documentedAt}
+                  </span>
+                  <Link
+                    to={`/contracts/${item.id}`}
+                    viewTransition
+                    className="font-semibold text-primary hover:underline flex items-center gap-1"
+                  >
+                    <span>عرض كامل التفاصيل</span>
+                    <ChevronLeft className="size-3" />
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Desktop DataTable (>= md) */}
+      <div className="hidden md:block">
+        <DataTable
+          data={RECENT_CONTRACTS_DATA}
+          columns={columns}
+          title="أحدث عمليات توثيق العقود والعقارات"
+          subtitle="سجل فوري لجميع العقود السكنية والتجارية الموثقة عبر شبكة إيجار والهيئة العامة للعقار."
+          searchPlaceholder="بحث برقم العقد، العقار، المؤجر، المستأجر، أو المدينة..."
+          searchKeys={[
+            "contractNumber",
+            "ejarContractId",
+            "propertyTitle",
+            "unitNumber",
+            "city",
+            "district",
+            "lessorName",
+            "lesseeName",
+          ]}
+          filters={filterConfigs}
+          pageSize={5}
+          pageSizeOptions={[5, 10, 20]}
+        />
+      </div>
+    </div>
   );
 }

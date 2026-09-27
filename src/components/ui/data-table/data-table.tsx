@@ -202,13 +202,14 @@ export function DataTable<TData>({
     if (!sorting) return filteredData;
 
     const column = columns.find((c) => c.id === sorting.columnId);
-    if (!column || !column.accessorKey) return filteredData;
+    if (!column || (!column.sortValue && !column.accessorKey)) return filteredData;
 
+    const sortFn = column.sortValue;
     const key = column.accessorKey;
 
     return [...filteredData].sort((a, b) => {
-      const aVal = a[key];
-      const bVal = b[key];
+      const aVal = sortFn ? sortFn(a) : key ? a[key] : undefined;
+      const bVal = sortFn ? sortFn(b) : key ? b[key] : undefined;
 
       if (aVal === bVal) return 0;
       if (aVal === undefined || aVal === null) return 1;
@@ -217,6 +218,8 @@ export function DataTable<TData>({
       let comparison = 0;
       if (typeof aVal === "number" && typeof bVal === "number") {
         comparison = aVal - bVal;
+      } else if (aVal instanceof Date && bVal instanceof Date) {
+        comparison = aVal.getTime() - bVal.getTime();
       } else {
         comparison = String(aVal).localeCompare(String(bVal), "ar");
       }
@@ -226,9 +229,11 @@ export function DataTable<TData>({
   })();
 
   // Pagination
+  const pageCount = Math.max(1, Math.ceil(sortedData.length / pageSize));
+  const safePageIndex = Math.min(Math.max(0, pageIndex), pageCount - 1);
   const paginatedData = sortedData.slice(
-    pageIndex * pageSize,
-    pageIndex * pageSize + pageSize,
+    safePageIndex * pageSize,
+    safePageIndex * pageSize + pageSize,
   );
 
   // Filter management handlers
@@ -362,31 +367,36 @@ export function DataTable<TData>({
       />
 
       {/* Table Content */}
-      <div className="relative w-full overflow-x-auto bg-muted/15">
-        <Table>
-          <TableHeader className="border-b border-border bg-muted/70 backdrop-blur-xs">
-            <TableRow className="border-b border-border/80 hover:bg-transparent">
-              {columns.map((column) => {
-                const isSortable = Boolean(column.sortable && column.accessorKey);
-                const isSorted = sorting?.columnId === column.id;
-                const sortDir = isSorted ? sorting.direction : null;
+      <Table>
+        <TableHeader className="sticky top-16 z-10 border-b border-border bg-card shadow-xs">
+          <TableRow className="border-b border-border/80 hover:bg-transparent">
+            {columns.map((column) => {
+              const isSortable = Boolean(
+                column.sortable && (column.accessorKey || column.sortValue),
+              );
+              const isSorted = sorting?.columnId === column.id;
+              const sortDir = isSorted ? sorting.direction : null;
 
-                return (
-                  <TableHead
-                    key={column.id}
-                    style={{ minWidth: column.minWidth }}
-                    className={cn(
-                      "py-3.5 font-semibold text-foreground/90",
-                      column.align === "center" && "text-center",
-                      column.align === "end" && "text-end",
-                      column.headerClassName,
-                    )}
-                  >
+              return (
+                <TableHead
+                  key={column.id}
+                  style={{ minWidth: column.minWidth }}
+                  className={cn(
+                    "sticky top-16 z-10 bg-muted/95 backdrop-blur-md py-3 font-semibold text-foreground/90",
+                    column.align === "center" && "text-center",
+                    column.align === "end" && "text-end",
+                    column.headerClassName,
+                  )}
+                >
                     {isSortable ? (
                       <button
                         type="button"
                         onClick={() => handleSort(column.id)}
-                        className="inline-flex items-center gap-1.5 font-semibold text-foreground/90 transition-colors hover:text-primary"
+                        className={cn(
+                          "inline-flex items-center gap-1.5 font-semibold text-foreground/90 transition-colors hover:text-primary cursor-pointer",
+                          column.align === "center" && "justify-center",
+                          column.align === "end" && "justify-end",
+                        )}
                       >
                         <span>{column.header}</span>
                         {sortDir === "asc" ? (
@@ -479,16 +489,15 @@ export function DataTable<TData>({
             )}
           </TableBody>
         </Table>
-      </div>
 
-      {/* Pagination */}
+        {/* Pagination */}
       {!isLoading && sortedData.length > 0 && (
         <DataTablePagination
-          pageIndex={pageIndex}
+          pageIndex={safePageIndex}
           pageSize={pageSize}
           totalItems={sortedData.length}
           pageSizeOptions={pageSizeOptions}
-          onPageChange={(newIdx) => setPageIndex(newIdx)}
+          onPageChange={(newIdx) => setPageIndex(Math.min(Math.max(0, newIdx), pageCount - 1))}
           onPageSizeChange={(newSize) => {
             setPageSize(newSize);
             setPageIndex(0);

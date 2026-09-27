@@ -100,14 +100,18 @@ Theme tokens live in `src/index.css` (`:root`, `.dark`, `@theme inline`):
    - Feature logic lives in `src/features/<feature-name>/`.
    - Cross-cutting UI lives in `src/components/ui/` or `src/components/layout/`.
 
-5. **Type Safety & Validation**:
+5. **React Compiler & No Manual Memoization (Strict Rule)**:
+   - **DO NOT** use `useMemo`, `useCallback`, or `React.memo`.
+   - The React Compiler (`babel-plugin-react-compiler`) is enabled and automatically handles all memoization across the codebase. Write idiomatic, clean React code with direct variable assignments and standard functions.
+
+6. **Type Safety & Validation**:
    - Strict TypeScript. Regular `function Name()` syntax for components and services.
    - Forms: Zod + react-hook-form. API responses: TypeScript interfaces from real payloads (check-before-type).
 
-6. **Environment**:
+7. **Environment**:
    - Vite client vars are `VITE_*`, read only through `src/lib/env.ts` (`import.meta.env`). Never `process.env` in app code.
 
-7. **Key Commands**:
+8. **Key Commands**:
    - `npm run dev`: Vite dev server
    - `npm run build`: `tsc -b && vite build`
    - `npm run preview`: preview the production bundle
