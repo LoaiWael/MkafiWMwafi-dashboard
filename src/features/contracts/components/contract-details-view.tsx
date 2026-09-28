@@ -69,6 +69,21 @@ import ContractCertificateModal from "./contract-certificate-modal";
 import UpdateContractStatusDialog from "./update-contract-status-dialog";
 import UpdatePaymentStatusDialog from "./update-payment-status-dialog";
 
+import { FilterTabs, type FilterTabItem } from "@/components/ui/filter-tabs";
+import { useUrlTab } from "@/hooks/use-url-tab";
+
+const CONTRACT_DETAILS_TABS = [
+  "overview",
+  "parties",
+  "property",
+  "financials",
+  "ejar",
+  "terms",
+  "history",
+] as const;
+
+type ContractDetailsTab = (typeof CONTRACT_DETAILS_TABS)[number];
+
 interface ContractDetailsViewProps {
   contractId: string;
 }
@@ -81,15 +96,11 @@ export default function ContractDetailsView({
     MOCK_CONTRACTS.find((c) => c.id === contractId) || MOCK_CONTRACTS[0];
 
   const [contract, setContract] = useState<Contract>(initialContract);
-  const [activeTab, setActiveTab] = useState<
-    | "overview"
-    | "parties"
-    | "property"
-    | "financials"
-    | "ejar"
-    | "terms"
-    | "history"
-  >("overview");
+  const [activeTab, setActiveTab] = useUrlTab<ContractDetailsTab>({
+    paramKey: "tab",
+    defaultValue: "overview",
+    validValues: CONTRACT_DETAILS_TABS,
+  });
 
   // Dialog & Modal states
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
@@ -233,7 +244,7 @@ export default function ContractDetailsView({
   const isFailed =
     contract.status === "rejected" || contract.status === "expired";
 
-  let currentStepIndex = 0;
+  let currentStepIndex = 2;
   if (isEjarDone) {
     currentStepIndex = 5; // all done
   } else if (contract.status === "pending_approval") {
@@ -242,8 +253,6 @@ export default function ContractDetailsView({
     currentStepIndex = 2;
   } else if (!isPaymentDone) {
     currentStepIndex = 1;
-  } else {
-    currentStepIndex = 2;
   }
 
   const lifecycleSteps: {
@@ -341,7 +350,7 @@ export default function ContractDetailsView({
   ];
 
   // Tab definitions
-  const tabsList = [
+  const tabsList: FilterTabItem<ContractDetailsTab>[] = [
     { id: "overview", label: "نظرة عامة والمسار", icon: Layers },
     { id: "parties", label: "أطراف العقد", icon: Users },
     { id: "property", label: "العقار والوحدة", icon: Building2 },
@@ -354,7 +363,7 @@ export default function ContractDetailsView({
       icon: Clock,
       count: contract.historyLogs.length,
     },
-  ] as const;
+  ];
 
   return (
     <div className="page-shell space-y-4 sm:space-y-6 py-4 sm:py-8">
@@ -779,51 +788,14 @@ export default function ContractDetailsView({
       {/* 5. ROBUST CUSTOM SEGMENTED TAB BAR WITH HORIZONTAL SCROLL ON MOBILE */}
       <FadeIn duration={0.3} delay={0.15}>
         <div className="space-y-4 sm:space-y-6">
-          {/* Enhanced Segmented Tab Navigation - swipeable with snap on mobile, grid on desktop */}
-          <div className="rounded-2xl border border-border bg-card p-1 sm:p-1.5 shadow-xs overflow-hidden">
-            <nav
-              className="flex overflow-x-auto no-scrollbar scroll-smooth gap-1 sm:gap-1.5 sm:grid sm:grid-cols-4 lg:grid-cols-7 snap-x snap-mandatory touch-pan-x"
-              role="tablist"
-              aria-label="تبويبات تفاصيل العقد"
-            >
-              {tabsList.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    role="tab"
-                    id={`tab-${tab.id}`}
-                    aria-selected={isActive}
-                    aria-controls={`panel-${tab.id}`}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={cn(
-                      "flex shrink-0 snap-start items-center justify-center gap-1.5 sm:gap-2 rounded-xl px-2.5 py-2 sm:px-3.5 sm:py-2.5 text-[11px] sm:text-xs font-bold transition-all duration-200 cursor-pointer select-none whitespace-nowrap active:scale-98",
-                      isActive
-                        ? "bg-linear-to-r from-primary-800 via-primary to-primary-400 text-primary-foreground shadow-md shadow-inner-primary hover:brightness-105 ring-1 ring-primary/40"
-                        : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/50 hover:border-border",
-                    )}
-                  >
-                    <Icon className="size-3.5 sm:size-4 shrink-0" />
-                    <span>{tab.label}</span>
-                    {"count" in tab && tab.count !== undefined && (
-                      <span
-                        className={cn(
-                          "ms-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-extrabold",
-                          isActive
-                            ? "bg-white/20 text-white"
-                            : "bg-muted-foreground/15 text-muted-foreground",
-                        )}
-                      >
-                        {tab.count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
+          <FilterTabs
+            items={tabsList}
+            value={activeTab}
+            onValueChange={setActiveTab}
+            gridColsClass="sm:grid-cols-4 lg:grid-cols-7"
+            ariaLabel="تبويبات تفاصيل العقد"
+            idPrefix="contract-details-tab"
+          />
 
           {/* TAB 1: OVERVIEW & LIFECYCLE */}
           {activeTab === "overview" && (
@@ -1261,13 +1233,6 @@ export default function ContractDetailsView({
                         </span>
                       </div>
                     )}
-
-                    <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-[11px] sm:text-xs font-medium text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                      <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                      <span>
-                        تم التحقق من صفة المؤجر ومطابقة الصك عبر نفاذ
-                      </span>
-                    </div>
                   </div>
                 </div>
 
@@ -1362,13 +1327,6 @@ export default function ContractDetailsView({
                           <span>متوافق مع الضمان الاجتماعي المطور</span>
                         </div>
                       )}
-                    </div>
-
-                    <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-[11px] sm:text-xs font-medium text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                      <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                      <span>
-                        تم التحقق من هوية المستأجر ومصادقة النفاذ الوطني
-                      </span>
                     </div>
                   </div>
                 </div>
@@ -1744,68 +1702,8 @@ export default function ContractDetailsView({
                   </Badge>
                 </div>
 
-                {/* Mobile Installments Cards (< md) */}
-                <div className="grid grid-cols-1 gap-2.5 md:hidden">
-                  {contract.financials.installments.map((inst) => {
-                    const isPaid = inst.status === "paid";
-                    return (
-                      <div
-                        key={inst.id}
-                        className="rounded-xl border border-border bg-muted/20 p-3 space-y-2 text-xs"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-foreground">
-                            الدفعة #{inst.number}
-                          </span>
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "px-2 py-0.5 text-[10px] font-semibold",
-                              isPaid
-                                ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                                : "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
-                            )}
-                          >
-                            {inst.statusLabel}
-                          </Badge>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 text-[11px]">
-                          <div>
-                            <span className="text-muted-foreground block text-[10px]">
-                              تاريخ الاستحقاق:
-                            </span>
-                            <span className="font-mono font-medium text-foreground">
-                              {inst.dueDate}
-                            </span>
-                          </div>
-
-                          <div className="text-end">
-                            <span className="text-muted-foreground block text-[10px]">
-                              المبلغ المستحق:
-                            </span>
-                            <div className="flex items-center justify-end gap-1 font-bold text-foreground">
-                              <span>{inst.amount.toLocaleString("en-US")}</span>
-                              <SaudiRiyal className="size-3 text-muted-foreground" />
-                            </div>
-                          </div>
-                        </div>
-
-                        {inst.paidDate && (
-                          <div className="border-t border-border/50 pt-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
-                            <span>تاريخ السداد الفعلي:</span>
-                            <span className="font-mono text-emerald-600 font-medium">
-                              {inst.paidDate}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Desktop Installments Table (>= md) */}
-                <div className="hidden md:block overflow-x-auto rounded-2xl border border-border">
+                {/* Installments Table */}
+                <div className="overflow-x-auto rounded-2xl border border-border">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/40 text-xs">

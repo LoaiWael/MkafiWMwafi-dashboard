@@ -390,184 +390,32 @@ export default function ContractsTable({
   ];
 
   return (
-    <div className="space-y-4">
-      {/* Mobile Contracts Cards View (< md) */}
-      <div className="block md:hidden space-y-3">
-        <div className="flex items-center justify-between pb-1">
-          <div>
-            <h3 className="text-sm font-bold text-foreground">
-              سجل عقود الإيجار
-            </h3>
-            <p className="text-[11px] text-muted-foreground">
-              {contracts.length} عقد مسجل ومطابق
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-2.5">
-          {contracts.map((item) => {
-            const isResidential = item.type === "residential";
-            return (
-              <div
-                key={item.id}
-                className="rounded-2xl border border-border bg-card p-3.5 shadow-2xs space-y-3 transition-all hover:border-primary/40"
-              >
-                {/* Header: Icon, Number, Document Status */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Link
-                      to={`/contracts/${item.id}`}
-                      viewTransition
-                      className={cn(
-                        "flex size-8.5 shrink-0 items-center justify-center rounded-xl",
-                        isResidential
-                          ? "bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400"
-                          : "bg-secondary-50 text-secondary-600 dark:bg-secondary-950 dark:text-secondary-400",
-                      )}
-                    >
-                      {isResidential ? (
-                        <FileText className="size-4" />
-                      ) : (
-                        <Store className="size-4" />
-                      )}
-                    </Link>
-
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <Link
-                          to={`/contracts/${item.id}`}
-                          viewTransition
-                          className="font-bold text-foreground hover:text-primary text-xs truncate"
-                        >
-                          {item.contractNumber}
-                        </Link>
-                        <CopyButton
-                          value={item.contractNumber}
-                          itemId={`m-cnt-${item.id}`}
-                          label="نسخ"
-                        />
-                      </div>
-                      <span className="text-[10px] font-mono text-muted-foreground block truncate">
-                        إيجار: {item.ejar.ejarContractNumber}
-                      </span>
-                    </div>
-                  </div>
-
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "px-2 py-0.5 text-[10px] font-semibold shrink-0",
-                      item.statusColorClass,
-                    )}
-                  >
-                    {item.statusLabel}
-                  </Badge>
-                </div>
-
-                {/* Property & City */}
-                <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border/40 pt-2">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
-                    <span className="truncate text-foreground font-medium text-[11px]">
-                      {item.property.name} ({item.property.unitNumber})
-                    </span>
-                  </div>
-                  <span className="text-[10px] shrink-0 font-medium">
-                    {item.property.city}
-                  </span>
-                </div>
-
-                {/* Parties & Financials */}
-                <div className="grid grid-cols-2 gap-2 border-t border-border/40 pt-2 text-xs">
-                  <div className="space-y-0.5 text-[11px] text-muted-foreground truncate">
-                    <span className="block truncate">المؤجر: {item.lessor.name}</span>
-                    <span className="block truncate">المستأجر: {item.lessee.name}</span>
-                  </div>
-
-                  <div className="text-end">
-                    <div className="flex items-center justify-end gap-0.5 font-bold text-foreground text-xs">
-                      <span>{item.financials.rentalAmount.toLocaleString("en-US")}</span>
-                      <SaudiRiyal className="size-3 text-muted-foreground" />
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "mt-1 px-1.5 py-0 text-[9px] font-semibold",
-                        item.financials.paymentStatus === "paid"
-                          ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                          : "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
-                      )}
-                    >
-                      {item.financials.paymentStatusLabel}
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Mobile Quick Action Buttons Grid */}
-                <div className="grid grid-cols-3 gap-1.5 border-t border-border/50 pt-2 text-xs">
-                  <Link
-                    to={`/contracts/${item.id}`}
-                    viewTransition
-                    className="inline-flex items-center justify-center gap-1 rounded-xl border border-border bg-muted/30 py-1.5 text-[11px] font-medium text-foreground hover:bg-muted active:scale-95"
-                  >
-                    <Eye className="size-3 text-primary" />
-                    <span>التفاصيل</span>
-                  </Link>
-
-                  <button
-                    type="button"
-                    onClick={() => onUpdateStatus(item)}
-                    className="inline-flex items-center justify-center gap-1 rounded-xl border border-border bg-muted/30 py-1.5 text-[11px] font-medium text-foreground hover:bg-muted active:scale-95 cursor-pointer"
-                  >
-                    <RefreshCw className="size-3 text-secondary" />
-                    <span>الحالة</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onPrintCertificate(item)}
-                    className="inline-flex items-center justify-center gap-1 rounded-xl border border-border bg-muted/30 py-1.5 text-[11px] font-medium text-foreground hover:bg-muted active:scale-95 cursor-pointer"
-                  >
-                    <Printer className="size-3 text-tertiary" />
-                    <span>الوثيقة</span>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Desktop DataTable (>= md) */}
-      <div className="hidden md:block">
-        <DataTable
-          data={contracts}
-          columns={columns}
-          title="سجل عقود الإيجار والتوثيق"
-          subtitle="إدارة عقود الإيجار السكنية والتجارية المدفوعة وغير المدفوعة مع إمكانية تحديث الحالة والربط مع شبكة إيجار."
-          searchPlaceholder="بحث برقم العقد، رمز إيجار، العقار، المؤجر، المستأجر، أو المدينة..."
-          searchKeys={["contractNumber"]}
-          searchFilter={(item, query) => {
-            const q = query.toLowerCase().trim();
-            return (
-              item.contractNumber.toLowerCase().includes(q) ||
-              item.ejar.ejarContractNumber.toLowerCase().includes(q) ||
-              item.property.name.toLowerCase().includes(q) ||
-              item.property.unitNumber.toLowerCase().includes(q) ||
-              item.property.city.toLowerCase().includes(q) ||
-              item.property.district.toLowerCase().includes(q) ||
-              item.property.deedNumber.toLowerCase().includes(q) ||
-              item.lessor.name.toLowerCase().includes(q) ||
-              item.lessor.idNumber.toLowerCase().includes(q) ||
-              item.lessee.name.toLowerCase().includes(q) ||
-              item.lessee.idNumber.toLowerCase().includes(q)
-            );
-          }}
-          filters={filterConfigs}
-          pageSize={10}
-          pageSizeOptions={[5, 10, 20, 50]}
-        />
-      </div>
-    </div>
+    <DataTable
+      data={contracts}
+      columns={columns}
+      title="سجل عقود الإيجار والتوثيق"
+      subtitle="إدارة عقود الإيجار السكنية والتجارية المدفوعة وغير المدفوعة مع إمكانية تحديث الحالة والربط مع شبكة إيجار."
+      searchPlaceholder="بحث برقم العقد، رمز إيجار، العقار، المؤجر، المستأجر، أو المدينة..."
+      searchKeys={["contractNumber"]}
+      searchFilter={(item, query) => {
+        const q = query.toLowerCase().trim();
+        return (
+          item.contractNumber.toLowerCase().includes(q) ||
+          item.ejar.ejarContractNumber.toLowerCase().includes(q) ||
+          item.property.name.toLowerCase().includes(q) ||
+          item.property.unitNumber.toLowerCase().includes(q) ||
+          item.property.city.toLowerCase().includes(q) ||
+          item.property.district.toLowerCase().includes(q) ||
+          item.property.deedNumber.toLowerCase().includes(q) ||
+          item.lessor.name.toLowerCase().includes(q) ||
+          item.lessor.idNumber.toLowerCase().includes(q) ||
+          item.lessee.name.toLowerCase().includes(q) ||
+          item.lessee.idNumber.toLowerCase().includes(q)
+        );
+      }}
+      filters={filterConfigs}
+      pageSize={10}
+      pageSizeOptions={[5, 10, 20, 50]}
+    />
   );
 }

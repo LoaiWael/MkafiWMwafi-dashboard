@@ -181,20 +181,21 @@ export default function UpdatePaymentStatusDialog({
             </div>
           )}
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2.5 sm:gap-3">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={onClose}
               disabled={isSubmitting}
+              className="cursor-pointer"
             >
               إلغاء
             </Button>
             <Button
               type="submit"
               size="sm"
-              className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+              className="gap-1.5 cursor-pointer"
               disabled={isSubmitting}
             >
               {isSubmitting ? "جاري الحفظ..." : "تأكيد التحديث"}

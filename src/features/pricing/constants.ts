@@ -102,7 +102,6 @@ export const PRICING_STORAGE_KEYS = {
 
 export const PRICING_METADATA = {
   title: "تسعير الخدمات",
-  subtitle: "سعر إنشاء العقد",
   description: "رسوم توثيق وتسجيل عقود الإيجار المعتمدة رسمياً عبر شبكة إيجار",
   taxNote: "جميع الرسوم تشمل رسوم منصة إيجار والضرائب المحددة في النظام",
 } as const;

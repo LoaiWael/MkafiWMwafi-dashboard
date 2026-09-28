@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -287,14 +286,6 @@ export default function ContractsSection() {
       <PageHeader
         title="عقود الإيجار والتوثيق الإلكتروني"
         description="إدارة شاملة لجميع عقود الإيجار السكنية والتجارية (المدفوعة وغير المدفوعة)، وتحديث الحالات والربط مع شبكة إيجار والهيئة العامة للعقار."
-        badge={
-          <Badge
-            variant="outline"
-            className="border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300 text-xs font-medium sm:text-sm"
-          >
-            {contracts.length} عقد مسجل
-          </Badge>
-        }
         showRefresh
         onRefresh={handleRefresh}
         isRefreshing={isRefreshing}

@@ -32,18 +32,24 @@ export const COUPONS_STORAGE_KEYS = {
 
 export const COUPONS_METADATA = {
   title: "كوبونات الخصم",
-  subtitle: "إدارة العروض الترويجية",
-  description: "إنشاء وإدارة وتتبع أداء كوبونات الخصم لعقود الإيجار السكنية والتجارية المعتمدة",
+  description:
+    "إنشاء وإدارة وتتبع أداء كوبونات الخصم لعقود الإيجار السكنية والتجارية المعتمدة",
   note: "يتم التحقق من صلاحية الكوبونات وتطبيقها فوراً في مرحلة سداد رسوم التوثيق",
 } as const;
 
-export const TARGET_SERVICES_MAP: Record<TargetService, { label: string; short: string }> = {
+export const TARGET_SERVICES_MAP: Record<
+  TargetService,
+  { label: string; short: string }
+> = {
   all: { label: "جميع العقود (سكني وتجاري)", short: "الكل" },
   residential: { label: "العقود السكنية فقط", short: "سكني" },
   commercial: { label: "العقود التجارية فقط", short: "تجاري" },
 };
 
-export const TARGET_USERS_MAP: Record<TargetUserType, { label: string; short: string }> = {
+export const TARGET_USERS_MAP: Record<
+  TargetUserType,
+  { label: string; short: string }
+> = {
   all: { label: "جميع العملاء", short: "الجميع" },
   individual: { label: "الأفراد والمستأجرين", short: "أفراد" },
   broker: { label: "الوسطاء العقاريون (فال)", short: "وسطاء" },
@@ -55,7 +61,8 @@ export const INITIAL_COUPONS: readonly Coupon[] = [
     id: "CPN-101",
     code: "RAMADAN2026",
     name: "عرض شهر الخير والبركة",
-    description: "خصم 25% على توثيق كافة عقود الإيجار السكنية والتجارية بمناسبة شهر رمضان المبارك",
+    description:
+      "خصم 25% على توثيق كافة عقود الإيجار السكنية والتجارية بمناسبة شهر رمضان المبارك",
     discountType: "percentage",
     discountValue: 25,
     maxDiscountAmount: 100,
@@ -99,7 +106,8 @@ export const INITIAL_COUPONS: readonly Coupon[] = [
     id: "CPN-103",
     code: "BROKER50",
     name: "حافز الوسطاء العقاريين المعتمدين",
-    description: "خصم ثابت 50 ريال للوسطاء الحاملين لرخصة فال العقارية لتوثيق العقود",
+    description:
+      "خصم ثابت 50 ريال للوسطاء الحاملين لرخصة فال العقارية لتوثيق العقود",
     discountType: "fixed",
     discountValue: 50,
     minOrderAmount: 249,
@@ -206,7 +214,8 @@ export const INITIAL_COUPONS: readonly Coupon[] = [
     id: "CPN-108",
     code: "FLASH30",
     name: "خصم الفلاش السريع",
-    description: "كوبون خصم 30% لفترة محدودة تم إيقافه مؤقتاً لمراجعة الميزانية",
+    description:
+      "كوبون خصم 30% لفترة محدودة تم إيقافه مؤقتاً لمراجعة الميزانية",
     discountType: "percentage",
     discountValue: 30,
     maxDiscountAmount: 150,

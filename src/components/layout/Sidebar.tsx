@@ -4,6 +4,8 @@ import {
   SIDEBAR_NAV_GROUPS,
   isNavItemActive,
 } from "@/components/layout/constants";
+import { MOCK_CONTRACTS } from "@/features/contracts/constants";
+import { MOCK_PROPERTIES } from "@/features/properties/constants";
 import {
   Sidebar as SidebarShell,
   SidebarContent,
@@ -18,6 +20,11 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
+
+const NAV_ITEM_COUNTS: Record<string, number> = {
+  [ROUTES.contracts]: MOCK_CONTRACTS.length,
+  [ROUTES.properties]: MOCK_PROPERTIES.length,
+};
 
 export default function Sidebar() {
   const { pathname } = useLocation();
@@ -73,6 +80,7 @@ export default function Sidebar() {
                     {group.items.map((item) => {
                       const Icon = item.icon;
                       const isActive = isNavItemActive(pathname, item.href);
+                      const count = NAV_ITEM_COUNTS[item.href];
 
                       return (
                         <SidebarMenuItem key={item.href}>
@@ -83,7 +91,12 @@ export default function Sidebar() {
                             className="h-10 text-base font-medium"
                           >
                             <Icon size={18} />
-                            <span>{item.label}</span>
+                            <span className="truncate">{item.label}</span>
+                            {count !== undefined && (
+                              <span className="ms-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-secondary-gradient px-1.5 text-xs font-bold text-secondary-foreground shadow-xs group-data-[collapsible=icon]:hidden tabular-nums">
+                                {count}
+                              </span>
+                            )}
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       );

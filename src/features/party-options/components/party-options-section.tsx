@@ -1,4 +1,5 @@
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import {
   Check,
   CreditCard,
@@ -125,7 +126,10 @@ export default function PartyOptionsSection() {
   };
 
   const handleSaveOption = () => {
-    if (!formData.nameAr.trim()) return;
+    if (!formData.nameAr.trim()) {
+      toast.error("يرجى إدخال مسمى الخيار");
+      return;
+    }
 
     if (editingItem) {
       // Edit
@@ -144,6 +148,7 @@ export default function PartyOptionsSection() {
       } else {
         setIdentities((prev) => prev.map((it) => (it.id === editingItem.id ? updated : it)));
       }
+      toast.success("تم تحديث بيانات الخيار بنجاح");
     } else {
       // Add
       const newItem: OptionItem = {
@@ -161,6 +166,7 @@ export default function PartyOptionsSection() {
       } else {
         setIdentities((prev) => [...prev, newItem]);
       }
+      toast.success("تمت إضافة الخيار الجديد بنجاح");
     }
 
     setIsDialogOpen(false);
@@ -174,6 +180,7 @@ export default function PartyOptionsSection() {
     } else {
       setIdentities((prev) => prev.filter((it) => it.id !== id));
     }
+    toast.success("تم حذف الخيار بنجاح");
   };
 
   const handleToggleActive = (id: string, collection: OptionCollection) => {
@@ -184,6 +191,7 @@ export default function PartyOptionsSection() {
     } else {
       setIdentities((prev) => prev.map((it) => (it.id === id ? { ...it, isActive: !it.isActive } : it)));
     }
+    toast.success("تم تحديث حالة تفعيل الخيار");
   };
 
   const handleResetDefaults = () => {
@@ -194,38 +202,36 @@ export default function PartyOptionsSection() {
       localStorage.removeItem(STORAGE_KEYS.authorizations);
       localStorage.removeItem(STORAGE_KEYS.capacities);
       localStorage.removeItem(STORAGE_KEYS.identities);
+      toast.success("تمت استعادة خيارات أطراف العقد الافتراضية بنجاح");
     }
   };
 
-  const filteredAuthorizations = useMemo(() => {
-    if (!searchQuery.trim()) return authorizations;
-    return authorizations.filter(
-      (item) =>
-        item.nameAr.includes(searchQuery) ||
-        (item.category && item.category.includes(searchQuery)) ||
-        (item.description && item.description.includes(searchQuery))
-    );
-  }, [searchQuery, authorizations]);
+  const filteredAuthorizations = !searchQuery.trim()
+    ? authorizations
+    : authorizations.filter(
+        (item) =>
+          item.nameAr.includes(searchQuery) ||
+          (item.category && item.category.includes(searchQuery)) ||
+          (item.description && item.description.includes(searchQuery))
+      );
 
-  const filteredCapacities = useMemo(() => {
-    if (!searchQuery.trim()) return capacities;
-    return capacities.filter(
-      (item) =>
-        item.nameAr.includes(searchQuery) ||
-        (item.category && item.category.includes(searchQuery)) ||
-        (item.description && item.description.includes(searchQuery))
-    );
-  }, [searchQuery, capacities]);
+  const filteredCapacities = !searchQuery.trim()
+    ? capacities
+    : capacities.filter(
+        (item) =>
+          item.nameAr.includes(searchQuery) ||
+          (item.category && item.category.includes(searchQuery)) ||
+          (item.description && item.description.includes(searchQuery))
+      );
 
-  const filteredIdentities = useMemo(() => {
-    if (!searchQuery.trim()) return identities;
-    return identities.filter(
-      (item) =>
-        item.nameAr.includes(searchQuery) ||
-        (item.category && item.category.includes(searchQuery)) ||
-        (item.description && item.description.includes(searchQuery))
-    );
-  }, [searchQuery, identities]);
+  const filteredIdentities = !searchQuery.trim()
+    ? identities
+    : identities.filter(
+        (item) =>
+          item.nameAr.includes(searchQuery) ||
+          (item.category && item.category.includes(searchQuery)) ||
+          (item.description && item.description.includes(searchQuery))
+      );
 
   return (
     <div className="page-shell space-y-6 py-8">
@@ -691,7 +697,7 @@ export default function PartyOptionsSection() {
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2.5 sm:gap-3">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               إلغاء
             </Button>

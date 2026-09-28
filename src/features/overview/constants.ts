@@ -88,7 +88,7 @@ export const OVERVIEW_STATS: OverviewStatItem[] = [
     numericValue: 196,
     unit: "طلب جاري",
     description: "طلبات توثيق قيد المراجعة من تدقيق المستندات حتى التسليم.",
-    href: ROUTES.requests,
+    href: `${ROUTES.contracts}?status=under_review`,
     icon: Hourglass,
     trend: "34 طلب جديد اليوم",
     trendPositive: true,

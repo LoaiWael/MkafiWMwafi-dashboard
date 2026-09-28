@@ -1,4 +1,5 @@
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import {
   Building,
   Building2,
@@ -143,7 +144,10 @@ export default function UnitOptionsSection() {
   };
 
   const handleSaveOption = () => {
-    if (!formData.nameAr.trim()) return;
+    if (!formData.nameAr.trim()) {
+      toast.error("يرجى إدخال مسمى الخيار");
+      return;
+    }
 
     if (editingItem) {
       // Edit
@@ -162,6 +166,7 @@ export default function UnitOptionsSection() {
       } else {
         setFloors((prev) => prev.map((it) => (it.id === editingItem.id ? updated : it)));
       }
+      toast.success("تم تحديث بيانات الخيار بنجاح");
     } else {
       // Add
       const newItem: OptionItem = {
@@ -179,6 +184,7 @@ export default function UnitOptionsSection() {
       } else {
         setFloors((prev) => [...prev, newItem]);
       }
+      toast.success("تمت إضافة الخيار الجديد بنجاح");
     }
 
     setIsDialogOpen(false);
@@ -192,6 +198,7 @@ export default function UnitOptionsSection() {
     } else {
       setFloors((prev) => prev.filter((it) => it.id !== id));
     }
+    toast.success("تم حذف الخيار بنجاح");
   };
 
   const handleToggleActive = (id: string, collection: OptionCollection) => {
@@ -202,16 +209,23 @@ export default function UnitOptionsSection() {
     } else {
       setFloors((prev) => prev.map((it) => (it.id === id ? { ...it, isActive: !it.isActive } : it)));
     }
+    toast.success("تم تحديث حالة تفعيل الخيار");
   };
 
   const handleAddAmenityOption = (categoryField: string) => {
     const val = (newAmenityValue[categoryField] || "").trim();
-    if (!val) return;
+    if (!val) {
+      toast.error("يرجى إدخال اسم الميزة أو التجهيز");
+      return;
+    }
 
     setAmenities((prev) =>
       prev.map((cat) => {
         if (cat.field === categoryField) {
-          if (cat.options.includes(val)) return cat;
+          if (cat.options.includes(val)) {
+            toast.info("هذه الميزة مضافة مسبقاً");
+            return cat;
+          }
           return { ...cat, options: [...cat.options, val] };
         }
         return cat;
@@ -219,6 +233,7 @@ export default function UnitOptionsSection() {
     );
 
     setNewAmenityValue((prev) => ({ ...prev, [categoryField]: "" }));
+    toast.success(`تمت إضافة الميزة "${val}" بنجاح`);
   };
 
   const handleRemoveAmenityOption = (categoryField: string, optionToRemove: string) => {
@@ -230,6 +245,7 @@ export default function UnitOptionsSection() {
         return cat;
       })
     );
+    toast.success(`تمت إزالة "${optionToRemove}"`);
   };
 
   const handleResetDefaults = () => {
@@ -242,37 +258,35 @@ export default function UnitOptionsSection() {
       localStorage.removeItem(STORAGE_KEYS.propertyTypes);
       localStorage.removeItem(STORAGE_KEYS.floors);
       localStorage.removeItem(STORAGE_KEYS.amenities);
+      toast.success("تمت استعادة خيارات الوحدات الافتراضية بنجاح");
     }
   };
 
-  const filteredUnitTypes = useMemo(() => {
-    if (!searchQuery.trim()) return unitTypes;
-    return unitTypes.filter(
-      (item) =>
-        item.nameAr.includes(searchQuery) ||
-        (item.category && item.category.includes(searchQuery)) ||
-        (item.description && item.description.includes(searchQuery))
-    );
-  }, [searchQuery, unitTypes]);
+  const filteredUnitTypes = !searchQuery.trim()
+    ? unitTypes
+    : unitTypes.filter(
+        (item) =>
+          item.nameAr.includes(searchQuery) ||
+          (item.category && item.category.includes(searchQuery)) ||
+          (item.description && item.description.includes(searchQuery))
+      );
 
-  const filteredPropertyTypes = useMemo(() => {
-    if (!searchQuery.trim()) return propertyTypes;
-    return propertyTypes.filter(
-      (item) =>
-        item.nameAr.includes(searchQuery) ||
-        (item.category && item.category.includes(searchQuery)) ||
-        (item.description && item.description.includes(searchQuery))
-    );
-  }, [searchQuery, propertyTypes]);
+  const filteredPropertyTypes = !searchQuery.trim()
+    ? propertyTypes
+    : propertyTypes.filter(
+        (item) =>
+          item.nameAr.includes(searchQuery) ||
+          (item.category && item.category.includes(searchQuery)) ||
+          (item.description && item.description.includes(searchQuery))
+      );
 
-  const filteredFloors = useMemo(() => {
-    if (!searchQuery.trim()) return floors;
-    return floors.filter(
-      (item) =>
-        item.nameAr.includes(searchQuery) ||
-        (item.description && item.description.includes(searchQuery))
-    );
-  }, [searchQuery, floors]);
+  const filteredFloors = !searchQuery.trim()
+    ? floors
+    : floors.filter(
+        (item) =>
+          item.nameAr.includes(searchQuery) ||
+          (item.description && item.description.includes(searchQuery))
+      );
 
   return (
     <div className="page-shell space-y-6 py-8">
@@ -841,7 +855,7 @@ export default function UnitOptionsSection() {
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2.5 sm:gap-3">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               إلغاء
             </Button>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   Building2,
   Edit2,
@@ -110,19 +111,29 @@ export default function TaxRulesTable({
   };
 
   const handleToggleActive = (id: string, nextChecked: boolean) => {
+    const target = taxes.find((t) => t.id === id);
     const updated = taxes.map((t) =>
       t.id === id ? { ...t, isActive: nextChecked } : t
     );
     onTaxesChange(updated);
+    if (nextChecked) {
+      toast.success(`تم تفعيل البند الضريبي "${target?.nameAr || ""}"`);
+    } else {
+      toast.info(`تم تعطيل البند الضريبي "${target?.nameAr || ""}"`);
+    }
   };
 
   const handleDelete = (id: string) => {
     const updated = taxes.filter((t) => t.id !== id);
     onTaxesChange(updated);
+    toast.success("تم حذف البند الضريبي بنجاح");
   };
 
   const handleSave = () => {
-    if (!formData.nameAr?.trim()) return;
+    if (!formData.nameAr?.trim()) {
+      toast.error("يرجى إدخال مسمى الضريبة أو الرسوم");
+      return;
+    }
 
     if (editingTax) {
       const updated = taxes.map((t) =>
@@ -136,6 +147,7 @@ export default function TaxRulesTable({
           : t
       );
       onTaxesChange(updated);
+      toast.success("تم تحديث بند الضريبة بنجاح");
     } else {
       const newTax: TaxSetting = {
         id: `tax_${Date.now()}`,
@@ -152,6 +164,7 @@ export default function TaxRulesTable({
         order: taxes.length + 1,
       };
       onTaxesChange([...taxes, newTax]);
+      toast.success("تمت إضافة بند ضريبي جديد بنجاح");
     }
 
     setIsDialogOpen(false);
@@ -518,7 +531,7 @@ export default function TaxRulesTable({
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2.5 sm:gap-3">
             <Button
               type="button"
               variant="outline"

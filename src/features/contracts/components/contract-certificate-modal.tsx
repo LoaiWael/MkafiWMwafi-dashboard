@@ -1,6 +1,6 @@
 import { useRef } from "react";
+import { toast } from "sonner";
 import {
-  CheckCircle2,
   FileCheck2,
   Printer,
   QrCode,
@@ -33,13 +33,14 @@ export default function ContractCertificateModal({
   if (!contract) return null;
 
   function handlePrint() {
+    toast.info("جاري إعداد وثيقة العقد للطباعة...");
     window.print();
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
-        <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
+        <DialogHeader className="flex flex-row items-center justify-between border-b pb-3 pe-12">
           <div className="flex items-center gap-2">
             <div className="flex size-9 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400">
               <FileCheck2 className="size-5" />
@@ -142,10 +143,6 @@ export default function ContractCertificateModal({
                 {contract.lessor.iban && (
                   <p className="text-muted-foreground">الآيبان: <span className="font-mono text-[11px] text-foreground">{contract.lessor.iban}</span></p>
                 )}
-                <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-medium pt-1">
-                  <CheckCircle2 className="size-3.5" />
-                  <span>تم التحقق من الهوية عبر نفاذ الوطني</span>
-                </div>
               </div>
             </div>
 
@@ -161,10 +158,6 @@ export default function ContractCertificateModal({
                 <p className="font-semibold text-foreground">{contract.lessee.name}</p>
                 <p className="text-muted-foreground">رقم الهوية / السجل: <span className="font-mono text-foreground">{contract.lessee.idNumber}</span></p>
                 <p className="text-muted-foreground">رقم الجوال: <span className="font-mono text-foreground">{contract.lessee.phone}</span></p>
-                <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-medium pt-1">
-                  <CheckCircle2 className="size-3.5" />
-                  <span>تم قبول العقد وتوثيقه عبر نفاذ</span>
-                </div>
               </div>
             </div>
           </div>

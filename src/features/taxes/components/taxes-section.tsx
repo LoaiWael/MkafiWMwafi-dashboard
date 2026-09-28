@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   Building2,
   CheckCircle2,
@@ -42,6 +43,7 @@ export default function TaxesSection() {
       TAX_STORAGE_KEYS.taxes,
       JSON.stringify(INITIAL_TAX_SETTINGS)
     );
+    toast.success("تمت استعادة الإعدادات والنسب الضريبية الافتراضية بنجاح");
   };
 
   const vatTax = taxes.find((t) => t.category === "vat" && t.isActive);

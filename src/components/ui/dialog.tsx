@@ -65,14 +65,13 @@ function DialogContent({
             render={
               <Button
                 variant="ghost"
-                className="absolute top-2 right-2"
+                className="absolute top-3 end-3 text-muted-foreground hover:text-foreground cursor-pointer rounded-full"
                 size="icon-sm"
               />
             }
           >
-            <XIcon
-            />
-            <span className="sr-only">Close</span>
+            <XIcon className="size-4" />
+            <span className="sr-only">إغلاق</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Popup>
@@ -84,7 +83,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2", className)}
+      className={cn("flex flex-col gap-2 pe-8", className)}
       {...props}
     />
   )
@@ -102,7 +101,7 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end",
+        "-mx-4 -mb-4 flex flex-col-reverse gap-2.5 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end sm:gap-2.5",
         className
       )}
       {...props}
@@ -110,7 +109,7 @@ function DialogFooter({
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close render={<Button variant="outline" />}>
-          Close
+          إغلاق
         </DialogPrimitive.Close>
       )}
     </div>

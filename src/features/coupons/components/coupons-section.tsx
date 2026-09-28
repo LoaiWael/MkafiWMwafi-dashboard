@@ -1,18 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   CheckCircle2,
-  Grid,
-  Percent,
   Plus,
   RefreshCw,
+  RotateCcw,
+  SaudiRiyal,
   Search,
   Sparkles,
-  Table as TableIcon,
-  Tag,
   TicketPercent,
-  TrendingUp,
-  Users,
+  X,
 } from "lucide-react";
+import { useSearchParams } from "react-router";
+import { toast } from "sonner";
+import { FadeIn, StaggerContainer, StaggerItem } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
 import {
   AlertDialog,
@@ -24,9 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Empty,
   EmptyDescription,
@@ -35,7 +33,13 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   COUPONS_METADATA,
   COUPONS_STORAGE_KEYS,
@@ -46,12 +50,35 @@ import {
 } from "@/features/coupons/constants";
 import CouponCard from "@/features/coupons/components/coupon-card";
 import CouponDialog from "@/features/coupons/components/coupon-dialog";
-import CouponSimulatorCard from "@/features/coupons/components/coupon-simulator-card";
-import CouponsTable from "@/features/coupons/components/coupons-table";
+import CouponsStatCards from "@/features/coupons/components/coupons-stat-cards";
+
+const statusLabels: Record<string, string> = {
+  all: "كل الحالات",
+  active: "النشطة فقط",
+  scheduled: "المجدولة",
+  inactive: "المعطلة",
+  expired: "المنتهية",
+};
+
+const serviceLabels: Record<string, string> = {
+  all: "كل أنواع العقود",
+  residential: "عقود سكنية",
+  commercial: "عقود تجارية",
+};
+
+const discountTypeLabels: Record<string, ReactNode> = {
+  all: "كل أنواع الخصم",
+  percentage: "نسبة مئوية (%)",
+  fixed: (
+    <span className="inline-flex items-center gap-1">
+      <span>مبلغ ثابت</span>
+      <SaudiRiyal className="size-3 text-muted-foreground" />
+    </span>
+  ),
+};
 
 export default function CouponsSection() {
-  const [activeTab, setActiveTab] = useState<string>("manage");
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Coupons State with LocalStorage Persistence
   const [coupons, setCoupons] = useState<Coupon[]>(() => {
@@ -67,68 +94,87 @@ export default function CouponsSection() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [simulatorPresetCode, setSimulatorPresetCode] = useState<string>("");
 
-  // Filters State
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [serviceFilter, setServiceFilter] = useState<string>("all");
+  // Active filters from URL query parameters
+  const searchQuery = searchParams.get("search") || "";
+  const statusFilter = searchParams.get("status") || "all";
+  const serviceFilter = searchParams.get("service") || "all";
+  const discountTypeFilter = searchParams.get("discountType") || "all";
+
+  // URL query parameter updater
+  function handleFilterChange(key: string, value: string | null) {
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        if (!value || value === "all" || value.trim() === "") {
+          next.delete(key);
+        } else {
+          next.set(key, value.trim());
+        }
+        return next;
+      },
+      { replace: true },
+    );
+  }
+
+  // Clear all active filters
+  function handleClearFilters() {
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete("search");
+        next.delete("status");
+        next.delete("service");
+        next.delete("discountType");
+        return next;
+      },
+      { replace: true },
+    );
+  }
+
+  const hasActiveFilters = Boolean(
+    searchQuery ||
+      statusFilter !== "all" ||
+      serviceFilter !== "all" ||
+      discountTypeFilter !== "all",
+  );
 
   // Filtered list
-  const filteredCoupons = useMemo(() => {
-    return coupons.filter((coupon) => {
-      // Search
-      const query = searchQuery.trim().toLowerCase();
-      if (query) {
-        const matchesCode = coupon.code.toLowerCase().includes(query);
-        const matchesName = coupon.name.toLowerCase().includes(query);
-        const matchesDesc = coupon.description.toLowerCase().includes(query);
-        if (!matchesCode && !matchesName && !matchesDesc) return false;
+  const filteredCoupons = coupons.filter((coupon) => {
+    // Search query
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchesCode = coupon.code.toLowerCase().includes(q);
+      const matchesName = coupon.name.toLowerCase().includes(q);
+      const matchesDesc = (coupon.description || "").toLowerCase().includes(q);
+      if (!matchesCode && !matchesName && !matchesDesc) return false;
+    }
+
+    // Status filter
+    if (statusFilter !== "all" && coupon.status !== statusFilter) {
+      return false;
+    }
+
+    // Target service filter
+    if (serviceFilter !== "all") {
+      if (
+        !coupon.targetServices.includes("all") &&
+        !coupon.targetServices.includes(serviceFilter as TargetService)
+      ) {
+        return false;
       }
+    }
 
-      // Status
-      if (statusFilter !== "all") {
-        if (coupon.status !== statusFilter) return false;
-      }
+    // Discount type filter
+    if (
+      discountTypeFilter !== "all" &&
+      coupon.discountType !== discountTypeFilter
+    ) {
+      return false;
+    }
 
-      // Service
-      if (serviceFilter !== "all") {
-        if (
-          !coupon.targetServices.includes("all") &&
-          !coupon.targetServices.includes(serviceFilter as TargetService)
-        ) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [coupons, searchQuery, serviceFilter, statusFilter]);
-
-  // Key Metrics
-  const metrics = useMemo(() => {
-    const totalCount = coupons.length;
-    const activeCount = coupons.filter((c) => c.status === "active").length;
-    const totalRedemptions = coupons.reduce((sum, c) => sum + c.usedCount, 0);
-    const totalSavings = coupons.reduce((sum, c) => sum + c.totalDiscountedAmount, 0);
-    const avgDiscount =
-      coupons.filter((c) => c.discountType === "percentage").length > 0
-        ? Math.round(
-            coupons
-              .filter((c) => c.discountType === "percentage")
-              .reduce((sum, c) => sum + c.discountValue, 0) /
-              coupons.filter((c) => c.discountType === "percentage").length
-          )
-        : 0;
-
-    return {
-      totalCount,
-      activeCount,
-      totalRedemptions,
-      totalSavings,
-      avgDiscount,
-    };
-  }, [coupons]);
+    return true;
+  });
 
   // Handlers
   function handleOpenCreate() {
@@ -142,12 +188,14 @@ export default function CouponsSection() {
   }
 
   function handleSaveCoupon(
-    couponData: Omit<Coupon, "id" | "createdAt" | "createdBy" | "usedCount" | "totalDiscountedAmount"> & {
+    couponData: Omit<
+      Coupon,
+      "id" | "createdAt" | "createdBy" | "usedCount" | "totalDiscountedAmount"
+    > & {
       id?: string;
-    }
+    },
   ) {
     if (couponData.id) {
-      // Edit
       setCoupons((prev) =>
         prev.map((c) =>
           c.id === couponData.id
@@ -155,11 +203,11 @@ export default function CouponsSection() {
                 ...c,
                 ...couponData,
               }
-            : c
-        )
+            : c,
+        ),
       );
+      toast.success("تم تحديث بيانات الكوبون بنجاح");
     } else {
-      // Create
       const newCoupon: Coupon = {
         ...couponData,
         id: `CPN-${Date.now().toString().slice(-4)}`,
@@ -169,17 +217,25 @@ export default function CouponsSection() {
         totalDiscountedAmount: 0,
       };
       setCoupons((prev) => [newCoupon, ...prev]);
+      toast.success("تمت إضافة الكوبون الجديد بنجاح");
     }
   }
 
   function handleToggleStatus(couponId: string) {
+    const target = coupons.find((c) => c.id === couponId);
+    if (!target) return;
+    const nextStatus: CouponStatus =
+      target.status === "active" ? "inactive" : "active";
+
     setCoupons((prev) =>
-      prev.map((c) => {
-        if (c.id !== couponId) return c;
-        const newStatus: CouponStatus = c.status === "active" ? "inactive" : "active";
-        return { ...c, status: newStatus };
-      })
+      prev.map((c) => (c.id === couponId ? { ...c, status: nextStatus } : c)),
     );
+
+    if (nextStatus === "active") {
+      toast.success(`تم تفعيل الكوبون "${target.name}" بنجاح`);
+    } else {
+      toast.info(`تم إيقاف تفعيل الكوبون "${target.name}"`);
+    }
   }
 
   function handleDuplicate(coupon: Coupon) {
@@ -195,294 +251,223 @@ export default function CouponsSection() {
       status: "inactive",
     };
     setCoupons((prev) => [duplicated, ...prev]);
+    toast.success("تم نسخ الكوبون كقالب جديد بنجاح");
   }
 
   function handleDeleteConfirm() {
     if (!deletingId) return;
     setCoupons((prev) => prev.filter((c) => c.id !== deletingId));
     setDeletingId(null);
+    toast.success("تم حذف الكوبون بنجاح");
   }
 
   function handleResetDefaults() {
     setCoupons([...INITIAL_COUPONS]);
-    localStorage.setItem(COUPONS_STORAGE_KEYS.coupons, JSON.stringify(INITIAL_COUPONS));
-  }
-
-  function handleTestInSimulator(coupon: Coupon) {
-    setSimulatorPresetCode(coupon.code);
-    setActiveTab("simulator");
+    localStorage.setItem(
+      COUPONS_STORAGE_KEYS.coupons,
+      JSON.stringify(INITIAL_COUPONS),
+    );
+    toast.success("تمت استعادة الكوبونات الافتراضية بنجاح");
   }
 
   return (
-    <div className="page-shell space-y-6 py-8">
-      {/* Header */}
+    <div className="page-shell space-y-3.5 sm:space-y-6 py-3 sm:py-6">
+      {/* Top Page Header */}
       <PageHeader
         title={COUPONS_METADATA.title}
         description={COUPONS_METADATA.description}
-        badge={
-          <Badge variant="secondary" className="gap-1.5 font-medium">
-            <TicketPercent className="size-3.5" />
-            <span>{COUPONS_METADATA.subtitle}</span>
-          </Badge>
-        }
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex w-full sm:w-auto items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={handleResetDefaults}
-              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+              className="flex-1 sm:flex-initial gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
             >
               <RefreshCw className="size-3.5" />
-              <span>استعادة الافتراضي</span>
+              <span className="hidden xs:inline">استعادة الافتراضي</span>
+              <span className="xs:hidden">استعادة</span>
             </Button>
-            <Button onClick={handleOpenCreate} className="gap-1.5 font-bold shadow-xs">
+            <Button
+              onClick={handleOpenCreate}
+              size="sm"
+              className="flex-1 sm:flex-initial gap-1.5 font-bold shadow-xs cursor-pointer"
+            >
               <Plus className="size-4" />
-              <span>إضافة كوبون جديد</span>
+              <span>إضافة كوبون</span>
             </Button>
           </div>
         }
       />
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Active Coupons */}
-        <Card className="border-border/80 bg-card shadow-xs">
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="space-y-1">
-              <span className="text-xs font-medium text-muted-foreground">
-                الكوبونات النشطة
-              </span>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl font-black text-foreground">
-                  {metrics.activeCount}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  من إجمالي {metrics.totalCount}
-                </span>
-              </div>
-            </div>
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary-50 text-primary">
-              <Tag className="size-5" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* KPI Stat Cards */}
+      <CouponsStatCards coupons={coupons} />
 
-        {/* Total Redemptions */}
-        <Card className="border-border/80 bg-card shadow-xs">
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="space-y-1">
-              <span className="text-xs font-medium text-muted-foreground">
-                إجمالي مرات الاستخدام
-              </span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-black text-foreground">
-                  {metrics.totalRedemptions.toLocaleString("ar-SA")}
-                </span>
-                <span className="text-xs text-muted-foreground">عقد موثق</span>
-              </div>
-            </div>
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary-50 text-primary">
-              <Users className="size-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Total Savings Given */}
-        <Card className="border-border/80 bg-card shadow-xs">
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="space-y-1">
-              <span className="text-xs font-medium text-muted-foreground">
-                إجمالي الوفورات الممنوحة
-              </span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-black text-foreground">
-                  {metrics.totalSavings.toLocaleString("ar-SA")}
-                </span>
-                <span className="text-xs font-bold text-primary">ر.س</span>
-              </div>
-            </div>
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary-50 text-primary">
-              <TrendingUp className="size-5" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Average Discount % */}
-        <Card className="border-border/80 bg-card shadow-xs">
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="space-y-1">
-              <span className="text-xs font-medium text-muted-foreground">
-                متوسط نسبة الخصم
-              </span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-black text-foreground">
-                  {metrics.avgDiscount}%
-                </span>
-                <span className="text-xs text-muted-foreground">على العقود</span>
-              </div>
-            </div>
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary-50 text-primary">
-              <Percent className="size-5" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <TabsList className="w-full sm:w-auto">
-            <TabsTrigger value="manage" className="gap-2">
-              <Tag className="size-3.5" />
-              <span>إدارة وتصفح الكوبونات</span>
-            </TabsTrigger>
-            <TabsTrigger value="simulator" className="gap-2">
-              <Sparkles className="size-3.5" />
-              <span>محاكي واختبار الخصومات</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <TicketPercent className="size-4 text-primary" />
-            <span>تطبيق فوري معتمد لتوثيق منصة إيجار</span>
-          </div>
-        </div>
-
-        {/* TAB 1: MANAGE COUPONS */}
-        <TabsContent value="manage" className="space-y-6">
-          {/* Toolbar: Search, Filters, and View Mode Switch */}
-          <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* Filter Toolbar with shadcn Dropdowns & Search */}
+      <FadeIn duration={0.3} delay={0.1}>
+        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 sm:p-4 shadow-xs">
+          <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
             {/* Search Input */}
-            <div className="relative flex-1 min-w-[240px]">
+            <div className="relative flex-1 min-w-0">
               <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleFilterChange("search", e.target.value)}
                 placeholder="ابحث برمز الكوبون أو اسم العرض..."
-                className="ps-9"
+                className="ps-9 pe-9 h-9 text-xs rounded-xl"
               />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => handleFilterChange("search", "")}
+                  aria-label="مسح البحث"
+                  className="absolute end-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer p-0.5"
+                >
+                  <X className="size-3.5" />
+                </button>
+              ) : null}
             </div>
 
             {/* Filter Dropdowns */}
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Status Filter */}
-              <select
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
+              {/* Status Filter Dropdown */}
+              <Select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
+                onValueChange={(val) => handleFilterChange("status", val)}
               >
-                <option value="all">كل الحالات ({coupons.length})</option>
-                <option value="active">النشطة فقط</option>
-                <option value="scheduled">المجدولة</option>
-                <option value="inactive">المعطلة</option>
-                <option value="expired">المنتهية</option>
-              </select>
+                <SelectTrigger className="w-full sm:w-[145px] h-9 text-xs rounded-xl bg-card border-border cursor-pointer">
+                  <SelectValue>
+                    {statusLabels[statusFilter] || "حالة الكوبون"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent align="start">
+                  <SelectItem value="all">كل الحالات ({coupons.length})</SelectItem>
+                  <SelectItem value="active">النشطة فقط</SelectItem>
+                  <SelectItem value="scheduled">المجدولة</SelectItem>
+                  <SelectItem value="inactive">المعطلة</SelectItem>
+                  <SelectItem value="expired">المنتهية</SelectItem>
+                </SelectContent>
+              </Select>
 
-              {/* Service Filter */}
-              <select
+              {/* Service Type Filter Dropdown */}
+              <Select
                 value={serviceFilter}
-                onChange={(e) => setServiceFilter(e.target.value)}
-                className="rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
+                onValueChange={(val) => handleFilterChange("service", val)}
               >
-                <option value="all">كل أنواع العقود</option>
-                <option value="residential">عقود سكنية</option>
-                <option value="commercial">عقود تجارية</option>
-              </select>
+                <SelectTrigger className="w-full sm:w-[140px] h-9 text-xs rounded-xl bg-card border-border cursor-pointer">
+                  <SelectValue>
+                    {serviceLabels[serviceFilter] || "نوع العقد"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent align="start">
+                  <SelectItem value="all">كل أنواع العقود</SelectItem>
+                  <SelectItem value="residential">عقود سكنية</SelectItem>
+                  <SelectItem value="commercial">عقود تجارية</SelectItem>
+                </SelectContent>
+              </Select>
 
-              {/* View Mode Toggle */}
-              <div className="flex items-center rounded-lg border border-border bg-muted/50 p-1">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("grid")}
-                  aria-label="عرض البطاقات"
-                  className={`flex size-7 items-center justify-center rounded-md transition-colors ${
-                    viewMode === "grid"
-                      ? "bg-card text-foreground shadow-xs"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
+              {/* Discount Type Filter Dropdown */}
+              <Select
+                value={discountTypeFilter}
+                onValueChange={(val) => handleFilterChange("discountType", val)}
+              >
+                <SelectTrigger className="w-full sm:w-[140px] h-9 text-xs rounded-xl bg-card border-border cursor-pointer col-span-2 sm:col-span-1">
+                  <SelectValue>
+                    {discountTypeLabels[discountTypeFilter] || "نوع الخصم"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent align="start">
+                  <SelectItem value="all">كل أنواع الخصم</SelectItem>
+                  <SelectItem value="percentage">نسبة مئوية (%)</SelectItem>
+                  <SelectItem value="fixed">
+                    <span className="inline-flex items-center gap-1">
+                      <span>مبلغ ثابت</span>
+                      <SaudiRiyal className="size-3 text-muted-foreground" />
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Reset Filters Button */}
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearFilters}
+                  className="h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground gap-1 cursor-pointer col-span-2 sm:col-span-1 justify-center"
                 >
-                  <Grid className="size-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode("table")}
-                  aria-label="عرض الجدول"
-                  className={`flex size-7 items-center justify-center rounded-md transition-colors ${
-                    viewMode === "table"
-                      ? "bg-card text-foreground shadow-xs"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <TableIcon className="size-4" />
-                </button>
-              </div>
+                  <RotateCcw className="size-3.5" />
+                  <span>إعادة ضبط</span>
+                </Button>
+              )}
             </div>
           </div>
 
-          {/* List Display (Grid vs Table vs Empty) */}
-          {filteredCoupons.length === 0 ? (
-            <Empty className="border border-dashed border-border bg-card py-16">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <TicketPercent className="size-8 text-muted-foreground" />
-                </EmptyMedia>
-                <EmptyTitle>لا توجد كوبونات تطابق البحث</EmptyTitle>
-                <EmptyDescription>
-                  لم يتم العثور على أي كوبونات خصم تطابق معايير البحث أو التصفية الحالية
-                </EmptyDescription>
-              </EmptyHeader>
+          {/* Results Count & Quick Info */}
+          <div className="flex items-center justify-between border-t border-border/60 pt-2.5 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <TicketPercent className="size-4 text-primary" />
+              <span>
+                عرض <strong>{filteredCoupons.length}</strong> من أصل{" "}
+                <strong>{coupons.length}</strong> كوبون خصم
+              </span>
+            </div>
+            {hasActiveFilters && (
+              <span className="text-[11px] text-primary font-medium">
+                (نتائج مصفاة)
+              </span>
+            )}
+          </div>
+        </div>
+      </FadeIn>
+
+      {/* Coupons Cards Grid / Empty State */}
+      <FadeIn duration={0.3} delay={0.15}>
+        {filteredCoupons.length === 0 ? (
+          <Empty className="border border-dashed border-border bg-card py-16">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <TicketPercent className="size-8 text-muted-foreground" />
+              </EmptyMedia>
+              <EmptyTitle>لا توجد كوبونات تطابق البحث والتصفية</EmptyTitle>
+              <EmptyDescription>
+                لم يتم العثور على أي كوبونات خصم تطابق معايير البحث أو التصفية
+                الحالية في النظام
+              </EmptyDescription>
+            </EmptyHeader>
+            {hasActiveFilters && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  setSearchQuery("");
-                  setStatusFilter("all");
-                  setServiceFilter("all");
-                }}
+                onClick={handleClearFilters}
+                className="cursor-pointer"
               >
                 إعادة ضبط الفلاتر
               </Button>
-            </Empty>
-          ) : viewMode === "grid" ? (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredCoupons.map((coupon) => (
+            )}
+          </Empty>
+        ) : (
+          <StaggerContainer
+            staggerDelay={0.04}
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          >
+            {filteredCoupons.map((coupon) => (
+              <StaggerItem key={coupon.id}>
                 <CouponCard
-                  key={coupon.id}
                   coupon={coupon}
                   onEdit={handleOpenEdit}
                   onToggleStatus={handleToggleStatus}
                   onDuplicate={handleDuplicate}
                   onDelete={(id) => setDeletingId(id)}
-                  onTestInSimulator={handleTestInSimulator}
                 />
-              ))}
-            </div>
-          ) : (
-            <CouponsTable
-              coupons={filteredCoupons}
-              onEdit={handleOpenEdit}
-              onToggleStatus={handleToggleStatus}
-              onDuplicate={handleDuplicate}
-              onDelete={(id) => setDeletingId(id)}
-              onTestInSimulator={handleTestInSimulator}
-            />
-          )}
-        </TabsContent>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
+        )}
+      </FadeIn>
 
-        {/* TAB 2: COUPON SIMULATOR */}
-        <TabsContent value="simulator" className="space-y-6">
-          <div className="mx-auto max-w-3xl">
-            <CouponSimulatorCard
-              coupons={coupons}
-              selectedCodePreset={simulatorPresetCode}
-            />
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      {/* Compliance Note */}
-      <div className="flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary-50/50 p-4 text-center text-sm font-medium text-foreground">
+      {/* Official Platform Compliance Note */}
+      <div className="flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary-50/50 dark:bg-primary-950/20 p-4 text-center text-xs sm:text-sm font-medium text-foreground">
         <Sparkles className="size-4 text-primary shrink-0" />
         <span>{COUPONS_METADATA.note}</span>
         <CheckCircle2 className="size-4 text-primary shrink-0" />
@@ -497,19 +482,26 @@ export default function CouponsSection() {
       />
 
       {/* Delete Confirmation Alert */}
-      <AlertDialog open={Boolean(deletingId)} onOpenChange={(open) => !open && setDeletingId(null)}>
+      <AlertDialog
+        open={Boolean(deletingId)}
+        onOpenChange={(open) => !open && setDeletingId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>هل أنت متأكد من حذف هذا الكوبون؟</AlertDialogTitle>
+            <AlertDialogTitle>
+              هل أنت متأكد من حذف هذا الكوبون؟
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              سيتم إزالة الكوبون نهائياً من النظام ولن يتمكن المستخدمون من الاستفادة منه في سداد العقود الجديدة.
+              سيتم إزالة الكوبون نهائياً من النظام ولن يتمكن المستخدمون من
+              الاستفادة منه في سداد العقود الجديدة.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogCancel className="cursor-pointer">إلغاء</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={handleDeleteConfirm}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="cursor-pointer"
             >
               تأكيد الحذف
             </AlertDialogAction>

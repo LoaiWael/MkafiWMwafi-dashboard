@@ -39,15 +39,15 @@ export function DataTablePagination({
   const canNext = safePageIndex < pageCount - 1;
 
   return (
-    <div className="flex flex-col items-center justify-between gap-4 border-t border-border px-4 py-3 sm:flex-row">
-      <div className="flex items-center gap-3 text-xs text-muted-foreground sm:text-sm">
+    <div className="flex flex-col items-center justify-between gap-3 border-t border-border px-3 sm:px-4 py-3 sm:flex-row">
+      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 text-xs text-muted-foreground sm:text-sm">
         <span>
           عرض <strong className="font-semibold text-foreground">{startItem}</strong> إلى{" "}
           <strong className="font-semibold text-foreground">{endItem}</strong> من إجمالي{" "}
           <strong className="font-semibold text-foreground">{totalItems}</strong> عنصر
         </span>
 
-        <div className="flex items-center gap-2 ms-2 border-s border-border ps-3">
+        <div className="flex items-center gap-1.5 sm:gap-2 ms-1 sm:ms-2 border-s border-border ps-2 sm:ps-3">
           <span className="text-xs text-muted-foreground">لكل صفحة:</span>
           <Select
             value={String(pageSize)}
@@ -74,7 +74,7 @@ export function DataTablePagination({
         </div>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center justify-center gap-1">
         <span className="me-2 text-xs text-muted-foreground sm:text-sm">
           الصفحة <strong className="font-semibold text-foreground">{safePageIndex + 1}</strong> من{" "}
           <strong className="font-semibold text-foreground">{pageCount}</strong>

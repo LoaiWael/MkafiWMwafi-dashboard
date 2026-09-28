@@ -24,7 +24,6 @@ export const DEFAULT_PAGE_SIZE = 10;
 export const ROUTES = {
   home: "/",
   contracts: "/contracts",
-  requests: "/requests",
   properties: "/properties",
   users: "/users",
   documents: "/documents",

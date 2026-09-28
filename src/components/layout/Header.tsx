@@ -55,12 +55,12 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b border-border bg-background px-4">
+    <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 sm:gap-3 border-b border-border bg-background px-3 sm:px-4">
       <Tooltip>
         <TooltipTrigger
           type="button"
           aria-label={sidebarToggleLabel}
-          className="inline-flex size-10 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted"
+          className="inline-flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted"
           onClick={toggleSidebar}
         >
           <AnimateIcon animateOnHover className="flex size-full items-center justify-center">
@@ -78,11 +78,11 @@ export default function Header() {
         </TooltipContent>
       </Tooltip>
 
-      <h1 className="truncate text-base font-bold text-foreground sm:text-lg">
+      <h1 className="min-w-0 truncate text-sm font-bold text-foreground sm:text-base md:text-lg">
         {pageTitle}
       </h1>
 
-      <div className="ms-auto flex items-center gap-1.5 sm:gap-2">
+      <div className="ms-auto flex items-center gap-1.5 sm:gap-2 shrink-0">
         <Tooltip>
           <TooltipTrigger
             render={

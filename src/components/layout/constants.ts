@@ -3,7 +3,6 @@ import {
   BarChart3,
   Bell,
   Building2,
-  ClipboardList,
   FileCheck2,
   FileText,
   Layers,
@@ -45,7 +44,6 @@ export const SIDEBAR_NAV_GROUPS: readonly SidebarNavGroup[] = [
     title: "العمليات",
     items: [
       { href: ROUTES.contracts, label: "العقود", icon: FileText },
-      { href: ROUTES.requests, label: "طلبات التوثيق", icon: ClipboardList },
       { href: ROUTES.properties, label: "العقارات", icon: Building2 },
     ],
   },

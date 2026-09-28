@@ -2,15 +2,16 @@
 
 ## 1. Project Overview & Business Domain
 
-**Mkafi W Mwafi (مكفي وموفي)** is an online real estate platform specializing in certified electronic lease contracts for individuals, corporate entities, and certified real estate brokers.
+**Mkafi W Mwafi (مكفي وموفي)** is an online real estate platform specializing in certified electronic lease contracts for individuals, corporate entities, and certified real estate brokers, and this project is the dashboard for it.
 
 This repository is the **authenticated admin / operations dashboard** (Vite + React SPA) for that platform. It is not the public marketing or customer site and is not SEO-indexable.
 
 The public website lives in a **sibling repository**: `MkafiWMwafi` (typically `../MkafiWMwafi`, locally `C:\Loai\work\MkafiWMwafi`). That repo is a Next.js 16 App Router site (landing, contract wizard, customer auth, legal pages). Do not copy Next.js APIs (`next/image`, `'use client'`, Server Actions, `NEXT_PUBLIC_*`) from it into this dashboard. Shared product language, brand tokens, and RTL conventions should stay aligned across both apps.
 
 ### Core Purposes & Capabilities:
+
 - **Lease Contract Certification**:
-  - **Residential Contracts**: For renting and leasing apartments, villas, and family/individual dwellings (fully compatible with *Citizen Account* and *Developed Social Insurance*).
+  - **Residential Contracts**: For renting and leasing apartments, villas, and family/individual dwellings (fully compatible with _Citizen Account_ and _Developed Social Insurance_).
   - **Commercial Contracts**: For leasing commercial units, shops, offices, warehouses, and industrial facilities.
 - **Official Regulatory Integrations & Compliance**:
   - **Ejar Network (شبكة إيجار)**
@@ -76,6 +77,7 @@ There is **no Next.js** in this repo: no App Router, no RSC, no `'use client'`, 
 ## 4. Design System & Theme Tokens
 
 Theme tokens live in `src/index.css` (`:root`, `.dark`, `@theme inline`):
+
 - Prefer semantic utilities: `bg-background`, `text-foreground`, `bg-card`, `bg-primary`, `text-primary-foreground`, `bg-muted`, `text-muted-foreground`, `border-border`, `bg-sidebar`, `bg-chart-1`…`bg-chart-5`.
 - Brand scales (when defined): `text-primary`, `bg-primary-50`, `border-primary-200`, `bg-primary-gradient`, etc.
 - Layout utilities: `page-shell` (max width + horizontal padding), `full-bleed` (full-viewport breakout).

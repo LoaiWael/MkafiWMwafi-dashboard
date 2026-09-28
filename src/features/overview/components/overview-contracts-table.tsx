@@ -4,7 +4,6 @@ import {
   Eye,
   FileText,
   MapPin,
-  SaudiRiyal,
   Store,
 } from "lucide-react";
 import { Link } from "react-router";
@@ -286,152 +285,35 @@ export default function OverviewContractsTable() {
   ];
 
   return (
-    <div className="space-y-4">
-      {/* Mobile Card List for Small Screens (< md) */}
-      <div className="block md:hidden space-y-3">
-        <div className="flex items-center justify-between pb-1">
-          <div className="space-y-0.5">
-            <h3 className="text-sm font-bold text-foreground">
-              أحدث العقود المسجلة
-            </h3>
-            <p className="text-[11px] text-muted-foreground">
-              سجل فوري للعقود الموثقة عبر شبكة إيجار
-            </p>
-          </div>
-          <Link
-            to={ROUTES.contracts}
-            viewTransition
-            className="text-xs font-semibold text-primary hover:underline flex items-center gap-0.5"
-          >
-            <span>عرض الكل</span>
-            <ChevronLeft className="size-3.5" />
-          </Link>
-        </div>
-
-        <div className="space-y-2.5">
-          {RECENT_CONTRACTS_DATA.slice(0, 5).map((item) => {
-            const isResidential = item.type === "residential";
-            return (
-              <div
-                key={item.id}
-                className="rounded-2xl border border-border bg-card p-3.5 shadow-2xs space-y-2.5 transition-all hover:border-primary/40 active:scale-[0.99]"
-              >
-                {/* Card Header: Icon, Contract number, Status badge */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div
-                      className={cn(
-                        "flex size-8 shrink-0 items-center justify-center rounded-xl",
-                        isResidential
-                          ? "bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400"
-                          : "bg-secondary-50 text-secondary-600 dark:bg-secondary-950 dark:text-secondary-400",
-                      )}
-                    >
-                      {isResidential ? (
-                        <FileText className="size-4" />
-                      ) : (
-                        <Store className="size-4" />
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <Link
-                        to={`/contracts/${item.id}`}
-                        viewTransition
-                        className="text-xs font-bold text-foreground hover:text-primary block truncate"
-                      >
-                        {item.contractNumber}
-                      </Link>
-                      <span className="text-[10px] font-mono text-muted-foreground block truncate">
-                        إيجار: {item.ejarContractId}
-                      </span>
-                    </div>
-                  </div>
-
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "px-2 py-0.5 text-[10px] font-semibold shrink-0",
-                      item.statusColorClass,
-                    )}
-                  >
-                    {item.statusLabel}
-                  </Badge>
-                </div>
-
-                {/* Property & City */}
-                <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border/40 pt-2">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
-                    <span className="truncate text-foreground font-medium text-[11px]">
-                      {item.propertyTitle} ({item.unitNumber})
-                    </span>
-                  </div>
-                  <span className="text-[10px] shrink-0 font-medium">
-                    {item.city}
-                  </span>
-                </div>
-
-                {/* Parties and Rental Amount */}
-                <div className="flex items-center justify-between border-t border-border/40 pt-2 text-xs">
-                  <div className="space-y-0.5 text-[11px] text-muted-foreground truncate max-w-[60%]">
-                    <span className="block truncate">المؤجر: {item.lessorName}</span>
-                    <span className="block truncate">المستأجر: {item.lesseeName}</span>
-                  </div>
-
-                  <div className="text-end">
-                    <div className="flex items-center justify-end gap-0.5 font-bold text-foreground text-xs">
-                      <span>{item.rentalAmount.toLocaleString("en-US")}</span>
-                      <SaudiRiyal className="size-3 text-muted-foreground" />
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">
-                      {item.durationMonths} شهر
-                    </span>
-                  </div>
-                </div>
-
-                {/* Action Link Footer */}
-                <div className="border-t border-border/50 pt-2 flex items-center justify-between text-[11px]">
-                  <span className="text-muted-foreground text-[10px]">
-                    {item.documentedAt}
-                  </span>
-                  <Link
-                    to={`/contracts/${item.id}`}
-                    viewTransition
-                    className="font-semibold text-primary hover:underline flex items-center gap-1"
-                  >
-                    <span>عرض كامل التفاصيل</span>
-                    <ChevronLeft className="size-3" />
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Desktop DataTable (>= md) */}
-      <div className="hidden md:block">
-        <DataTable
-          data={RECENT_CONTRACTS_DATA}
-          columns={columns}
-          title="أحدث عمليات توثيق العقود والعقارات"
-          subtitle="سجل فوري لجميع العقود السكنية والتجارية الموثقة عبر شبكة إيجار والهيئة العامة للعقار."
-          searchPlaceholder="بحث برقم العقد، العقار، المؤجر، المستأجر، أو المدينة..."
-          searchKeys={[
-            "contractNumber",
-            "ejarContractId",
-            "propertyTitle",
-            "unitNumber",
-            "city",
-            "district",
-            "lessorName",
-            "lesseeName",
-          ]}
-          filters={filterConfigs}
-          pageSize={5}
-          pageSizeOptions={[5, 10, 20]}
-        />
-      </div>
-    </div>
+    <DataTable
+      data={RECENT_CONTRACTS_DATA}
+      columns={columns}
+      title="أحدث عمليات توثيق العقود والعقارات"
+      subtitle="سجل فوري لجميع العقود السكنية والتجارية الموثقة عبر شبكة إيجار والهيئة العامة للعقار."
+      searchPlaceholder="بحث برقم العقد، العقار، المؤجر، المستأجر، أو المدينة..."
+      searchKeys={[
+        "contractNumber",
+        "ejarContractId",
+        "propertyTitle",
+        "unitNumber",
+        "city",
+        "district",
+        "lessorName",
+        "lesseeName",
+      ]}
+      filters={filterConfigs}
+      pageSize={5}
+      pageSizeOptions={[5, 10, 20]}
+      toolbarActions={
+        <Link
+          to={ROUTES.contracts}
+          viewTransition
+          className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border bg-card px-3 text-xs font-semibold text-foreground transition-all hover:bg-muted active:scale-98"
+        >
+          <span>عرض جميع العقود</span>
+          <ChevronLeft className="size-3.5 text-muted-foreground" />
+        </Link>
+      }
+    />
   );
 }

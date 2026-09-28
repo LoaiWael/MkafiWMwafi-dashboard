@@ -1,4 +1,5 @@
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import {
   CalendarDays,
   Check,
@@ -149,7 +150,10 @@ export default function PaymentsSection() {
   };
 
   const handleSaveFrequency = () => {
-    if (!freqForm.nameAr.trim()) return;
+    if (!freqForm.nameAr.trim()) {
+      toast.error("يرجى إدخال مسمى دورية الدفع");
+      return;
+    }
 
     if (editingFrequency) {
       setFrequencies((prev) =>
@@ -166,6 +170,7 @@ export default function PaymentsSection() {
             : f
         )
       );
+      toast.success("تم تحديث دورية الدفع بنجاح");
     } else {
       const newItem: PaymentFrequencyOption = {
         id: `freq_${Date.now()}`,
@@ -176,6 +181,7 @@ export default function PaymentsSection() {
         isActive: freqForm.isActive,
       };
       setFrequencies((prev) => [...prev, newItem]);
+      toast.success("تمت إضافة دورية دفع جديدة بنجاح");
     }
 
     setIsDialogOpen(false);
@@ -183,12 +189,20 @@ export default function PaymentsSection() {
 
   const handleDeleteFrequency = (id: string) => {
     setFrequencies((prev) => prev.filter((f) => f.id !== id));
+    toast.success("تم حذف دورية الدفع بنجاح");
   };
 
   const handleToggleFrequencyActive = (id: string) => {
+    const target = frequencies.find((f) => f.id === id);
+    const nextState = !target?.isActive;
     setFrequencies((prev) =>
       prev.map((f) => (f.id === id ? { ...f, isActive: !f.isActive } : f))
     );
+    if (nextState) {
+      toast.success(`تم تفعيل دورية "${target?.nameAr || ""}"`);
+    } else {
+      toast.info(`تم تعطيل دورية "${target?.nameAr || ""}"`);
+    }
   };
 
   const handleOpenAddDuration = () => {
@@ -216,7 +230,10 @@ export default function PaymentsSection() {
   };
 
   const handleSaveDuration = () => {
-    if (!durForm.nameAr.trim()) return;
+    if (!durForm.nameAr.trim()) {
+      toast.error("يرجى إدخال مسمى مدة العقد");
+      return;
+    }
 
     if (editingDuration) {
       setDurations((prev) =>
@@ -232,6 +249,7 @@ export default function PaymentsSection() {
             : d
         )
       );
+      toast.success("تم تحديث مدة العقد بنجاح");
     } else {
       const newItem: ContractDurationOption = {
         id: `dur_${Date.now()}`,
@@ -241,6 +259,7 @@ export default function PaymentsSection() {
         isActive: durForm.isActive,
       };
       setDurations((prev) => [...prev, newItem]);
+      toast.success("تمت إضافة مدة عقد جديدة بنجاح");
     }
 
     setIsDialogOpen(false);
@@ -248,18 +267,33 @@ export default function PaymentsSection() {
 
   const handleDeleteDuration = (id: string) => {
     setDurations((prev) => prev.filter((d) => d.id !== id));
+    toast.success("تم حذف مدة العقد بنجاح");
   };
 
   const handleToggleDurationActive = (id: string) => {
+    const target = durations.find((d) => d.id === id);
+    const nextState = !target?.isActive;
     setDurations((prev) =>
       prev.map((d) => (d.id === id ? { ...d, isActive: !d.isActive } : d))
     );
+    if (nextState) {
+      toast.success(`تم تفعيل مدة "${target?.nameAr || ""}"`);
+    } else {
+      toast.info(`تم تعطيل مدة "${target?.nameAr || ""}"`);
+    }
   };
 
   const handleToggleMethodActive = (id: string) => {
+    const target = methods.find((m) => m.id === id);
+    const nextState = !target?.isActive;
     setMethods((prev) =>
       prev.map((m) => (m.id === id ? { ...m, isActive: !m.isActive } : m))
     );
+    if (nextState) {
+      toast.success(`تم تفعيل قناة الدفع "${target?.nameAr || ""}"`);
+    } else {
+      toast.info(`تم تعطيل قناة الدفع "${target?.nameAr || ""}"`);
+    }
   };
 
   const handleResetDefaults = () => {
@@ -270,27 +304,26 @@ export default function PaymentsSection() {
       localStorage.removeItem(STORAGE_KEYS.frequencies);
       localStorage.removeItem(STORAGE_KEYS.durations);
       localStorage.removeItem(STORAGE_KEYS.methods);
+      toast.success("تمت استعادة خيارات الدفع والبيانات المالية الافتراضية بنجاح");
     }
   };
 
-  const filteredFrequencies = useMemo(() => {
-    if (!searchQuery.trim()) return frequencies;
-    return frequencies.filter(
-      (f) =>
-        f.nameAr.includes(searchQuery) ||
-        f.periodAr.includes(searchQuery) ||
-        f.description.includes(searchQuery)
-    );
-  }, [searchQuery, frequencies]);
+  const filteredFrequencies = !searchQuery.trim()
+    ? frequencies
+    : frequencies.filter(
+        (f) =>
+          f.nameAr.includes(searchQuery) ||
+          f.periodAr.includes(searchQuery) ||
+          f.description.includes(searchQuery)
+      );
 
-  const filteredDurations = useMemo(() => {
-    if (!searchQuery.trim()) return durations;
-    return durations.filter(
-      (d) =>
-        d.nameAr.includes(searchQuery) ||
-        (d.description && d.description.includes(searchQuery))
-    );
-  }, [searchQuery, durations]);
+  const filteredDurations = !searchQuery.trim()
+    ? durations
+    : durations.filter(
+        (d) =>
+          d.nameAr.includes(searchQuery) ||
+          (d.description && d.description.includes(searchQuery))
+      );
 
   return (
     <div className="page-shell space-y-6 py-8">
@@ -845,7 +878,7 @@ export default function PaymentsSection() {
             </div>
           )}
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2.5 sm:gap-3">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               إلغاء
             </Button>

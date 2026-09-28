@@ -9,11 +9,11 @@ function Table({
   return (
     <div
       data-slot="table-container"
-      className={cn("relative w-full", containerClassName)}
+      className={cn("relative w-full overflow-x-auto", containerClassName)}
     >
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
+        className={cn("w-full caption-bottom text-sm border-separate border-spacing-0", className)}
         {...props}
       />
     </div>

@@ -109,18 +109,20 @@ export function DataTable<TData>({
     return "";
   });
 
-  const [activeFilters, setActiveFilters] = useState<Record<string, string>>(() => {
-    const initial: Record<string, string> = {};
-    for (const f of filters) {
-      if (syncWithUrl && searchParams.has(f.id)) {
-        const val = searchParams.get(f.id);
-        if (val) initial[f.id] = val;
-      } else if (f.defaultValue) {
-        initial[f.id] = f.defaultValue;
+  const [activeFilters, setActiveFilters] = useState<Record<string, string>>(
+    () => {
+      const initial: Record<string, string> = {};
+      for (const f of filters) {
+        if (syncWithUrl && searchParams.has(f.id)) {
+          const val = searchParams.get(f.id);
+          if (val) initial[f.id] = val;
+        } else if (f.defaultValue) {
+          initial[f.id] = f.defaultValue;
+        }
       }
-    }
-    return initial;
-  });
+      return initial;
+    },
+  );
 
   const [sorting, setSorting] = useState<DataTableSortingState | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
@@ -142,7 +144,10 @@ export function DataTable<TData>({
     }
 
     setActiveFilters((prev) => {
-      const allKeys = new Set([...Object.keys(prev), ...Object.keys(urlFilters)]);
+      const allKeys = new Set([
+        ...Object.keys(prev),
+        ...Object.keys(urlFilters),
+      ]);
       let changed = false;
       for (const key of allKeys) {
         if ((prev[key] ?? "all") !== (urlFilters[key] ?? "all")) {
@@ -202,7 +207,8 @@ export function DataTable<TData>({
     if (!sorting) return filteredData;
 
     const column = columns.find((c) => c.id === sorting.columnId);
-    if (!column || (!column.sortValue && !column.accessorKey)) return filteredData;
+    if (!column || (!column.sortValue && !column.accessorKey))
+      return filteredData;
 
     const sortFn = column.sortValue;
     const key = column.accessorKey;
@@ -368,7 +374,7 @@ export function DataTable<TData>({
 
       {/* Table Content */}
       <Table>
-        <TableHeader className="sticky top-16 z-10 border-b border-border bg-card shadow-xs">
+        <TableHeader className="sticky top-0 z-10 border-b border-border bg-card shadow-xs">
           <TableRow className="border-b border-border/80 hover:bg-transparent">
             {columns.map((column) => {
               const isSortable = Boolean(
@@ -382,122 +388,127 @@ export function DataTable<TData>({
                   key={column.id}
                   style={{ minWidth: column.minWidth }}
                   className={cn(
-                    "sticky top-16 z-10 bg-muted/95 backdrop-blur-md py-3 font-semibold text-foreground/90",
+                    "bg-muted/60 py-3.5 font-semibold text-foreground border-b border-border whitespace-nowrap",
                     column.align === "center" && "text-center",
                     column.align === "end" && "text-end",
                     column.headerClassName,
                   )}
                 >
-                    {isSortable ? (
-                      <button
-                        type="button"
-                        onClick={() => handleSort(column.id)}
-                        className={cn(
-                          "inline-flex items-center gap-1.5 font-semibold text-foreground/90 transition-colors hover:text-primary cursor-pointer",
-                          column.align === "center" && "justify-center",
-                          column.align === "end" && "justify-end",
-                        )}
-                      >
-                        <span>{column.header}</span>
-                        {sortDir === "asc" ? (
-                          <ArrowUp className="size-3.5 text-primary" />
-                        ) : sortDir === "desc" ? (
-                          <ArrowDown className="size-3.5 text-primary" />
-                        ) : (
-                          <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
-                        )}
-                      </button>
-                    ) : (
-                      column.header
-                    )}
-                  </TableHead>
-                );
-              })}
-            </TableRow>
-          </TableHeader>
-
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: pageSize }).map((_, rIndex) => (
-                <TableRow
-                  key={rIndex}
-                  className={cn(
-                    "border-b border-border/50",
-                    striped && (rIndex % 2 === 1 ? "bg-muted/40 dark:bg-muted/20" : "bg-card dark:bg-card"),
-                  )}
-                >
-                  {columns.map((col) => (
-                    <TableCell key={col.id} className="py-3.5">
-                      <Skeleton className="h-5 w-full max-w-28" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : paginatedData.length > 0 ? (
-              paginatedData.map((item, rIndex) => (
-                <TableRow
-                  key={rIndex}
-                  onClick={() => onRowClick?.(item)}
-                  className={cn(
-                    "border-b border-border/50 transition-colors duration-150",
-                    striped && (rIndex % 2 === 1 ? "bg-muted/40 dark:bg-muted/20" : "bg-card dark:bg-card"),
-                    !striped && "bg-card",
-                    onRowClick
-                      ? "cursor-pointer hover:bg-primary-50/50 dark:hover:bg-primary-950/40"
-                      : "hover:bg-muted/70 dark:hover:bg-muted/40",
-                  )}
-                >
-                  {columns.map((column) => (
-                    <TableCell
-                      key={column.id}
+                  {isSortable ? (
+                    <button
+                      type="button"
+                      onClick={() => handleSort(column.id)}
                       className={cn(
-                        "py-3.5 align-middle",
-                        column.align === "center" && "text-center",
-                        column.align === "end" && "text-end",
-                        column.className,
+                        "inline-flex items-center gap-1.5 font-semibold text-foreground/90 transition-colors hover:text-primary cursor-pointer",
+                        column.align === "center" && "justify-center",
+                        column.align === "end" && "justify-end",
                       )}
                     >
-                      {column.cell
-                        ? column.cell(item, rIndex)
-                        : column.accessorKey
-                          ? (item[column.accessorKey] as ReactNode)
-                          : null}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-48 text-center"
-                >
-                  <Empty className="py-8">
-                    <EmptyHeader>
-                      <EmptyMedia variant="icon">
-                        <EmptyIcon className="size-6 text-muted-foreground" />
-                      </EmptyMedia>
-                      <EmptyTitle className="text-base">{emptyTitle}</EmptyTitle>
-                      <EmptyDescription className="text-xs">
-                        {emptyDescription}
-                      </EmptyDescription>
-                    </EmptyHeader>
-                    {emptyAction}
-                  </Empty>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+                      <span>{column.header}</span>
+                      {sortDir === "asc" ? (
+                        <ArrowUp className="size-3.5 text-primary" />
+                      ) : sortDir === "desc" ? (
+                        <ArrowDown className="size-3.5 text-primary" />
+                      ) : (
+                        <ArrowUpDown className="size-3.5 text-muted-foreground/60" />
+                      )}
+                    </button>
+                  ) : (
+                    column.header
+                  )}
+                </TableHead>
+              );
+            })}
+          </TableRow>
+        </TableHeader>
 
-        {/* Pagination */}
+        <TableBody>
+          {isLoading ? (
+            Array.from({ length: pageSize }).map((_, rIndex) => (
+              <TableRow
+                key={rIndex}
+                className={cn(
+                  "border-b border-border/50",
+                  striped &&
+                    (rIndex % 2 === 1
+                      ? "bg-muted/40 dark:bg-muted/20"
+                      : "bg-card dark:bg-card"),
+                )}
+              >
+                {columns.map((col) => (
+                  <TableCell key={col.id} className="py-3.5">
+                    <Skeleton className="h-5 w-full max-w-28" />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : paginatedData.length > 0 ? (
+            paginatedData.map((item, rIndex) => (
+              <TableRow
+                key={rIndex}
+                onClick={() => onRowClick?.(item)}
+                className={cn(
+                  "border-b border-border/50 transition-colors duration-150",
+                  striped &&
+                    (rIndex % 2 === 1
+                      ? "bg-muted/40 dark:bg-muted/20"
+                      : "bg-card dark:bg-card"),
+                  !striped && "bg-card",
+                  onRowClick
+                    ? "cursor-pointer hover:bg-primary-50/50 dark:hover:bg-primary-950/40"
+                    : "hover:bg-muted/70 dark:hover:bg-muted/40",
+                )}
+              >
+                {columns.map((column) => (
+                  <TableCell
+                    key={column.id}
+                    className={cn(
+                      "py-3.5 align-middle",
+                      column.align === "center" && "text-center",
+                      column.align === "end" && "text-end",
+                      column.className,
+                    )}
+                  >
+                    {column.cell
+                      ? column.cell(item, rIndex)
+                      : column.accessorKey
+                        ? (item[column.accessorKey] as ReactNode)
+                        : null}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-48 text-center">
+                <Empty className="py-8">
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <EmptyIcon className="size-6 text-muted-foreground" />
+                    </EmptyMedia>
+                    <EmptyTitle className="text-base">{emptyTitle}</EmptyTitle>
+                    <EmptyDescription className="text-xs">
+                      {emptyDescription}
+                    </EmptyDescription>
+                  </EmptyHeader>
+                  {emptyAction}
+                </Empty>
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+
+      {/* Pagination */}
       {!isLoading && sortedData.length > 0 && (
         <DataTablePagination
           pageIndex={safePageIndex}
           pageSize={pageSize}
           totalItems={sortedData.length}
           pageSizeOptions={pageSizeOptions}
-          onPageChange={(newIdx) => setPageIndex(Math.min(Math.max(0, newIdx), pageCount - 1))}
+          onPageChange={(newIdx) =>
+            setPageIndex(Math.min(Math.max(0, newIdx), pageCount - 1))
+          }
           onPageSizeChange={(newSize) => {
             setPageSize(newSize);
             setPageIndex(0);

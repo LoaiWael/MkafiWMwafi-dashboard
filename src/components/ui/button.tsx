@@ -13,9 +13,11 @@ export const buttonVariants = cva(
         tertiary:
           'bg-tertiary-gradient text-tertiary-foreground shadow-inner-tertiary hover:brightness-110',
         ghost:
-          'rounded-md bg-transparent text-foreground shadow-none hover:bg-muted',
+          'bg-transparent text-foreground shadow-none hover:bg-muted',
         outline:
-          'rounded-md border border-input bg-background text-foreground shadow-none hover:bg-muted',
+          'border border-input bg-background text-foreground shadow-none hover:bg-muted',
+        destructive:
+          'bg-destructive text-white shadow-none hover:bg-destructive/90',
       },
       size: {
         sm: 'h-9 px-5 text-sm',

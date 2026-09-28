@@ -31,7 +31,7 @@ export default function OverviewSection() {
         actions={
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <Link
-              to={ROUTES.requests}
+              to={ROUTES.contracts}
               viewTransition
               className={cn(
                 buttonVariants({ variant: "outline", size: "sm" }),
@@ -39,7 +39,7 @@ export default function OverviewSection() {
               )}
             >
               <FileCheck2 className="size-4 text-primary shrink-0" />
-              <span>متابعة الطلبات</span>
+              <span>استعراض العقود</span>
             </Link>
 
             <Link
@@ -88,12 +88,12 @@ export default function OverviewSection() {
             </div>
 
             {/* Quick System Metric */}
-            <div className="flex items-center gap-3 text-[11px] text-muted-foreground border-t border-border/40 pt-2 lg:border-t-0 lg:pt-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] text-muted-foreground border-t border-border/40 pt-2 lg:border-t-0 lg:pt-0">
               <span className="flex items-center gap-1">
                 <Clock className="size-3.5" />
                 متوسط وقت التوثيق: <strong className="text-foreground">12 دقيقة</strong>
               </span>
-              <span>•</span>
+              <span className="hidden sm:inline">•</span>
               <span className="flex items-center gap-1">
                 <Zap className="size-3.5 text-amber-500" />
                 المطابقة الفورية للصكوك: <strong className="text-emerald-600">99.8%</strong>
@@ -230,7 +230,7 @@ export default function OverviewSection() {
 
       {/* 5. Overview Contracts & Real Estate Data Table */}
       <section aria-label="جدول العقود والعقارات الأخيرة">
-        <FadeIn direction="up" delay={0.2} duration={0.4}>
+        <FadeIn direction="none" delay={0.2} duration={0.4}>
           <OverviewContractsTable />
         </FadeIn>
       </section>

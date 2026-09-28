@@ -3,9 +3,10 @@ import RootLayout from "@/components/layout/RootLayout";
 import OverviewPage from "@/routes/dashboard/overview-page";
 import ContractsPage from "@/routes/dashboard/contracts-page";
 import ContractDetailsPage from "@/routes/dashboard/contract-details-page";
-import RequestsPage from "@/routes/dashboard/requests-page";
 import PropertiesPage from "@/routes/dashboard/properties-page";
+import PropertyDetailsPage from "@/routes/dashboard/property-details-page";
 import UsersPage from "@/routes/dashboard/users-page";
+import UserDetailsPage from "@/routes/dashboard/user-details-page";
 import DocumentsPage from "@/routes/dashboard/documents-page";
 import PaymentsPage from "@/routes/dashboard/payments-page";
 import PricingPage from "@/routes/dashboard/pricing-page";
@@ -30,9 +31,10 @@ export const router = createBrowserRouter([
       { index: true, Component: OverviewPage },
       { path: "contracts", Component: ContractsPage },
       { path: "contracts/:id", Component: ContractDetailsPage },
-      { path: "requests", Component: RequestsPage },
       { path: "properties", Component: PropertiesPage },
+      { path: "properties/:id", Component: PropertyDetailsPage },
       { path: "users", Component: UsersPage },
+      { path: "users/:id", Component: UserDetailsPage },
       { path: "documents", Component: DocumentsPage },
       { path: "payments", Component: PaymentsPage },
       { path: "pricing", Component: PricingPage },

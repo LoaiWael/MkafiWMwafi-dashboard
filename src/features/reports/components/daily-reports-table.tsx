@@ -233,126 +233,38 @@ export default function DailyReportsTable({ data }: DailyReportsTableProps) {
 
   return (
     <>
-      {/* Mobile Records Card View (< md) */}
-      <div className="block md:hidden space-y-3">
-        <div className="flex items-center justify-between pb-1">
-          <div>
-            <h3 className="text-sm font-bold text-foreground">
-              سجل العمليات اليومية
-            </h3>
-            <p className="text-[11px] text-muted-foreground">
-              المؤشرات اليومية وحجم العقود والإيرادات
-            </p>
-          </div>
-          <Badge variant="outline" className="text-xs">
-            {data.length} يوم مسجل
-          </Badge>
-        </div>
-
-        <div className="space-y-2.5">
-          {data.slice(0, 7).map((item) => {
-            const isHigh = item.ejarSuccessRate >= 99.0;
-            return (
-              <div
-                key={item.id}
-                onClick={() => setSelectedDay(item)}
-                className="rounded-2xl border border-border bg-card p-3.5 shadow-2xs space-y-2.5 transition-all hover:border-primary/40 active:scale-[0.99] cursor-pointer"
+      <DataTable
+        data={data}
+        columns={columns}
+        title="سجل التقارير ومؤشرات العمليات اليومية"
+        subtitle="جدول تفصيلي يوضح كل يوم تشغيلي، نسب التوثيق، الإيرادات المحصلة، وزمن المعالجة"
+        searchPlaceholder="بحث بالتاريخ، اليوم، أو رقم السجل..."
+        searchKeys={["date", "dayName"]}
+        filters={filterConfigs}
+        pageSize={8}
+        pageSizeOptions={[8, 15, 30]}
+        toolbarActions={
+          <TooltipProvider delay={100}>
+            <Tooltip>
+              <TooltipTrigger
+                type="button"
+                onClick={handleExportCSV}
+                className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-3.5 text-xs font-semibold text-foreground transition-all hover:bg-muted active:scale-98"
+                aria-label="تصدير ملف التقارير Excel"
               >
-                {/* Header: Date and Ejar badge */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="flex size-8 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-950 shrink-0">
-                      <Calendar className="size-4" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-bold text-foreground block">
-                        {item.dayName}
-                      </span>
-                      <span className="font-mono text-[10px] text-muted-foreground block">
-                        {item.date}
-                      </span>
-                    </div>
-                  </div>
-
-                  <Badge
-                    variant={isHigh ? "secondary" : "outline"}
-                    className="gap-1 font-mono text-[10px] px-2 py-0.5"
-                  >
-                    <ShieldCheck className="size-3 text-tertiary" />
-                    <span>{item.ejarSuccessRate}%</span>
-                  </Badge>
-                </div>
-
-                {/* Metrics row */}
-                <div className="grid grid-cols-2 gap-2 border-t border-border/40 pt-2 text-xs">
-                  <div>
-                    <span className="text-[10px] text-muted-foreground block">العقود الموثقة:</span>
-                    <span className="font-bold text-foreground">{item.totalContracts} عقد</span>
-                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
-                      <span className="text-primary font-medium">{item.residentialContracts} س</span>
-                      <span>•</span>
-                      <span className="text-secondary font-medium">{item.commercialContracts} ت</span>
-                    </div>
-                  </div>
-
-                  <div className="text-end">
-                    <span className="text-[10px] text-muted-foreground block">الإيرادات المحصلة:</span>
-                    <div className="flex items-center justify-end gap-1 font-bold text-foreground">
-                      <span>{item.totalRevenue.toLocaleString()}</span>
-                      <SaudiRiyal className="size-3 text-muted-foreground" />
-                    </div>
-                    <span className="text-[10px] text-muted-foreground block mt-0.5">
-                      {item.avgProcessingTimeMin} دقيقة معالجة
-                    </span>
-                  </div>
-                </div>
-
-                {/* Footer preview action */}
-                <div className="border-t border-border/40 pt-2 flex items-center justify-between text-[11px] text-primary font-medium">
-                  <span className="text-muted-foreground text-[10px]">اضغط للمعاينة التفصيلية</span>
-                  <span className="text-xs">عرض التفاصيل ←</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Desktop DataTable (>= md) */}
-      <div className="hidden md:block">
-        <DataTable
-          data={data}
-          columns={columns}
-          title="سجل التقارير ومؤشرات العمليات اليومية"
-          subtitle="جدول تفصيلي يوضح كل يوم تشغيلي، نسب التوثيق، الإيرادات المحصلة، وزمن المعالجة"
-          searchPlaceholder="بحث بالتاريخ، اليوم، أو رقم السجل..."
-          searchKeys={["date", "dayName"]}
-          filters={filterConfigs}
-          pageSize={8}
-          pageSizeOptions={[8, 15, 30]}
-          toolbarActions={
-            <TooltipProvider delay={100}>
-              <Tooltip>
-                <TooltipTrigger
-                  type="button"
-                  onClick={handleExportCSV}
-                  className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-3.5 text-xs font-semibold text-foreground transition-all hover:bg-muted active:scale-98"
-                  aria-label="تصدير ملف التقارير Excel"
-                >
-                  <FileSpreadsheet className="size-3.5 text-tertiary" />
-                  <span>تصدير Excel</span>
-                  <span className="rounded-full bg-muted/90 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    قيد التطوير
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top" sideOffset={6} className="text-xs">
-                  تنزيل السجلات اليومية بصيغة Excel — قيد التطوير
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          }
-        />
-      </div>
+                <FileSpreadsheet className="size-3.5 text-tertiary" />
+                <span>تصدير Excel</span>
+                <span className="rounded-full bg-muted/90 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  قيد التطوير
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={6} className="text-xs">
+                تنزيل السجلات اليومية بصيغة Excel — قيد التطوير
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        }
+      />
 
       {/* Day Details Modal */}
       <Dialog open={!!selectedDay} onOpenChange={(open) => !open && setSelectedDay(null)}>
