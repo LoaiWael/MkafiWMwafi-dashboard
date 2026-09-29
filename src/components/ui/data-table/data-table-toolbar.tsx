@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/tooltip";
 import type { DataTableFilterConfig } from "./types";
 
+const TOOLBAR_EASE = [0.21, 0.47, 0.32, 0.98] as const;
+
 interface DataTableToolbarProps<TData> {
   searchValue: string;
   onSearchChange: (value: string) => void;
@@ -56,15 +58,15 @@ export function DataTableToolbar<TData>({
             placeholder={searchPlaceholder}
             className="h-9 w-full pe-8 ps-9 text-sm"
           />
-          <AnimatePresence>
+          <AnimatePresence initial={false}>
             {searchValue ? (
               <motion.button
                 key="clear-search-btn"
                 type="button"
-                initial={{ opacity: 0, scale: 0.6 }}
+                initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.6 }}
-                transition={{ duration: 0.15 }}
+                exit={{ opacity: 0, scale: 0.92 }}
+                transition={{ duration: 0.12, ease: TOOLBAR_EASE }}
                 onClick={() => onSearchChange("")}
                 aria-label="مسح البحث"
                 className="absolute end-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -76,7 +78,7 @@ export function DataTableToolbar<TData>({
         </div>
 
         {/* Filter controls & Actions */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex flex-wrap items-center gap-2">
           {filters.map((filter) => {
             const Icon = filter.icon;
             const currentValue = activeFilters[filter.id] ?? "all";
@@ -145,15 +147,14 @@ export function DataTableToolbar<TData>({
             );
           })}
 
-          <AnimatePresence>
+          <AnimatePresence initial={false} mode="popLayout">
             {hasActiveFilters ? (
               <motion.div
                 key="clear-filters-btn"
-                initial={{ opacity: 0, scale: 0.8, width: 0 }}
-                animate={{ opacity: 1, scale: 1, width: "auto" }}
-                exit={{ opacity: 0, scale: 0.8, width: 0 }}
-                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                className="overflow-hidden"
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.92 }}
+                transition={{ duration: 0.12, ease: TOOLBAR_EASE }}
               >
                 <TooltipProvider delay={150}>
                   <Tooltip>

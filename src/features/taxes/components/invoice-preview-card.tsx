@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import { FadeIn } from "@/components/animations";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
@@ -170,17 +169,14 @@ export default function InvoicePreviewCard({ taxes }: InvoicePreviewCardProps) {
 
       {/* Header */}
       <div className="space-y-1 text-center sm:text-start">
-        <FadeIn direction="up" delay={0.05} distance={12} duration={0.4}>
-          <h2 className="text-lg font-extrabold text-primary-950 sm:text-2xl tracking-tight">
-            مراجعة الحساب وتأكيد السداد
-          </h2>
-        </FadeIn>
+        <h2 className="text-lg font-extrabold text-primary-950 sm:text-2xl tracking-tight">
+          مراجعة الحساب وتأكيد السداد
+        </h2>
       </div>
 
       <div className="space-y-4 sm:space-y-6">
         {/* Luxury Itemized Financial Summary Card */}
-        <FadeIn direction="up" delay={0.1} distance={14} duration={0.4}>
-          <div className="rounded-2xl border border-border/80 bg-card p-3 sm:p-6 shadow-xs relative overflow-hidden sm:rounded-3xl">
+        <div className="rounded-2xl border border-border/80 bg-card p-3 sm:p-6 shadow-xs relative overflow-hidden sm:rounded-3xl">
             {/* Top Bar of the Card */}
             <div className="flex items-center justify-between gap-2.5 border-b border-border/60 pb-3 sm:pb-4">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -381,7 +377,6 @@ export default function InvoicePreviewCard({ taxes }: InvoicePreviewCardProps) {
               </div>
             </div>
           </div>
-        </FadeIn>
       </div>
     </div>
   );

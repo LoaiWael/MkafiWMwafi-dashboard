@@ -85,7 +85,7 @@ export function DataTablePagination({
             <TooltipTrigger
               type="button"
               aria-label="الصفحة الأولى"
-              className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background text-foreground transition-all hover:bg-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-border/40 disabled:bg-muted/10 disabled:text-muted-foreground/30 disabled:opacity-30 data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:border-border/40 data-disabled:bg-muted/10 data-disabled:text-muted-foreground/30 data-disabled:opacity-30 aria-disabled:pointer-events-none aria-disabled:opacity-30"
+              className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-border/40 disabled:bg-muted/10 disabled:text-muted-foreground/30 disabled:opacity-30 data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:border-border/40 data-disabled:bg-muted/10 data-disabled:text-muted-foreground/30 data-disabled:opacity-30 aria-disabled:pointer-events-none aria-disabled:opacity-30"
               disabled={!canPrevious}
               onClick={() => onPageChange(0)}
             >
@@ -100,7 +100,7 @@ export function DataTablePagination({
             <TooltipTrigger
               type="button"
               aria-label="الصفحة السابقة"
-              className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background text-foreground transition-all hover:bg-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-border/40 disabled:bg-muted/10 disabled:text-muted-foreground/30 disabled:opacity-30 data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:border-border/40 data-disabled:bg-muted/10 data-disabled:text-muted-foreground/30 data-disabled:opacity-30 aria-disabled:pointer-events-none aria-disabled:opacity-30"
+              className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-border/40 disabled:bg-muted/10 disabled:text-muted-foreground/30 disabled:opacity-30 data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:border-border/40 data-disabled:bg-muted/10 data-disabled:text-muted-foreground/30 data-disabled:opacity-30 aria-disabled:pointer-events-none aria-disabled:opacity-30"
               disabled={!canPrevious}
               onClick={() => onPageChange(Math.max(0, safePageIndex - 1))}
             >
@@ -115,7 +115,7 @@ export function DataTablePagination({
             <TooltipTrigger
               type="button"
               aria-label="الصفحة التالية"
-              className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background text-foreground transition-all hover:bg-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-border/40 disabled:bg-muted/10 disabled:text-muted-foreground/30 disabled:opacity-30 data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:border-border/40 data-disabled:bg-muted/10 data-disabled:text-muted-foreground/30 data-disabled:opacity-30 aria-disabled:pointer-events-none aria-disabled:opacity-30"
+              className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-border/40 disabled:bg-muted/10 disabled:text-muted-foreground/30 disabled:opacity-30 data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:border-border/40 data-disabled:bg-muted/10 data-disabled:text-muted-foreground/30 data-disabled:opacity-30 aria-disabled:pointer-events-none aria-disabled:opacity-30"
               disabled={!canNext}
               onClick={() => {
                 if (safePageIndex < pageCount - 1) {
@@ -134,7 +134,7 @@ export function DataTablePagination({
             <TooltipTrigger
               type="button"
               aria-label="الصفحة الأخيرة"
-              className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background text-foreground transition-all hover:bg-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-border/40 disabled:bg-muted/10 disabled:text-muted-foreground/30 disabled:opacity-30 data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:border-border/40 data-disabled:bg-muted/10 data-disabled:text-muted-foreground/30 data-disabled:opacity-30 aria-disabled:pointer-events-none aria-disabled:opacity-30"
+              className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background text-foreground transition-colors hover:bg-muted focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-border/40 disabled:bg-muted/10 disabled:text-muted-foreground/30 disabled:opacity-30 data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:border-border/40 data-disabled:bg-muted/10 data-disabled:text-muted-foreground/30 data-disabled:opacity-30 aria-disabled:pointer-events-none aria-disabled:opacity-30"
               disabled={!canNext}
               onClick={() => onPageChange(pageCount - 1)}
             >

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Building, Home, ListOrdered, SlidersHorizontal } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import { AnimatedPanel } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
 import { FilterTabs, type FilterTabItem } from "@/components/ui/filter-tabs";
 import AmenitiesTab from "@/features/unit-options/components/amenities-tab";
@@ -31,13 +32,6 @@ const STORAGE_KEYS = {
   propertyTypes: "makfiwamufi.unit-options.property-types",
   floors: "makfiwamufi.unit-options.floors",
   amenities: "makfiwamufi.unit-options.amenities",
-};
-
-const PANEL_MOTION = {
-  initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -12 },
-  transition: { duration: 0.22, ease: [0.21, 0.47, 0.32, 0.98] as const },
 };
 
 export default function UnitOptionsSection() {
@@ -149,13 +143,12 @@ export default function UnitOptionsSection() {
         idPrefix="unit-options-tab"
       />
 
-      <AnimatePresence mode="wait">
-        <motion.div
+      <AnimatePresence mode="wait" initial={false}>
+        <AnimatedPanel
           key={activeTab}
           role="tabpanel"
           id={`panel-${activeTab}`}
           aria-labelledby={`unit-options-tab-${activeTab}`}
-          {...PANEL_MOTION}
         >
           {activeTab === "unit-types" ? (
             <UnitTypesTab
@@ -185,7 +178,7 @@ export default function UnitOptionsSection() {
               onResetDefaults={handleResetDefaults}
             />
           ) : null}
-        </motion.div>
+        </AnimatedPanel>
       </AnimatePresence>
     </div>
   );

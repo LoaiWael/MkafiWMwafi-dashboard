@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { MapPin, Plus, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
-import { FadeIn } from "@/components/animations";
+import { MountFade } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -156,7 +156,7 @@ export default function RegionsSection() {
         }
       />
 
-      <FadeIn duration={0.3} delay={0.04}>
+      <MountFade delay={0.04}>
         <RegionsFilters
           search={search}
           onSearchChange={setSearch}
@@ -167,58 +167,66 @@ export default function RegionsSection() {
           hasActiveFilters={hasActiveFilters}
           onReset={handleResetFilters}
         />
-      </FadeIn>
+      </MountFade>
 
       {filteredRegions.length === 0 ? (
-        <Empty className="border border-dashed border-border bg-card py-16">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <MapPin />
-            </EmptyMedia>
-            <EmptyTitle>
-              {regions.length === 0
-                ? "لا توجد مناطق أو مدن مسجّلة"
-                : "لا توجد نتائج مطابقة"}
-            </EmptyTitle>
-            <EmptyDescription>
-              {regions.length === 0
-                ? "تم حذف جميع المناطق أو لم يتم تسجيل أي مناطق بعد. يمكنك استعادة المناطق الافتراضية أو إضافة مناطق جديدة."
-                : "لم نتمكن من العثور على أي منطقة أو مدينة مطابقة لمعايير البحث الحالية."}
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            {regions.length === 0 ? (
-              <Button
-                className="cursor-pointer gap-2"
-                onClick={handleRestoreDefaults}
-              >
-                <RotateCcw className="size-4" />
-                استعادة المناطق الافتراضية
-              </Button>
-            ) : hasActiveFilters ? (
-              <Button
-                variant="outline"
-                className="cursor-pointer gap-2"
-                onClick={handleResetFilters}
-              >
-                <RotateCcw className="size-4" />
-                إعادة ضبط البحث والتصفية
-              </Button>
-            ) : null}
-          </EmptyContent>
-        </Empty>
+        <MountFade distance={0} duration={0.2}>
+          <Empty className="border border-dashed border-border bg-card py-16">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <MapPin />
+              </EmptyMedia>
+              <EmptyTitle>
+                {regions.length === 0
+                  ? "لا توجد مناطق أو مدن مسجّلة"
+                  : "لا توجد نتائج مطابقة"}
+              </EmptyTitle>
+              <EmptyDescription>
+                {regions.length === 0
+                  ? "تم حذف جميع المناطق أو لم يتم تسجيل أي مناطق بعد. يمكنك استعادة المناطق الافتراضية أو إضافة مناطق جديدة."
+                  : "لم نتمكن من العثور على أي منطقة أو مدينة مطابقة لمعايير البحث الحالية."}
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              {regions.length === 0 ? (
+                <Button
+                  className="cursor-pointer gap-2"
+                  onClick={handleRestoreDefaults}
+                >
+                  <RotateCcw className="size-4" />
+                  استعادة المناطق الافتراضية
+                </Button>
+              ) : hasActiveFilters ? (
+                <Button
+                  variant="outline"
+                  className="cursor-pointer gap-2"
+                  onClick={handleResetFilters}
+                >
+                  <RotateCcw className="size-4" />
+                  إعادة ضبط البحث والتصفية
+                </Button>
+              ) : null}
+            </EmptyContent>
+          </Empty>
+        </MountFade>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredRegions.map((region) => (
-            <RegionCard
+          {filteredRegions.map((region, index) => (
+            <MountFade
               key={region.id}
-              region={region}
-              onAddCity={(regionId) =>
-                openDialog({ kind: REGION_ENTRY_KIND.city, regionId })
-              }
-              onRemoveCity={handleRemoveCity}
-              onRemoveRegion={handleRemoveRegion}
-            />
+              className="h-full"
+              delay={Math.min(index, 8) * 0.04}
+              distance={10}
+            >
+              <RegionCard
+                region={region}
+                onAddCity={(regionId) =>
+                  openDialog({ kind: REGION_ENTRY_KIND.city, regionId })
+                }
+                onRemoveCity={handleRemoveCity}
+                onRemoveRegion={handleRemoveRegion}
+              />
+            </MountFade>
           ))}
         </div>
       )}

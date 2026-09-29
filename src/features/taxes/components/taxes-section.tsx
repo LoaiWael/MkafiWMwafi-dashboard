@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Percent, Receipt } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import { AnimatedPanel } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
 import { FilterTabs, type FilterTabItem } from "@/components/ui/filter-tabs";
 import { useUrlTab } from "@/hooks/use-url-tab";
@@ -78,39 +79,20 @@ export default function TaxesSection() {
         />
       </div>
 
-      {/* Tab Panels */}
-      <AnimatePresence mode="wait">
-        {activeTab === "overview" ? (
-          <motion.div
-            key="overview"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.22, ease: [0.21, 0.47, 0.32, 0.98] }}
-            className="space-y-6"
-          >
-            {/* Tab 1: Management Tax Rules Table */}
+      <AnimatePresence mode="wait" initial={false}>
+        <AnimatedPanel key={activeTab} className="space-y-6">
+          {activeTab === "overview" ? (
             <TaxRulesTable
               taxes={taxes}
               onTaxesChange={setTaxes}
               onResetDefaults={handleResetTaxes}
             />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="simulator"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.22, ease: [0.21, 0.47, 0.32, 0.98] }}
-            className="space-y-6"
-          >
-            {/* Tab 2: Full Simulator */}
+          ) : (
             <div className="mx-auto max-w-3xl">
               <InvoicePreviewCard taxes={taxes} />
             </div>
-          </motion.div>
-        )}
+          )}
+        </AnimatedPanel>
       </AnimatePresence>
     </div>
   );

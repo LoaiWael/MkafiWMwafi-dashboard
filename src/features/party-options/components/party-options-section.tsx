@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { MountFade } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
 import PartyOptionsTable from "@/features/party-options/components/party-options-table";
 import {
@@ -49,11 +50,13 @@ export default function PartyOptionsSection() {
         title={PARTY_OPTIONS_METADATA.title}
         description={PARTY_OPTIONS_METADATA.description}
       />
-      <PartyOptionsTable
-        items={capacities}
-        onItemsChange={setCapacities}
-        onResetDefaults={handleResetDefaults}
-      />
+      <MountFade>
+        <PartyOptionsTable
+          items={capacities}
+          onItemsChange={setCapacities}
+          onResetDefaults={handleResetDefaults}
+        />
+      </MountFade>
     </div>
   );
 }

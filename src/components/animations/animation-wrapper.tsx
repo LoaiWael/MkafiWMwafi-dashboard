@@ -122,6 +122,8 @@ const containerVariants: Variants = {
   }),
 }
 
+const REVEAL_EASE = [0.21, 0.47, 0.32, 0.98] as const
+
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   show: {
@@ -129,9 +131,66 @@ const itemVariants: Variants = {
     y: 0,
     transition: {
       duration: 0.5,
-      ease: [0.21, 0.47, 0.32, 0.98],
+      ease: REVEAL_EASE,
     },
   },
+}
+
+export interface MountFadeProps extends HTMLMotionProps<"div"> {
+  delay?: number
+  duration?: number
+  distance?: number
+  children?: React.ReactNode
+  className?: string
+}
+
+/**
+ * Plays once on mount. Use for dashboard content that is already in view,
+ * including lists that remount when filters change.
+ */
+export function MountFade({
+  delay = 0,
+  duration = 0.28,
+  distance = 8,
+  children,
+  className,
+  ...props
+}: MountFadeProps) {
+  return (
+    <motion.div
+      {...props}
+      initial={{ opacity: 0, y: distance }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration, delay, ease: REVEAL_EASE }}
+      className={cn(className)}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+/**
+ * Direct child of `AnimatePresence` for tab panels.
+ * Enter uses a short transform; exit is opacity-only so large tables
+ * are not translated off-screen.
+ */
+export function AnimatedPanel({
+  children,
+  className,
+  ...props
+}: HTMLMotionProps<"div">) {
+  return (
+    <motion.div
+      {...props}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.16, ease: REVEAL_EASE }}
+      className={cn(className)}
+    >
+      {children}
+    </motion.div>
+  )
 }
 
 /**

@@ -155,20 +155,23 @@ export default function AmenitiesTab({
               </div>
 
               {/* Options Chips Container */}
-              <div className="flex min-h-12 max-h-36 flex-1 flex-wrap items-center gap-1.5 overflow-y-auto rounded-xl border border-border/50 bg-muted/25 p-2 no-scrollbar sm:min-h-14">
+              <div className="relative flex min-h-12 max-h-36 flex-1 flex-wrap items-center gap-1.5 overflow-y-auto rounded-xl border border-border/50 bg-muted/25 p-2 no-scrollbar sm:min-h-14">
                 {amenity.options.length === 0 ? (
                   <span className="w-full text-center text-xs text-muted-foreground">
                     لا توجد خيارات
                   </span>
                 ) : (
-                  <AnimatePresence initial={false}>
+                  <AnimatePresence initial={false} mode="popLayout">
                     {amenity.options.map((option) => (
                       <motion.span
                         key={option}
-                        initial={{ opacity: 0, scale: 0.85 }}
+                        initial={{ opacity: 0, scale: 0.92 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.85 }}
-                        transition={{ duration: 0.15 }}
+                        exit={{ opacity: 0, scale: 0.92 }}
+                        transition={{
+                          duration: 0.12,
+                          ease: [0.21, 0.47, 0.32, 0.98],
+                        }}
                         className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-card px-2 py-0.5 text-[11px] font-medium text-foreground shadow-2xs transition-colors hover:border-primary/40 sm:text-xs"
                       >
                         <span>{option}</span>
