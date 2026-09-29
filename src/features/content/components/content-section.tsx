@@ -1,28 +1,33 @@
 import PageHeader from "@/components/layout/page-header";
-import { Card, CardContent } from "@/components/ui/card";
-import { Pencil } from "lucide-react";
+import AboutPage from "@/features/content/components/about-page";
+import HomePage from "@/features/content/components/home-page";
+import SiteHeader from "@/features/content/components/site-header";
+import {
+  CONTENT_PAGE_IDS,
+  CONTENT_PAGES,
+  type ContentPageId,
+} from "@/features/content/constants";
+import { useUrlTab } from "@/hooks/use-url-tab";
 
 export default function ContentSection() {
+  const [activePage, setActivePage] = useUrlTab<ContentPageId>({
+    paramKey: "page",
+    defaultValue: CONTENT_PAGES.home,
+    validValues: CONTENT_PAGE_IDS,
+    clearDefaultFromUrl: true,
+  });
+
   return (
-    <div className="page-shell space-y-6 py-8">
+    <div className="page-shell space-y-4 py-4 sm:space-y-6 sm:py-6 md:py-8">
       <PageHeader
         title="محتوى الموقع"
         description="تخصيص وإدارة بيانات ومحتوى الصفحة الرئيسية وصفحة من نحن."
       />
 
-      <Card className="border-dashed border-border bg-card/50">
-        <CardContent className="flex min-h-[400px] flex-col items-center justify-center p-8 text-center">
-          <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Pencil className="size-6" />
-          </div>
-          <h3 className="mt-4 text-base font-semibold text-foreground">
-            تخصيص محتوى الموقع
-          </h3>
-          <p className="mt-1.5 max-w-md text-sm text-muted-foreground">
-            سيتم هنا إضافة خيارات التحكم وتعديل بيانات الصفحة الرئيسية وصفحة من نحن.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="overflow-hidden rounded-xl border border-border bg-background sm:rounded-2xl">
+        <SiteHeader activePage={activePage} onNavigate={setActivePage} />
+        {activePage === CONTENT_PAGES.home ? <HomePage /> : <AboutPage />}
+      </div>
     </div>
   );
 }

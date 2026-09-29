@@ -41,7 +41,7 @@ export function useUrlTab<T extends string = string>({
         }
         return next;
       },
-      { replace: true },
+      { replace: true, preventScrollReset: true },
     );
   }
 
