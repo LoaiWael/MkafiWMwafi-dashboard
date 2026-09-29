@@ -1,17 +1,17 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
-  Banknote,
-  Building,
+  Building2,
+  CircleDollarSign,
   Clock,
+  Coins,
   Home,
   Percent,
   Receipt,
+  SaudiRiyal,
   ShieldCheck,
   Sparkles,
-  Wallet,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { FadeIn } from "@/components/animations";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
@@ -22,111 +22,116 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { TaxSetting } from "@/features/taxes/constants";
-import { CONTRACT_PRICING_PLANS, type PricingPlan } from "@/features/pricing/constants";
+import {
+  CONTRACT_PRICING_PLANS,
+  type PricingPlan,
+} from "@/features/pricing/constants";
 
 interface InvoicePreviewCardProps {
   taxes: TaxSetting[];
 }
 
 export default function InvoicePreviewCard({ taxes }: InvoicePreviewCardProps) {
-  const [contractType, setContractType] = useState<"residential" | "commercial">("residential");
+  const [contractType, setContractType] = useState<
+    "residential" | "commercial"
+  >("residential");
   const [selectedPlanId, setSelectedPlanId] = useState<string>("2-years");
 
   const plans: readonly PricingPlan[] = CONTRACT_PRICING_PLANS;
+  const selectedPlan =
+    plans.find((p) => p.id === selectedPlanId) || plans[3] || plans[0];
 
-  const selectedPlan = useMemo(() => {
-    return plans.find((p) => p.id === selectedPlanId) || plans[3] || plans[0];
-  }, [plans, selectedPlanId]);
+  const basePrice = selectedPlan?.amount || 399;
+  const durationLabel = selectedPlan?.duration || "سنتين";
 
-  // Calculate taxes and breakdown
-  const calculation = useMemo(() => {
-    const baseAmount = selectedPlan?.amount || 399;
+  // Filter applicable active taxes
+  const applicableTaxes = taxes
+    .filter((tax) => tax.isActive)
+    .filter((tax) => {
+      if (tax.appliesTo === "all") return true;
+      return tax.appliesTo === contractType;
+    })
+    .sort((a, b) => a.order - b.order);
 
-    // Filter applicable active taxes
-    const applicableTaxes = taxes
-      .filter((tax) => tax.isActive)
-      .filter((tax) => {
-        if (tax.appliesTo === "all") return true;
-        return tax.appliesTo === contractType;
-      })
-      .sort((a, b) => a.order - b.order);
+  let calculatedTaxTotal = 0;
 
-    let calculatedTaxTotal = 0;
-
-    const breakdown = applicableTaxes.map((tax) => {
-      let taxAmount = 0;
-      if (!tax.isExempt) {
-        if (tax.calculationType === "percentage") {
-          taxAmount = Math.round(((baseAmount * tax.ratePercent) / 100) * 100) / 100;
-        } else {
-          taxAmount = tax.fixedAmount || 0;
-        }
+  const breakdown = applicableTaxes.map((tax) => {
+    let taxAmount = 0;
+    if (!tax.isExempt) {
+      if (tax.calculationType === "percentage") {
+        taxAmount =
+          Math.round(((basePrice * tax.ratePercent) / 100) * 100) / 100;
+      } else {
+        taxAmount = tax.fixedAmount || 0;
       }
-      calculatedTaxTotal += taxAmount;
-
-      return {
-        id: tax.id,
-        name: tax.nameAr,
-        category: tax.category,
-        description: tax.description,
-        ratePercent: tax.ratePercent,
-        isExempt: tax.isExempt,
-        exemptionLabel: tax.exemptionLabel,
-        amount: taxAmount,
-      };
-    });
-
-    const finalTotal = baseAmount + calculatedTaxTotal;
+    }
+    calculatedTaxTotal += taxAmount;
 
     return {
-      baseAmount,
-      breakdown,
-      taxTotal: calculatedTaxTotal,
-      finalTotal,
+      id: tax.id,
+      name: tax.nameAr,
+      category: tax.category,
+      description: tax.description,
+      ratePercent: tax.ratePercent,
+      isExempt: tax.isExempt,
+      exemptionLabel: tax.exemptionLabel,
+      amount: taxAmount,
     };
-  }, [selectedPlan, taxes, contractType]);
+  });
+
+  const finalPrice = basePrice + calculatedTaxTotal;
 
   return (
-    <div className="space-y-4">
-      {/* Simulation Controls Toolbar */}
-      <Card className="border-border/80 bg-muted/40 shadow-xs">
-        <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Sparkles className="size-4 text-primary" />
-              <span className="text-xs font-semibold text-foreground">
-                تجربة المحاكي المباشر:
-              </span>
-            </div>
+    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col space-y-4 sm:space-y-6">
+      {/* Simulation Controls Toolbar & Optimized Tabs */}
+      <Card className="border-border/80 bg-card shadow-xs overflow-hidden">
+        <CardContent className="p-3.5 sm:p-5">
+          <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between">
+            {/* Contract Type Segmented Tabs */}
+            <div className="space-y-1.5 sm:space-y-2">
+              <div className="flex items-center gap-2">
+                <Sparkles className="size-3.5 sm:size-4 text-primary" />
+                <span className="text-xs font-bold text-foreground">
+                  نوع العقد للتجربة والمحاكاة:
+                </span>
+              </div>
 
-            {/* Contract Type Toggle */}
-            <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
-              <Button
-                type="button"
-                size="sm"
-                variant={contractType === "residential" ? "primary" : "ghost"}
-                className="h-7 gap-1 px-3 text-xs"
-                onClick={() => setContractType("residential")}
-              >
-                <Home className="size-3.5" />
-                <span>عقد سكني</span>
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={contractType === "commercial" ? "primary" : "ghost"}
-                className="h-7 gap-1 px-3 text-xs"
-                onClick={() => setContractType("commercial")}
-              >
-                <Building className="size-3.5" />
-                <span>عقد تجاري</span>
-              </Button>
+              <div className="grid grid-cols-2 rounded-xl border border-border bg-muted/40 p-1 gap-1 sm:inline-flex">
+                <button
+                  type="button"
+                  onClick={() => setContractType("residential")}
+                  className={`flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 text-xs font-bold transition-all duration-200 cursor-pointer ${
+                    contractType === "residential"
+                      ? "bg-linear-to-r from-primary-800 via-primary to-primary-400 text-primary-foreground shadow-md shadow-inner-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <Home className="size-3.5 sm:size-4 shrink-0" />
+                  <span>عقد سكني</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setContractType("commercial")}
+                  className={`flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 text-xs font-bold transition-all duration-200 cursor-pointer ${
+                    contractType === "commercial"
+                      ? "bg-linear-to-r from-primary-800 via-primary to-primary-400 text-primary-foreground shadow-md shadow-inner-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <Building2 className="size-3.5 sm:size-4 shrink-0" />
+                  <span>عقد تجاري</span>
+                </button>
+              </div>
             </div>
 
             {/* Duration Selector */}
-            <div className="flex items-center gap-2">
-              <Label htmlFor="plan-select" className="text-xs text-muted-foreground whitespace-nowrap">
-                مدة العقد:
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label
+                htmlFor="plan-select"
+                className="text-xs font-bold text-foreground block"
+              >
+                مدة العقد المعتمدة:
               </Label>
               <Select
                 value={selectedPlanId}
@@ -134,216 +139,249 @@ export default function InvoicePreviewCard({ taxes }: InvoicePreviewCardProps) {
                   if (val) setSelectedPlanId(val);
                 }}
               >
-                <SelectTrigger id="plan-select" className="h-8 w-44 bg-card text-xs">
+                <SelectTrigger
+                  id="plan-select"
+                  className="h-9 sm:h-9.5 w-full sm:w-60 bg-background text-xs font-semibold"
+                >
                   <SelectValue placeholder="اختر مدة العقد" />
                 </SelectTrigger>
                 <SelectContent align="end">
                   {plans.map((p) => (
-                    <SelectItem key={p.id} value={p.id} className="text-xs">
-                      {p.duration} — ({p.amount} ر.س)
+                    <SelectItem
+                      key={p.id}
+                      value={p.id}
+                      className="text-xs font-medium py-2"
+                    >
+                      <div className="flex items-center justify-between w-full gap-3">
+                        <span className="font-bold">{p.duration}</span>
+                        <div className="flex items-center gap-1 text-primary font-bold">
+                          <span>{p.amount.toLocaleString("en-US")}</span>
+                          <SaudiRiyal className="size-3 shrink-0" />
+                        </div>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant="outline" className="gap-1 border-primary/30 text-primary text-xs">
-              <ShieldCheck className="size-3" />
-              <span>معاينة حية للمستخدم النهائي</span>
-            </Badge>
-          </div>
         </CardContent>
       </Card>
 
-      {/* Main Invoice Review Card Container */}
-      <div className="space-y-3">
-        <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-          مراجعة الحساب وتأكيد السداد
-        </h2>
+      {/* Header */}
+      <div className="space-y-1 text-center sm:text-start">
+        <FadeIn direction="up" delay={0.05} distance={12} duration={0.4}>
+          <h2 className="text-lg font-extrabold text-primary-950 sm:text-2xl tracking-tight">
+            مراجعة الحساب وتأكيد السداد
+          </h2>
+        </FadeIn>
+      </div>
 
-        <div className="overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-xs sm:p-7 space-y-4">
-          {/* Header Row: ملخص الفاتورة والرسوم */}
-          <div className="flex items-center justify-between border-b border-border/60 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-primary-50 text-primary">
-                <Receipt className="size-5" />
+      <div className="space-y-4 sm:space-y-6">
+        {/* Luxury Itemized Financial Summary Card */}
+        <FadeIn direction="up" delay={0.1} distance={14} duration={0.4}>
+          <div className="rounded-2xl border border-border/80 bg-card p-3 sm:p-6 shadow-xs relative overflow-hidden sm:rounded-3xl">
+            {/* Top Bar of the Card */}
+            <div className="flex items-center justify-between gap-2.5 border-b border-border/60 pb-3 sm:pb-4">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div className="flex size-8 sm:size-10 items-center justify-center rounded-xl bg-primary-50 text-primary border border-primary-100 shrink-0 sm:rounded-2xl">
+                  <Receipt className="size-4 sm:size-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-xs sm:text-base font-bold text-foreground truncate">
+                    ملخص الفاتورة والرسوم
+                  </h3>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                    بيان الرسوم المستحقة لتوثيق العقد الإلكتروني
+                  </p>
+                </div>
               </div>
-              <div className="space-y-0.5">
-                <h3 className="text-base font-bold text-foreground">
-                  ملخص الفاتورة والرسوم
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  بيان الرسوم المستحقة لتوثيق العقد الإلكتروني
-                </p>
+
+              <div className="flex items-center gap-1 rounded-full bg-muted/60 px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-foreground border border-border/50 shrink-0 sm:px-3 sm:py-1 sm:gap-1.5">
+                <ShieldCheck className="size-3 sm:size-3.5 text-primary" />
+                <span>إيجار معتمد</span>
               </div>
             </div>
 
-            <Badge
-              variant="outline"
-              className="gap-1.5 rounded-full border-primary/30 bg-primary-50/50 px-3 py-1 text-xs font-semibold text-primary"
-            >
-              <ShieldCheck className="size-3.5 text-primary" />
-              <span>إيجار معتمد</span>
-            </Badge>
-          </div>
-
-          {/* Row 1: ضريبة القيمة المضافة الحكومية (General VAT) */}
-          {calculation.breakdown
-            .filter((tax) => tax.category === "vat")
-            .map((vat) => (
-              <div
-                key={vat.id}
-                className="flex items-center justify-between rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/40"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex size-9 items-center justify-center rounded-xl bg-primary-50 text-primary">
-                    <Percent className="size-4" />
+            {/* Itemized Line Items */}
+            <div className="divide-y divide-border/50 pt-1.5 sm:pt-2 text-start">
+              {/* General VAT Taxes (ضريبه) */}
+              {breakdown
+                .filter((tax) => tax.category === "vat")
+                .map((vat) => (
+                  <div
+                    key={vat.id}
+                    className="flex items-center justify-between gap-2 py-2 sm:py-3.5 transition-colors hover:bg-muted/20 px-1 sm:px-2 rounded-xl"
+                  >
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                      <span className="flex size-6 sm:size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Percent className="size-3 sm:size-3.5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs sm:text-sm font-semibold text-foreground truncate block">
+                          {vat.name}
+                        </span>
+                        <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
+                          {vat.description || "ضريبة القيمة المضافة الحكومية"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                      <span className="inline-block rounded-md bg-muted/70 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground">
+                        {vat.isExempt
+                          ? vat.exemptionLabel || "0%"
+                          : `${vat.ratePercent}%`}
+                      </span>
+                      <div className="flex items-center gap-1 text-xs sm:text-base font-bold text-foreground">
+                        <span>{vat.amount.toLocaleString("en-US")}</span>
+                        <SaudiRiyal
+                          className="size-3 sm:size-4 text-foreground/80"
+                          aria-label="ريال سعودي"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-0.5">
-                    <h4 className="text-sm font-bold text-foreground">{vat.name}</h4>
-                    <p className="text-xs text-muted-foreground">{vat.description}</p>
-                  </div>
-                </div>
+                ))}
 
-                <div className="flex items-center gap-2 text-end">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {vat.isExempt ? vat.exemptionLabel : `${vat.ratePercent}%`}
+              {/* Duration and Fees (مدة العقد) - Featured active row */}
+              <div className="flex items-center justify-between gap-2 py-2 sm:py-3 bg-primary-50/40 border border-primary-200/50 px-2 sm:px-3 rounded-xl my-1">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                  <span className="flex size-6 sm:size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <Clock className="size-3 sm:size-3.5" />
                   </span>
-                  <div className="flex items-baseline gap-1 text-sm font-bold text-foreground">
-                    <span>{vat.amount}</span>
-                    <span className="text-xs font-normal text-muted-foreground">﷼</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-          {/* Row 2: Contract Duration & Ejar Fees (مدة العقد) */}
-          <div className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary-50/35 p-3.5 sm:p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                <Clock className="size-4" />
-              </div>
-              <div className="space-y-0.5">
-                <h4 className="text-sm font-bold text-foreground sm:text-base">
-                  مدة العقد {selectedPlan?.duration} (اجمالي الرسوم {selectedPlan?.amount})
-                </h4>
-                <p className="text-xs text-muted-foreground">
-                  رسوم توثيق العقد المعتمد في منصة إيجار
-                </p>
-              </div>
-            </div>
-
-            <div className="text-end">
-              <div className="flex items-baseline gap-1 text-base font-bold text-foreground sm:text-lg">
-                <span>{selectedPlan?.amount}</span>
-                <span className="text-xs font-normal text-muted-foreground">﷼</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Row 3: Contract Tax (ضريبة العقد السكني / التجاري) */}
-          {calculation.breakdown
-            .filter((tax) => tax.category === "contract_tax")
-            .map((contractTax) => (
-              <div
-                key={contractTax.id}
-                className="flex items-center justify-between rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/40"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex size-9 items-center justify-center rounded-xl bg-primary-50 text-primary">
-                    <Percent className="size-4" />
-                  </div>
-                  <div className="space-y-0.5">
-                    <h4 className="text-sm font-bold text-foreground">
-                      {contractTax.name}
-                    </h4>
-                    <p className="text-xs text-muted-foreground">
-                      {contractTax.description}
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs sm:text-sm font-bold text-primary-950 truncate block">
+                      مدة العقد {durationLabel} (اجمالي الرسوم {basePrice})
+                    </span>
+                    <p className="text-[10px] sm:text-[11px] text-primary-700 font-medium truncate">
+                      رسوم توثيق العقد المعتمد في منصة إيجار
                     </p>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2.5 text-end">
-                  {contractTax.isExempt ? (
-                    <Badge
-                      variant="secondary"
-                      className="bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
-                    >
-                      {contractTax.exemptionLabel || "معفى"}
-                    </Badge>
-                  ) : (
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {contractTax.ratePercent}%
-                    </span>
-                  )}
-                  <div className="flex items-baseline gap-1 text-sm font-bold text-foreground">
-                    <span>{contractTax.amount}</span>
-                    <span className="text-xs font-normal text-muted-foreground">﷼</span>
-                  </div>
+                <div className="flex items-center gap-1 font-extrabold text-primary-900 text-xs sm:text-base shrink-0">
+                  <span>{basePrice.toLocaleString("en-US")}</span>
+                  <SaudiRiyal
+                    className="size-3 sm:size-4 text-primary-900"
+                    aria-label="ريال سعودي"
+                  />
                 </div>
               </div>
-            ))}
 
-          {/* Other custom taxes / fees if any */}
-          {calculation.breakdown
-            .filter((tax) => tax.category !== "vat" && tax.category !== "contract_tax")
-            .map((customTax) => (
-              <div
-                key={customTax.id}
-                className="flex items-center justify-between rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/40"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex size-9 items-center justify-center rounded-xl bg-primary-50 text-primary">
-                    <Banknote className="size-4" />
+              {/* Contract Tax (ضريبة العقد السكني / التجاري) */}
+              {breakdown
+                .filter((tax) => tax.category === "contract_tax")
+                .map((contractTax) => (
+                  <div
+                    key={contractTax.id}
+                    className="flex items-center justify-between gap-2 py-2 sm:py-3.5 transition-colors hover:bg-muted/20 px-1 sm:px-2 rounded-xl"
+                  >
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                      <span className="flex size-6 sm:size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Percent className="size-3 sm:size-3.5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs sm:text-sm font-semibold text-foreground truncate block">
+                          {contractTax.name}
+                        </span>
+                        <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
+                          {contractTax.description ||
+                            (contractType === "residential"
+                              ? "معفى للوحدات والمنشآت السكنية"
+                              : "ضريبة توثيق العقد التجاري")}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                      <span className="inline-block rounded-md bg-muted/70 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground">
+                        {contractTax.isExempt
+                          ? contractTax.exemptionLabel || "معفى"
+                          : `${contractTax.ratePercent}%`}
+                      </span>
+                      <div className="flex items-center gap-1 text-xs sm:text-base font-bold text-foreground">
+                        <span>
+                          {contractTax.amount.toLocaleString("en-US")}
+                        </span>
+                        <SaudiRiyal
+                          className="size-3 sm:size-4 text-foreground/80"
+                          aria-label="ريال سعودي"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-0.5">
-                    <h4 className="text-sm font-bold text-foreground">{customTax.name}</h4>
-                    <p className="text-xs text-muted-foreground">{customTax.description}</p>
-                  </div>
-                </div>
+                ))}
 
-                <div className="flex items-center gap-2 text-end">
-                  <div className="flex items-baseline gap-1 text-sm font-bold text-foreground">
-                    <span>{customTax.amount}</span>
-                    <span className="text-xs font-normal text-muted-foreground">﷼</span>
+              {/* Other Custom Taxes/Fees */}
+              {breakdown
+                .filter(
+                  (tax) =>
+                    tax.category !== "vat" && tax.category !== "contract_tax",
+                )
+                .map((customTax) => (
+                  <div
+                    key={customTax.id}
+                    className="flex items-center justify-between gap-2 py-2 sm:py-3.5 transition-colors hover:bg-muted/20 px-1 sm:px-2 rounded-xl"
+                  >
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                      <span className="flex size-6 sm:size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Coins className="size-3 sm:size-3.5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs sm:text-sm font-semibold text-foreground truncate block">
+                          {customTax.name}
+                        </span>
+                        <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
+                          {customTax.description}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                      <div className="flex items-center gap-1 text-xs sm:text-base font-bold text-foreground">
+                        <span>{customTax.amount.toLocaleString("en-US")}</span>
+                        <SaudiRiyal
+                          className="size-3 sm:size-4 text-foreground/80"
+                          aria-label="ريال سعودي"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
-
-          {/* Bottom Total Container (الاجمالي المبلغ النهائي للدفع) */}
-          <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
-                <Wallet className="size-5" />
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5">
-                  <h4 className="text-base font-extrabold text-foreground sm:text-lg">
-                    الاجمالي
-                  </h4>
-                  <span className="text-xs font-normal text-muted-foreground">
-                    (المبلغ النهائي للدفع)
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  شامل جميع رسوم الخدمة والتوثيق المعتمدة
-                </p>
-              </div>
+                ))}
             </div>
 
-            <div className="flex items-center justify-end">
-              <div className="flex items-baseline gap-1.5 rounded-xl border border-primary/30 bg-primary-50/50 px-5 py-2">
-                <span className="text-2xl font-black text-primary sm:text-3xl">
-                  {calculation.finalTotal}
-                </span>
-                <span className="text-sm font-bold text-primary">﷼</span>
+            {/* Total Box (الاجمالي) */}
+            <div className="mt-3 sm:mt-4 rounded-2xl bg-muted/50 border border-border/80 p-3 sm:p-4.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
+              <div className="flex items-center gap-2.5 sm:gap-3 text-start min-w-0">
+                <div className="flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
+                  <CircleDollarSign className="size-4.5 sm:size-5.5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <span className="text-xs sm:text-base font-extrabold text-foreground">
+                      الاجمالي
+                    </span>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground font-normal">
+                      (المبلغ النهائي للدفع)
+                    </span>
+                  </div>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                    شامل جميع رسوم الخدمة والتوثيق المعتمدة
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 border-t border-border/50 sm:pt-0 sm:border-0">
+                <div className="flex items-center justify-center gap-1.5 rounded-xl bg-card px-3 py-1.5 sm:px-4 sm:py-2 border border-border shadow-2xs w-full sm:w-auto">
+                  <span className="text-lg sm:text-2xl font-black text-primary tracking-tight">
+                    {finalPrice.toLocaleString("en-US")}
+                  </span>
+                  <SaudiRiyal
+                    className="size-4 sm:size-5 text-primary"
+                    aria-label="ريال سعودي"
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </FadeIn>
       </div>
     </div>
   );

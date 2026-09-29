@@ -119,24 +119,26 @@ export function DataTableToolbar<TData>({
                     <SelectItem value="all">
                       <span>كل {filter.title}</span>
                     </SelectItem>
-                    {filter.options.map((option) => {
-                      const OptionIcon = option.icon;
-                      return (
-                        <SelectItem key={option.value} value={option.value}>
-                          <div className="flex items-center gap-2">
-                            {OptionIcon ? (
-                              <OptionIcon className="size-3.5 text-muted-foreground" />
-                            ) : null}
-                            <span>{option.label}</span>
-                            {option.count !== undefined ? (
-                              <span className="ms-auto text-[11px] text-muted-foreground">
-                                ({option.count})
-                              </span>
-                            ) : null}
-                          </div>
-                        </SelectItem>
-                      );
-                    })}
+                    {filter.options
+                      .filter((option) => option.value !== "all")
+                      .map((option) => {
+                        const OptionIcon = option.icon;
+                        return (
+                          <SelectItem key={option.value} value={option.value}>
+                            <div className="flex items-center gap-2">
+                              {OptionIcon ? (
+                                <OptionIcon className="size-3.5 text-muted-foreground" />
+                              ) : null}
+                              <span>{option.label}</span>
+                              {option.count !== undefined ? (
+                                <span className="ms-auto text-[11px] text-muted-foreground">
+                                  ({option.count})
+                                </span>
+                              ) : null}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
                   </SelectContent>
                 </Select>
               </div>

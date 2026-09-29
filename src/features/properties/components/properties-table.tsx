@@ -8,7 +8,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { Link } from "react-router";
-import { TITLE_DEED_TYPES } from "@/features/documents/constants";
+import { TITLE_DEED_TYPES } from "../constants";
 import { Badge } from "@/components/ui/badge";
 import { CopyButton } from "@/components/ui/copy-button";
 import {
@@ -281,7 +281,6 @@ export default function PropertiesTable({
       id: "status",
       title: "حالة الإشغال",
       options: [
-        { value: "all", label: "جميع الحالات" },
         { value: "has_vacant", label: "يحتوي وحدات شاغرة" },
         { value: "fully_rented", label: "مكتمل الإشغال (100%)" },
       ],

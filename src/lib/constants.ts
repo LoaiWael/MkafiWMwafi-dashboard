@@ -26,7 +26,6 @@ export const ROUTES = {
   contracts: "/contracts",
   properties: "/properties",
   users: "/users",
-  documents: "/documents",
   payments: "/payments",
   pricing: "/pricing",
   coupons: "/coupons",

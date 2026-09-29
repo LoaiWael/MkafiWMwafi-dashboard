@@ -3,7 +3,6 @@ import {
   BarChart3,
   Bell,
   Building2,
-  FileCheck2,
   FileText,
   Layers,
   LayoutDashboard,
@@ -11,11 +10,11 @@ import {
   Pencil,
   Percent,
   Scale,
-  ScrollText,
   Settings,
   Shield,
   Tag,
   TicketPercent,
+  User,
   Users,
   Wallet,
 } from "lucide-react";
@@ -66,13 +65,12 @@ export const SIDEBAR_NAV_GROUPS: readonly SidebarNavGroup[] = [
   {
     title: "النظام",
     items: [
-      { href: ROUTES.documents, label: "الصكوك", icon: ScrollText },
       { href: ROUTES.regions, label: "المناطق والمدن", icon: MapPin },
       { href: ROUTES.unitOptions, label: "خيارات الوحدات", icon: Layers },
       {
         href: ROUTES.partyOptions,
-        label: "أنواع التفويض والصفة",
-        icon: FileCheck2,
+        label: "صفة المستأجر والمؤجر",
+        icon: User,
       },
       { href: ROUTES.content, label: "محتوى الموقع", icon: Pencil },
       { href: ROUTES.terms, label: "الشروط والأحكام", icon: Scale },

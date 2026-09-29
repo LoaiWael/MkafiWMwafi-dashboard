@@ -18,6 +18,13 @@ export function parsePropertyType(value: string | null): "all" | PropertyType {
   return "all";
 }
 
+export const TITLE_DEED_TYPES = [
+  { id: "electronic", label: "صك إلكتروني" },
+  { id: "paper", label: "صك ورقي" },
+  { id: "ownership", label: "صك ملكية" },
+  { id: "istihkam", label: "حجة استحكام" },
+] as const;
+
 export const MOCK_PROPERTIES: Property[] = [
   {
     id: "re-residential-narjis",
