@@ -12,7 +12,7 @@ export default defineConfig({
   plugins: [
     react(),
     babel({ presets: [reactCompilerPreset()] }),
-    tailwindcss()
+    tailwindcss(),
   ],
   resolve: {
     alias: {
@@ -28,5 +28,10 @@ export default defineConfig({
         '**/tmp-edge-profile/**',
       ],
     },
+  },
+  preview: {
+    host: '127.0.0.1',
+    port: 4173,
+    allowedHosts: ['panel.makfiwamufi.sa'],
   },
 })
