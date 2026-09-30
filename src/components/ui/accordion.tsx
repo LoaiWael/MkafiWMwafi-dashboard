@@ -38,11 +38,12 @@ function AccordionHeader({
 
 function AccordionTrigger({
   className,
+  headerClassName,
   children,
   ...props
-}: AccordionPrimitive.Trigger.Props) {
+}: AccordionPrimitive.Trigger.Props & { headerClassName?: string }) {
   return (
-    <AccordionHeader>
+    <AccordionHeader className={headerClassName}>
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
         className={cn(

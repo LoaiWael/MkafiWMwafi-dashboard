@@ -7,6 +7,9 @@ import PropertiesPage from "@/routes/dashboard/properties-page";
 import PropertyDetailsPage from "@/routes/dashboard/property-details-page";
 import UsersPage from "@/routes/dashboard/users-page";
 import UserDetailsPage from "@/routes/dashboard/user-details-page";
+import EmployeesPage from "@/routes/dashboard/employees-page";
+import EmployeeDetailsPage from "@/routes/dashboard/employee-details-page";
+import ProfilePage from "@/routes/dashboard/profile-page";
 import PaymentsPage from "@/routes/dashboard/payments-page";
 import PricingPage from "@/routes/dashboard/pricing-page";
 import CouponsPage from "@/routes/dashboard/coupons-page";
@@ -34,6 +37,9 @@ export const router = createBrowserRouter([
       { path: "properties/:id", Component: PropertyDetailsPage },
       { path: "users", Component: UsersPage },
       { path: "users/:id", Component: UserDetailsPage },
+      { path: "employees", Component: EmployeesPage },
+      { path: "employees/:id", Component: EmployeeDetailsPage },
+      { path: "profile", Component: ProfilePage },
       { path: "payments", Component: PaymentsPage },
       { path: "pricing", Component: PricingPage },
       { path: "coupons", Component: CouponsPage },

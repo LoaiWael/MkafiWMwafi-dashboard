@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +21,7 @@ function AvatarImage({
   className,
   src,
   alt = "",
+  draggable = false,
   ...props
 }: React.ComponentProps<"img">) {
   const [hasError, setHasError] = React.useState(false);
@@ -36,8 +35,9 @@ function AvatarImage({
       data-slot="avatar-image"
       src={src}
       alt={alt}
+      draggable={draggable}
       onError={() => setHasError(true)}
-      className={cn("aspect-square size-full object-cover", className)}
+      className={cn("aspect-square size-full select-none object-cover", className)}
       {...props}
     />
   );

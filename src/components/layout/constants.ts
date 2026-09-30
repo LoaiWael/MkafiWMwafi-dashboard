@@ -1,7 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
-  Bell,
   Building2,
   FileText,
   Layers,
@@ -10,11 +9,12 @@ import {
   Pencil,
   Percent,
   Scale,
-  Settings,
+  Settings2,
   Shield,
   Tag,
   TicketPercent,
   User,
+  UserCog,
   Users,
   Wallet,
 } from "lucide-react";
@@ -59,7 +59,7 @@ export const SIDEBAR_NAV_GROUPS: readonly SidebarNavGroup[] = [
     title: "المستخدمين",
     items: [
       { href: ROUTES.users, label: "العملاء", icon: Users },
-      { href: ROUTES.notifications, label: "الإشعارات", icon: Bell },
+      { href: ROUTES.employees, label: "الموظفين", icon: UserCog },
     ],
   },
   {
@@ -75,7 +75,7 @@ export const SIDEBAR_NAV_GROUPS: readonly SidebarNavGroup[] = [
       { href: ROUTES.content, label: "محتوى الموقع", icon: Pencil },
       { href: ROUTES.terms, label: "الشروط والأحكام", icon: Scale },
       { href: ROUTES.privacy, label: "سياسة الخصوصية", icon: Shield },
-      { href: ROUTES.settings, label: "الإعدادات", icon: Settings },
+      { href: ROUTES.settings, label: "إعدادات النظام", icon: Settings2 },
     ],
   },
 ];
@@ -89,6 +89,10 @@ export function isNavItemActive(pathname: string, href: string) {
 }
 
 export function getPageTitle(pathname: string) {
+  if (pathname === ROUTES.profile) return "الملف الشخصي";
+  if (pathname.startsWith(`${ROUTES.users}/`)) return "ملف العميل";
+  if (pathname.startsWith(`${ROUTES.employees}/`)) return "ملف الموظف";
+
   for (const group of SIDEBAR_NAV_GROUPS) {
     for (const item of group.items) {
       if (isNavItemActive(pathname, item.href)) {
@@ -99,8 +103,3 @@ export function getPageTitle(pathname: string) {
 
   return "الصفحة غير موجودة";
 }
-
-export const CURRENT_EMPLOYEE = {
-  name: "عوض",
-  role: "مدير النظام",
-} as const;

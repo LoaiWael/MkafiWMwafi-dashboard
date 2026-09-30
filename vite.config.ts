@@ -19,4 +19,14 @@ export default defineConfig({
       '@': path.resolve(rootDir, './src'),
     },
   },
+  server: {
+    watch: {
+      ignored: [
+        '**/.git/**',
+        '**/node_modules/**',
+        '**/test-results/**',
+        '**/tmp-edge-profile/**',
+      ],
+    },
+  },
 })

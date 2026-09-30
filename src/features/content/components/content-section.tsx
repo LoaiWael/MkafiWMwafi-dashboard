@@ -1,5 +1,7 @@
 import PageHeader from "@/components/layout/page-header";
 import AboutPage from "@/features/content/components/about-page";
+import { ContentDraftProvider } from "@/features/content/components/content-draft-provider";
+import ContentSaveBar from "@/features/content/components/content-save-bar";
 import HomePage from "@/features/content/components/home-page";
 import SiteHeader from "@/features/content/components/site-header";
 import {
@@ -18,16 +20,24 @@ export default function ContentSection() {
   });
 
   return (
-    <div className="page-shell space-y-4 py-4 sm:space-y-6 sm:py-6 md:py-8">
-      <PageHeader
-        title="محتوى الموقع"
-        description="تخصيص وإدارة بيانات ومحتوى الصفحة الرئيسية وصفحة من نحن."
-      />
+    <ContentDraftProvider>
+      <div className="page-shell space-y-4 py-4 sm:space-y-6 sm:py-6 md:py-8">
+        <PageHeader
+          title="محتوى الموقع"
+          description="تخصيص وإدارة بيانات ومحتوى الصفحة الرئيسية وصفحة من نحن."
+        />
 
-      <div className="overflow-hidden rounded-xl border border-border bg-background sm:rounded-2xl">
-        <SiteHeader activePage={activePage} onNavigate={setActivePage} />
-        {activePage === CONTENT_PAGES.home ? <HomePage /> : <AboutPage />}
+        <div className="overflow-hidden rounded-xl border border-border bg-background sm:rounded-2xl">
+          <SiteHeader activePage={activePage} onNavigate={setActivePage} />
+          <div className={activePage === CONTENT_PAGES.home ? undefined : "hidden"}>
+            <HomePage />
+          </div>
+          <div className={activePage === CONTENT_PAGES.about ? undefined : "hidden"}>
+            <AboutPage onOpenHome={() => setActivePage(CONTENT_PAGES.home)} />
+          </div>
+        </div>
+        <ContentSaveBar />
       </div>
-    </div>
+    </ContentDraftProvider>
   );
 }

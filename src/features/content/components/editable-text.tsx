@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Check, Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useContentField } from "@/features/content/components/content-draft-provider";
 import { Input } from "@/components/ui/input";
 import {
   Tooltip,
@@ -17,6 +18,7 @@ interface EditableTextProps {
   dir?: "auto" | "ltr";
   fullWidth?: boolean;
   alignStart?: boolean;
+  onCommit?: (value: string) => void;
 }
 
 export default function EditableText({
@@ -26,10 +28,29 @@ export default function EditableText({
   inputClassName,
   dir = "auto",
   fullWidth = false,
+  onCommit,
 }: EditableTextProps) {
   const [value, setValue] = useState(defaultValue);
   const [draft, setDraft] = useState(defaultValue);
   const [isEditing, setIsEditing] = useState(false);
+  const valueRef = useRef(value);
+  const draftRef = useRef(draft);
+  const editingRef = useRef(isEditing);
+  valueRef.current = value;
+  draftRef.current = draft;
+  editingRef.current = isEditing;
+
+  const markDirty = useContentField(
+    () => (editingRef.current ? draftRef.current : valueRef.current),
+    (next: string) => {
+      valueRef.current = next;
+      draftRef.current = next;
+      editingRef.current = false;
+      setValue(next);
+      setDraft(next);
+      setIsEditing(false);
+    },
+  );
 
   function startEditing() {
     setDraft(value);
@@ -37,8 +58,14 @@ export default function EditableText({
   }
 
   function commitEditing() {
-    setValue(draft);
+    const next = draft;
+    valueRef.current = next;
+    editingRef.current = false;
+    setValue(next);
     setIsEditing(false);
+    if (next === value) return;
+    onCommit?.(next);
+    markDirty();
   }
 
   function cancelEditing() {
@@ -53,6 +80,8 @@ export default function EditableText({
           "inline-flex max-w-full items-center gap-1 sm:gap-1.5",
           fullWidth ? "w-full" : "w-auto",
         )}
+        onClick={(event) => event.stopPropagation()}
+        onPointerDown={(event) => event.stopPropagation()}
       >
         <Input
           value={draft}
@@ -134,7 +163,11 @@ export default function EditableText({
           <TooltipTrigger
             type="button"
             aria-label={label}
-            onClick={startEditing}
+            onClick={(event) => {
+              event.stopPropagation();
+              startEditing();
+            }}
+            onPointerDown={(event) => event.stopPropagation()}
             className="inline-flex size-6 shrink-0 items-center justify-center rounded-lg bg-background text-primary shadow-xs transition-colors hover:bg-primary-soft sm:size-7 md:size-8"
           >
             <Pencil className="size-3 sm:size-3.5 md:size-4" />

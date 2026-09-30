@@ -4,6 +4,10 @@ export const STORAGE_KEYS = {
   theme: `${APP_SLUG}.theme`,
   sidebarCollapsed: `${APP_SLUG}.sidebar-collapsed`,
   tablePageSize: `${APP_SLUG}.table.page-size`,
+  termsHtml: `${APP_SLUG}.terms-html`,
+  privacyHtml: `${APP_SLUG}.privacy-html`,
+  systemSettings: `${APP_SLUG}.system-settings`,
+  adminProfile: `${APP_SLUG}.admin-profile`,
 } as const;
 
 export const SITE = {
@@ -26,6 +30,7 @@ export const ROUTES = {
   contracts: "/contracts",
   properties: "/properties",
   users: "/users",
+  employees: "/employees",
   payments: "/payments",
   pricing: "/pricing",
   coupons: "/coupons",
@@ -37,6 +42,7 @@ export const ROUTES = {
   partyOptions: "/party-options",
   content: "/content",
   settings: "/settings",
+  profile: "/profile",
   terms: "/terms",
   privacy: "/privacy",
 } as const;

@@ -1,5 +1,5 @@
-import FeaturePageSkeleton from "@/components/layout/feature-page-skeleton";
+import SettingsSectionSkeleton from "@/features/settings/components/settings-section-skeleton";
 
 export default function SettingsPageSkeleton() {
-  return <FeaturePageSkeleton />;
+  return <SettingsSectionSkeleton />;
 }
