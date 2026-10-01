@@ -11,6 +11,7 @@ import {
   Scale,
   Settings2,
   Shield,
+  ShieldCheck,
   Tag,
   TicketPercent,
   User,
@@ -65,6 +66,7 @@ export const SIDEBAR_NAV_GROUPS: readonly SidebarNavGroup[] = [
   {
     title: "النظام",
     items: [
+      { href: ROUTES.roles, label: "الأدوار والصلاحيات", icon: ShieldCheck },
       { href: ROUTES.regions, label: "المناطق والمدن", icon: MapPin },
       { href: ROUTES.unitOptions, label: "خيارات الوحدات", icon: Layers },
       {

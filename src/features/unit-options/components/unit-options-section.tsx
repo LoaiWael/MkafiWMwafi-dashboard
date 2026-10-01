@@ -1,9 +1,17 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Building, Home, ListOrdered, SlidersHorizontal } from "lucide-react";
-import { AnimatePresence } from "motion/react";
-import { AnimatedPanel } from "@/components/animations";
+import {
+  Building,
+  Home,
+  ListOrdered,
+  Plus,
+  RotateCcw,
+  SlidersHorizontal,
+} from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { FadeIn } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
 import { FilterTabs, type FilterTabItem } from "@/components/ui/filter-tabs";
 import AmenitiesTab from "@/features/unit-options/components/amenities-tab";
 import FloorsTab from "@/features/unit-options/components/floors-tab";
@@ -17,6 +25,7 @@ import {
   type AmenityCategory,
   type OptionItem,
 } from "@/features/unit-options/constants";
+import { useOptionItemEditor } from "@/features/unit-options/hooks/use-option-item-editor";
 import { useUrlTab } from "@/hooks/use-url-tab";
 
 const UNIT_OPTIONS_TABS = [
@@ -59,6 +68,22 @@ export default function UnitOptionsSection() {
   const [amenities, setAmenities] = useState<AmenityCategory[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.amenities);
     return saved ? JSON.parse(saved) : INITIAL_AMENITIES_CONFIG;
+  });
+
+  // Editors for the option item tabs
+  const unitTypesEditor = useOptionItemEditor({
+    defaultCategory: "سكني",
+    onItemsChange: setUnitTypes,
+  });
+
+  const propertyTypesEditor = useOptionItemEditor({
+    defaultCategory: "تجاري",
+    onItemsChange: setPropertyTypes,
+  });
+
+  const floorsEditor = useOptionItemEditor({
+    defaultCategory: "سكني",
+    onItemsChange: setFloors,
   });
 
   useEffect(() => {
@@ -127,58 +152,99 @@ export default function UnitOptionsSection() {
 
   return (
     <div className="page-shell space-y-4 py-4 sm:space-y-6 sm:py-8">
-      <PageHeader
-        title="تخصيص بيانات وقوائم الوحدات"
-        description="إدارة وتعديل وإضافة الخيارات المنسدلة التي تظهر للمستخدمين عند تسجيل الوحدات في الموقع الرئيسي."
-      />
+      <FadeIn duration={0.3}>
+        <PageHeader
+          title="تخصيص بيانات وقوائم الوحدات"
+          description="إدارة وتعديل وإضافة الخيارات المنسدلة التي تظهر للمستخدمين عند تسجيل الوحدات في الموقع الرئيسي."
+          actions={
+            <div className="flex w-full sm:w-auto items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetDefaults}
+                className="gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <RotateCcw className="size-3.5" />
+                <span>استعادة الافتراضي</span>
+              </Button>
+              {activeTab === "unit-types" && (
+                <Button
+                  onClick={unitTypesEditor.openAdd}
+                  size="sm"
+                  className="gap-1.5 cursor-pointer font-bold shadow-xs shrink-0"
+                >
+                  <Plus className="size-4" />
+                  <span>إضافة نوع وحدة</span>
+                </Button>
+              )}
+              {activeTab === "property-types" && (
+                <Button
+                  onClick={propertyTypesEditor.openAdd}
+                  size="sm"
+                  className="gap-1.5 cursor-pointer font-bold shadow-xs shrink-0"
+                >
+                  <Plus className="size-4" />
+                  <span>إضافة نوع مبنى</span>
+                </Button>
+              )}
+              {activeTab === "floors" && (
+                <Button
+                  onClick={floorsEditor.openAdd}
+                  size="sm"
+                  className="gap-1.5 cursor-pointer font-bold shadow-xs shrink-0"
+                >
+                  <Plus className="size-4" />
+                  <span>إضافة دور / طابق</span>
+                </Button>
+              )}
+            </div>
+          }
+        />
+      </FadeIn>
 
-      <FilterTabs
-        items={filterTabs}
-        value={activeTab}
-        onValueChange={setActiveTab}
-        layout="auto"
-        gridColsClass="sm:grid-cols-2 md:grid-cols-4"
-        className="w-full md:w-fit max-w-full"
-        ariaLabel="تبويبات خيارات الوحدات"
-        idPrefix="unit-options-tab"
-      />
+      <FadeIn duration={0.3} delay={0.06}>
+        <FilterTabs
+          items={filterTabs}
+          value={activeTab}
+          onValueChange={setActiveTab}
+          layout="auto"
+          gridColsClass="sm:grid-cols-2 md:grid-cols-4"
+          className="w-full md:w-fit max-w-full"
+          ariaLabel="تبويبات خيارات الوحدات"
+          idPrefix="unit-options-tab"
+        />
+      </FadeIn>
 
-      <AnimatePresence mode="wait" initial={false}>
-        <AnimatedPanel
+      <AnimatePresence mode="wait">
+        <motion.div
           key={activeTab}
           role="tabpanel"
           id={`panel-${activeTab}`}
           aria-labelledby={`unit-options-tab-${activeTab}`}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          transition={{ duration: 0.22, ease: [0.21, 0.47, 0.32, 0.98] }}
         >
           {activeTab === "unit-types" ? (
-            <UnitTypesTab
-              items={unitTypes}
-              onItemsChange={setUnitTypes}
-              onResetDefaults={handleResetDefaults}
-            />
+            <UnitTypesTab items={unitTypes} editor={unitTypesEditor} />
           ) : null}
           {activeTab === "property-types" ? (
             <PropertyTypesTab
               items={propertyTypes}
-              onItemsChange={setPropertyTypes}
-              onResetDefaults={handleResetDefaults}
+              editor={propertyTypesEditor}
             />
           ) : null}
           {activeTab === "floors" ? (
-            <FloorsTab
-              items={floors}
-              onItemsChange={setFloors}
-              onResetDefaults={handleResetDefaults}
-            />
+            <FloorsTab items={floors} editor={floorsEditor} />
           ) : null}
           {activeTab === "amenities" ? (
             <AmenitiesTab
               amenities={amenities}
               onAmenitiesChange={setAmenities}
-              onResetDefaults={handleResetDefaults}
             />
           ) : null}
-        </AnimatedPanel>
+        </motion.div>
       </AnimatePresence>
     </div>
   );

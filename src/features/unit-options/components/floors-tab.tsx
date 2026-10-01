@@ -1,26 +1,14 @@
 import OptionItemDialog from "@/features/unit-options/components/option-item-dialog";
 import OptionItemsTable from "@/features/unit-options/components/option-items-table";
 import type { OptionItem } from "@/features/unit-options/constants";
-import { useOptionItemEditor } from "@/features/unit-options/hooks/use-option-item-editor";
+import type { useOptionItemEditor } from "@/features/unit-options/hooks/use-option-item-editor";
 
 interface FloorsTabProps {
   items: OptionItem[];
-  onItemsChange: (
-    updater: OptionItem[] | ((prev: OptionItem[]) => OptionItem[]),
-  ) => void;
-  onResetDefaults: () => void;
+  editor: ReturnType<typeof useOptionItemEditor>;
 }
 
-export default function FloorsTab({
-  items,
-  onItemsChange,
-  onResetDefaults,
-}: FloorsTabProps) {
-  const editor = useOptionItemEditor({
-    defaultCategory: "سكني",
-    onItemsChange,
-  });
-
+export default function FloorsTab({ items, editor }: FloorsTabProps) {
   return (
     <>
       <OptionItemsTable
@@ -30,13 +18,10 @@ export default function FloorsTab({
         subtitle="الخيارات المتاحة لاختيار (رقم الطابق) في تفاصيل الوحدات"
         nameHeader="اسم الطابق / الدور"
         descriptionHeader="التوضيح"
-        addLabel="إضافة طابق / دور"
         showCategory={false}
-        onAdd={editor.openAdd}
         onEdit={editor.openEdit}
         onDelete={editor.remove}
         onToggleActive={editor.toggle}
-        onResetDefaults={onResetDefaults}
       />
       <OptionItemDialog
         open={editor.isDialogOpen}

@@ -1,8 +1,8 @@
 import { lazy, Suspense } from "react";
 import { useParams } from "react-router";
-import { findCustomer } from "@/features/users/constants";
+import { useCustomer } from "@/features/users/hooks/use-customers";
 import { useDocumentTitle } from "@/hooks/use-document-title";
-import EmployeeDetailsPageSkeleton from "@/routes/dashboard/employee-details-page-skeleton";
+import UserDetailsPageSkeleton from "@/routes/dashboard/user-details-page-skeleton";
 
 const UserDetailsView = lazy(
   () => import("@/features/users/components/user-details-view"),
@@ -10,11 +10,11 @@ const UserDetailsView = lazy(
 
 export default function UserDetailsPage() {
   const { id } = useParams<{ id: string }>();
-  const customer = findCustomer(id);
+  const customer = useCustomer(id);
   useDocumentTitle(customer?.name ?? "ملف العميل");
 
   return (
-    <Suspense fallback={<EmployeeDetailsPageSkeleton />}>
+    <Suspense fallback={<UserDetailsPageSkeleton />}>
       <UserDetailsView userId={id} />
     </Suspense>
   );

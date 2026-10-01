@@ -1,5 +1,6 @@
 import { useRef, useState, type FormEvent } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -136,12 +137,14 @@ function EditProfileForm({
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="flex items-center gap-3">
-          <Avatar className="size-16 border border-border">
-            {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
-            <AvatarFallback className="bg-primary/10 font-bold text-primary">
-              {profileInitials(name)}
-            </AvatarFallback>
-          </Avatar>
+          <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.15 }}>
+            <Avatar className="size-16 border border-border shadow-xs">
+              {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
+              <AvatarFallback className="bg-primary/10 font-bold text-primary">
+                {profileInitials(name)}
+              </AvatarFallback>
+            </Avatar>
+          </motion.div>
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
@@ -157,7 +160,7 @@ function EditProfileForm({
                 <TooltipTrigger
                   type="button"
                   aria-label="إزالة الصورة"
-                  className="inline-flex size-10 items-center justify-center rounded-full border border-border text-destructive hover:bg-destructive/10"
+                  className="inline-flex size-10 items-center justify-center rounded-full border border-border text-destructive transition-colors hover:bg-destructive/10"
                   onClick={() => setAvatarUrl("")}
                 >
                   <Trash2 className="size-4" />
@@ -176,9 +179,18 @@ function EditProfileForm({
             />
           </div>
         </div>
-        {errors.avatar ? (
-          <p className="text-xs text-destructive">{errors.avatar}</p>
-        ) : null}
+        <AnimatePresence>
+          {errors.avatar ? (
+            <motion.p
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="text-xs text-destructive"
+            >
+              {errors.avatar}
+            </motion.p>
+          ) : null}
+        </AnimatePresence>
 
         <div className="space-y-2">
           <Label htmlFor="profile-name">الاسم</Label>
@@ -190,9 +202,18 @@ function EditProfileForm({
             className="h-10"
             aria-invalid={Boolean(errors.name)}
           />
-          {errors.name ? (
-            <p className="text-xs text-destructive">{errors.name}</p>
-          ) : null}
+          <AnimatePresence>
+            {errors.name ? (
+              <motion.p
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="text-xs text-destructive"
+              >
+                {errors.name}
+              </motion.p>
+            ) : null}
+          </AnimatePresence>
         </div>
 
         <div className="space-y-2">
@@ -212,9 +233,18 @@ function EditProfileForm({
               className="h-10"
               aria-invalid={Boolean(errors.email)}
             />
-            {errors.email ? (
-              <p className="text-xs text-destructive">{errors.email}</p>
-            ) : null}
+            <AnimatePresence>
+              {errors.email ? (
+                <motion.p
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="text-xs text-destructive"
+                >
+                  {errors.email}
+                </motion.p>
+              ) : null}
+            </AnimatePresence>
           </div>
           <div className="space-y-2">
             <Label htmlFor="profile-phone">رقم الجوال</Label>
@@ -227,9 +257,18 @@ function EditProfileForm({
               className="h-10"
               aria-invalid={Boolean(errors.phone)}
             />
-            {errors.phone ? (
-              <p className="text-xs text-destructive">{errors.phone}</p>
-            ) : null}
+            <AnimatePresence>
+              {errors.phone ? (
+                <motion.p
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="text-xs text-destructive"
+                >
+                  {errors.phone}
+                </motion.p>
+              ) : null}
+            </AnimatePresence>
           </div>
         </div>
 
@@ -243,3 +282,4 @@ function EditProfileForm({
     </DialogContent>
   );
 }
+

@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { useParams } from "react-router";
-import { findEmployee } from "@/features/employees/constants";
+import { useEmployee } from "@/features/employees/hooks/use-employees";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import EmployeeDetailsPageSkeleton from "@/routes/dashboard/employee-details-page-skeleton";
 
@@ -10,7 +10,7 @@ const EmployeeDetailsView = lazy(
 
 export default function EmployeeDetailsPage() {
   const { id } = useParams<{ id: string }>();
-  const employee = findEmployee(id);
+  const employee = useEmployee(id);
   useDocumentTitle(employee?.name ?? "ملف الموظف");
 
   return (

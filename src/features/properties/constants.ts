@@ -87,7 +87,7 @@ export const MOCK_PROPERTIES: Property[] = [
       verifiedViaNafath: true,
     },
     createdBy: {
-      id: "usr-acc-8821",
+      id: "usr-creator-default",
       name: "محمد عبد الله القحطاني",
       phone: "0504111307",
       email: "m.qahtani@example.com",

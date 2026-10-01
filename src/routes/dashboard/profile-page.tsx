@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, LogOut, Mail, Pencil, Phone, Shield } from "lucide-react";
+import { LogOut, Pencil } from "lucide-react";
 import { FadeIn } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import ProfileFacts from "@/features/profile/components/profile-facts";
 import ProfilePermissions from "@/features/profile/components/profile-permissions";
 import { ADMIN_PERMISSIONS } from "@/features/profile/constants";
 import { useAdminProfile } from "@/features/profile/hooks/use-admin-profile";
-import type { ProfileFact } from "@/features/profile/types";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 
 export default function ProfilePage() {
@@ -20,37 +19,6 @@ export default function ProfilePage() {
   const [logoutOpen, setLogoutOpen] = useState(false);
 
   useDocumentTitle(profile.name || "الملف الشخصي");
-
-  const facts: ProfileFact[] = [
-    {
-      id: "email",
-      label: "البريد الإلكتروني",
-      value: profile.email,
-      icon: Mail,
-      ltr: true,
-      copyable: true,
-    },
-    {
-      id: "phone",
-      label: "رقم الجوال",
-      value: profile.phone,
-      icon: Phone,
-      ltr: true,
-      copyable: true,
-    },
-    {
-      id: "joined",
-      label: "تاريخ الانضمام",
-      value: profile.joinedAt,
-      icon: Calendar,
-    },
-    {
-      id: "role",
-      label: "الدور",
-      value: profile.role,
-      icon: Shield,
-    },
-  ];
 
   return (
     <div className="page-shell space-y-4 py-4 sm:space-y-6 sm:py-8">
@@ -88,7 +56,13 @@ export default function ProfilePage() {
         />
       </FadeIn>
 
-      <ProfileFacts title="بيانات الملف" facts={facts} />
+      <ProfileFacts
+        title="بيانات الملف"
+        email={profile.email}
+        phone={profile.phone}
+        joinedAt={profile.joinedAt}
+        role={profile.role}
+      />
       <ProfilePermissions permissions={ADMIN_PERMISSIONS} />
       <ProfileActivityLog entries={activity} />
 

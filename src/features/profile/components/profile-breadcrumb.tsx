@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { motion } from "motion/react";
 
 export interface ProfileCrumb {
   label: string;
@@ -11,7 +12,10 @@ interface ProfileBreadcrumbProps {
 
 export default function ProfileBreadcrumb({ items }: ProfileBreadcrumbProps) {
   return (
-    <nav
+    <motion.nav
+      initial={{ opacity: 0, x: 8 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
       aria-label="مسار التنقل"
       className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"
     >
@@ -19,7 +23,7 @@ export default function ProfileBreadcrumb({ items }: ProfileBreadcrumbProps) {
         <span key={`${item.label}-${index}`} className="inline-flex items-center gap-1.5">
           {index > 0 ? <span aria-hidden="true">/</span> : null}
           {item.to ? (
-            <Link to={item.to} viewTransition className="hover:text-foreground">
+            <Link to={item.to} viewTransition className="transition-colors hover:text-foreground">
               {item.label}
             </Link>
           ) : (
@@ -27,6 +31,7 @@ export default function ProfileBreadcrumb({ items }: ProfileBreadcrumbProps) {
           )}
         </span>
       ))}
-    </nav>
+    </motion.nav>
   );
 }
+

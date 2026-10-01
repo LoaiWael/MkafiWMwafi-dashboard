@@ -1,3 +1,4 @@
+import { FadeIn } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
 import AboutPage from "@/features/content/components/about-page";
 import { ContentDraftProvider } from "@/features/content/components/content-draft-provider";
@@ -22,22 +23,27 @@ export default function ContentSection() {
   return (
     <ContentDraftProvider>
       <div className="page-shell space-y-4 py-4 sm:space-y-6 sm:py-6 md:py-8">
-        <PageHeader
-          title="محتوى الموقع"
-          description="تخصيص وإدارة بيانات ومحتوى الصفحة الرئيسية وصفحة من نحن."
-        />
+        <FadeIn duration={0.3}>
+          <PageHeader
+            title="محتوى الموقع"
+            description="تخصيص وإدارة بيانات ومحتوى الصفحة الرئيسية وصفحة من نحن."
+          />
+        </FadeIn>
 
-        <div className="overflow-hidden rounded-xl border border-border bg-background sm:rounded-2xl">
-          <SiteHeader activePage={activePage} onNavigate={setActivePage} />
-          <div className={activePage === CONTENT_PAGES.home ? undefined : "hidden"}>
-            <HomePage />
+        <FadeIn duration={0.3} delay={0.06}>
+          <div className="overflow-hidden rounded-xl border border-border bg-background sm:rounded-2xl shadow-xs">
+            <SiteHeader activePage={activePage} onNavigate={setActivePage} />
+            <div className={activePage === CONTENT_PAGES.home ? undefined : "hidden"}>
+              <HomePage />
+            </div>
+            <div className={activePage === CONTENT_PAGES.about ? undefined : "hidden"}>
+              <AboutPage onOpenHome={() => setActivePage(CONTENT_PAGES.home)} />
+            </div>
           </div>
-          <div className={activePage === CONTENT_PAGES.about ? undefined : "hidden"}>
-            <AboutPage onOpenHome={() => setActivePage(CONTENT_PAGES.home)} />
-          </div>
-        </div>
+        </FadeIn>
         <ContentSaveBar />
       </div>
     </ContentDraftProvider>
   );
 }
+

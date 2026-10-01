@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { toast } from "sonner";
-import { Edit2, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { Edit2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,9 +14,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import PartyOptionDialog, {
-  type PartyOptionFormValues,
-} from "@/features/party-options/components/party-option-dialog";
 import type { OptionItem } from "@/features/party-options/constants";
 
 interface PartyOptionsTableProps {
@@ -25,78 +21,17 @@ interface PartyOptionsTableProps {
   onItemsChange: (
     updater: OptionItem[] | ((prev: OptionItem[]) => OptionItem[]),
   ) => void;
-  onResetDefaults: () => void;
+  onEdit: (item: OptionItem) => void;
 }
-
-const EMPTY_FORM: PartyOptionFormValues = {
-  nameAr: "",
-  category: "أفراد",
-  description: "",
-  isActive: true,
-};
 
 export default function PartyOptionsTable({
   items,
   onItemsChange,
-  onResetDefaults,
+  onEdit,
 }: PartyOptionsTableProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<OptionItem | null>(null);
-  const [formData, setFormData] = useState<PartyOptionFormValues>(EMPTY_FORM);
-
   const categoryValues = [
     ...new Set(items.map((item) => item.category).filter(Boolean)),
   ] as string[];
-
-  function openAdd() {
-    setEditingItem(null);
-    setFormData(EMPTY_FORM);
-    setIsDialogOpen(true);
-  }
-
-  function openEdit(item: OptionItem) {
-    setEditingItem(item);
-    setFormData({
-      nameAr: item.nameAr,
-      category: item.category || EMPTY_FORM.category,
-      description: item.description || "",
-      isActive: item.isActive,
-    });
-    setIsDialogOpen(true);
-  }
-
-  function saveOption() {
-    if (!formData.nameAr.trim()) {
-      toast.error("يرجى إدخال مسمى الخيار");
-      return;
-    }
-
-    if (editingItem) {
-      const updated: OptionItem = {
-        ...editingItem,
-        nameAr: formData.nameAr.trim(),
-        category: formData.category,
-        description: formData.description.trim(),
-        isActive: formData.isActive,
-      };
-      onItemsChange((prev) =>
-        prev.map((item) => (item.id === editingItem.id ? updated : item)),
-      );
-      toast.success("تم تحديث بيانات الخيار بنجاح");
-    } else {
-      const newItem: OptionItem = {
-        id: `custom_${Date.now()}`,
-        nameAr: formData.nameAr.trim(),
-        category: formData.category,
-        description: formData.description.trim(),
-        isActive: formData.isActive,
-      };
-      onItemsChange((prev) => [...prev, newItem]);
-      toast.success("تمت إضافة الخيار الجديد بنجاح");
-    }
-
-    setIsDialogOpen(false);
-  }
 
   function deleteOption(id: string) {
     onItemsChange((prev) => prev.filter((item) => item.id !== id));
@@ -172,6 +107,7 @@ export default function PartyOptionsTable({
             checked={item.isActive}
             onCheckedChange={() => toggleActive(item.id)}
             aria-label={`تفعيل أو تعطيل ظهور ${item.nameAr}`}
+            className="cursor-pointer"
           />
           <span className="text-xs font-medium text-muted-foreground">
             {item.isActive ? "مفعّل" : "معطّل"}
@@ -193,9 +129,9 @@ export default function PartyOptionsTable({
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    onClick={() => openEdit(item)}
+                    onClick={() => onEdit(item)}
                     aria-label={`تعديل ${item.nameAr}`}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="text-muted-foreground hover:text-foreground cursor-pointer"
                   />
                 }
               >
@@ -213,7 +149,7 @@ export default function PartyOptionsTable({
                     size="icon-sm"
                     onClick={() => deleteOption(item.id)}
                     aria-label={`حذف ${item.nameAr}`}
-                    className="text-destructive hover:bg-destructive/10"
+                    className="text-destructive hover:bg-destructive/10 cursor-pointer"
                   />
                 }
               >
@@ -259,44 +195,16 @@ export default function PartyOptionsTable({
   ];
 
   return (
-    <>
-      <DataTable
-        data={items}
-        columns={columns}
-        searchPlaceholder="بحث في صفات الأطراف..."
-        searchKeys={["nameAr", "category", "description"]}
-        filters={filters}
-        pageSize={10}
-        pageSizeOptions={[5, 10, 20]}
-        emptyTitle="لا توجد صفات مطابقة"
-        emptyDescription="لم يتم العثور على صفات تطابق البحث أو التصفية."
-        toolbarActions={
-          <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onResetDefaults}
-              className="gap-1.5 text-muted-foreground hover:text-foreground"
-            >
-              <RotateCcw className="size-3.5" />
-              استعادة الافتراضي
-            </Button>
-            <Button onClick={openAdd} size="sm" className="gap-1.5">
-              <Plus className="size-4" />
-              إضافة صفة جديدة
-            </Button>
-          </div>
-        }
-      />
-
-      <PartyOptionDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        editingItem={editingItem}
-        formData={formData}
-        onFormDataChange={setFormData}
-        onSave={saveOption}
-      />
-    </>
+    <DataTable
+      data={items}
+      columns={columns}
+      searchPlaceholder="بحث في صفات الأطراف..."
+      searchKeys={["nameAr", "category", "description"]}
+      filters={filters}
+      pageSize={10}
+      pageSizeOptions={[5, 10, 20]}
+      emptyTitle="لا توجد صفات مطابقة"
+      emptyDescription="لم يتم العثور على صفات تطابق البحث أو التصفية."
+    />
   );
 }

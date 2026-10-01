@@ -27,10 +27,20 @@ import type { Property } from "../types";
 
 interface PropertiesTableProps {
   properties: Property[];
+  title?: string;
+  subtitle?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  syncWithUrl?: boolean;
 }
 
 export default function PropertiesTable({
   properties,
+  title = "سجل العقارات والوحدات",
+  subtitle = "إدارة العقارات والوحدات السكنية والتجارية، بيانات العناوين الوطنية وصكوك الملكية وتتبع الإشغال.",
+  emptyTitle,
+  emptyDescription,
+  syncWithUrl,
 }: PropertiesTableProps) {
   const columns: DataTableColumn<Property>[] = [
     {
@@ -308,8 +318,11 @@ export default function PropertiesTable({
     <DataTable
       data={properties}
       columns={columns}
-      title="سجل العقارات والوحدات"
-      subtitle="إدارة العقارات والوحدات السكنية والتجارية، بيانات العناوين الوطنية وصكوك الملكية وتتبع الإشغال."
+      title={title}
+      subtitle={subtitle}
+      emptyTitle={emptyTitle}
+      emptyDescription={emptyDescription}
+      syncWithUrl={syncWithUrl}
       searchPlaceholder="بحث باسم العقار، الحي، المدينة، الرمز، رقم الصك، أو المالك..."
       searchKeys={["name"]}
       searchFilter={(item, query) => {

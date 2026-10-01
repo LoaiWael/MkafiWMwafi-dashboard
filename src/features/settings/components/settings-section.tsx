@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { ImageIcon, Phone, Search, Share2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
+import { FadeIn } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { FilterTabs, type FilterTabItem } from "@/components/ui/filter-tabs";
@@ -114,20 +115,24 @@ export default function SettingsSection() {
 
   return (
     <div className="page-shell space-y-4 sm:space-y-6 py-4 sm:py-6 md:py-8">
-      <PageHeader
-        title="إعدادات النظام"
-        description="هوية المنصة، وبيانات التواصل، وروابط الشبكات، وبيانات ظهور الموقع الرئيسي في محركات البحث."
-      />
+      <FadeIn duration={0.3}>
+        <PageHeader
+          title="إعدادات النظام"
+          description="هوية المنصة، وبيانات التواصل، وروابط الشبكات، وبيانات ظهور الموقع الرئيسي في محركات البحث."
+        />
+      </FadeIn>
 
-      <FilterTabs
-        items={SETTINGS_TAB_ITEMS}
-        value={tab}
-        onValueChange={setTab}
-        layout="auto"
-        gridColsClass="sm:grid-cols-4"
-        ariaLabel="أقسام إعدادات النظام"
-        idPrefix="settings-tab"
-      />
+      <FadeIn duration={0.3} delay={0.06}>
+        <FilterTabs
+          items={SETTINGS_TAB_ITEMS}
+          value={tab}
+          onValueChange={setTab}
+          layout="auto"
+          gridColsClass="sm:grid-cols-4"
+          ariaLabel="أقسام إعدادات النظام"
+          idPrefix="settings-tab"
+        />
+      </FadeIn>
 
       <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
         <AnimatePresence mode="wait">

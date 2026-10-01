@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { MapPin, Plus, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
-import { MountFade } from "@/components/animations";
+import { FadeIn, MountFade, StaggerContainer, StaggerItem } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -128,33 +128,35 @@ export default function RegionsSection() {
 
   return (
     <div className="page-shell space-y-6 py-8">
-      <PageHeader
-        title={REGIONS_METADATA.title}
-        description={REGIONS_METADATA.description}
-        actions={
-          <div className="flex items-center gap-2">
-            {regions.length === 0 ? (
+      <FadeIn duration={0.3}>
+        <PageHeader
+          title={REGIONS_METADATA.title}
+          description={REGIONS_METADATA.description}
+          actions={
+            <div className="flex items-center gap-2">
+              {regions.length === 0 ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-10 cursor-pointer"
+                  onClick={handleRestoreDefaults}
+                >
+                  <RotateCcw className="size-4" />
+                  استعادة الافتراضي
+                </Button>
+              ) : null}
               <Button
-                variant="outline"
                 size="sm"
                 className="h-10 cursor-pointer"
-                onClick={handleRestoreDefaults}
+                onClick={() => openDialog({ kind: REGION_ENTRY_KIND.region })}
               >
-                <RotateCcw className="size-4" />
-                استعادة الافتراضي
+                <Plus className="size-4" />
+                إضافة منطقة أو مدينة
               </Button>
-            ) : null}
-            <Button
-              size="sm"
-              className="h-10 cursor-pointer"
-              onClick={() => openDialog({ kind: REGION_ENTRY_KIND.region })}
-            >
-              <Plus className="size-4" />
-              إضافة منطقة أو مدينة
-            </Button>
-          </div>
-        }
-      />
+            </div>
+          }
+        />
+      </FadeIn>
 
       <MountFade delay={0.04}>
         <RegionsFilters
@@ -210,14 +212,12 @@ export default function RegionsSection() {
           </Empty>
         </MountFade>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredRegions.map((region, index) => (
-            <MountFade
-              key={region.id}
-              className="h-full"
-              delay={Math.min(index, 8) * 0.04}
-              distance={10}
-            >
+        <StaggerContainer
+          staggerDelay={0.04}
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+        >
+          {filteredRegions.map((region) => (
+            <StaggerItem key={region.id} className="h-full">
               <RegionCard
                 region={region}
                 onAddCity={(regionId) =>
@@ -226,9 +226,9 @@ export default function RegionsSection() {
                 onRemoveCity={handleRemoveCity}
                 onRemoveRegion={handleRemoveRegion}
               />
-            </MountFade>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       )}
 
       <RegionDialog

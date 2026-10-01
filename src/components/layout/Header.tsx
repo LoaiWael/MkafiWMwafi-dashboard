@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
-import { NavLink, useLocation } from "react-router";
-import { Bell } from "@/components/animate-ui/icons/bell";
+import { useLocation } from "react-router";
 import { PanelRightClose } from "@/components/animate-ui/icons/panel-right-close";
 import { PanelRightOpen } from "@/components/animate-ui/icons/panel-right-open";
 import { getPageTitle } from "@/components/layout/constants";
+import NotificationsPopover from "@/features/notifications/components/notifications-popover";
 import UserAccountMenu from "@/components/layout/user-account-menu";
-import { ROUTES } from "@/lib/constants";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
   Tooltip,
@@ -74,27 +73,7 @@ export default function Header() {
       </h1>
 
       <div className="ms-auto flex items-center gap-1.5 sm:gap-2 shrink-0">
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <NavLink
-                to={ROUTES.notifications}
-                viewTransition
-                aria-label="الإشعارات"
-                className="relative inline-flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
-              />
-            }
-          >
-            <AnimateIcon animateOnHover className="flex size-full items-center justify-center">
-              <Bell size={20} />
-              <span className="absolute top-2 end-2 size-2 rounded-full bg-secondary" />
-            </AnimateIcon>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" sideOffset={6}>
-            الإشعارات
-          </TooltipContent>
-        </Tooltip>
-
+        <NotificationsPopover />
         <UserAccountMenu />
       </div>
 

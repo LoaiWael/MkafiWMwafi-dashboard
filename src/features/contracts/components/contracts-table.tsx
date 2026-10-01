@@ -27,12 +27,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { Contract } from "../types";
 
@@ -42,6 +36,11 @@ interface ContractsTableProps {
   onUpdateStatus: (contract: Contract) => void;
   onUpdatePayment: (contract: Contract) => void;
   onPrintCertificate: (contract: Contract) => void;
+  title?: string;
+  subtitle?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  syncWithUrl?: boolean;
 }
 
 export default function ContractsTable({
@@ -50,6 +49,11 @@ export default function ContractsTable({
   onUpdateStatus,
   onUpdatePayment,
   onPrintCertificate,
+  title = "سجل عقود الإيجار والتوثيق",
+  subtitle = "إدارة عقود الإيجار السكنية والتجارية المدفوعة وغير المدفوعة مع إمكانية تحديث الحالة والربط مع شبكة إيجار.",
+  emptyTitle,
+  emptyDescription,
+  syncWithUrl,
 }: ContractsTableProps) {
   const columns: DataTableColumn<Contract>[] = [
     {
@@ -246,78 +250,69 @@ export default function ContractsTable({
     },
     {
       id: "actions",
-      header: "الإجراءات والخيارات",
+      header: "الإجراءات",
       align: "center",
-      minWidth: "110px",
+      minWidth: "80px",
       cell: (item) => (
-        <div className="flex items-center justify-center gap-1">
-          {/* Quick View Button */}
-          <TooltipProvider delay={150}>
-            <Tooltip>
-              <TooltipTrigger
-                type="button"
-                onClick={() => onViewDetails(item)}
-                className="inline-flex size-8 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-muted cursor-pointer"
-                aria-label="عرض تفاصيل العقد كاملة"
-              >
-                <Eye className="size-4" />
-              </TooltipTrigger>
-              <TooltipContent side="top" sideOffset={4}>
-                عرض تفاصيل العقد
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
+        <div className="flex items-center justify-center">
           {/* Options Dropdown Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger
               type="button"
-              className="inline-flex size-8 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-muted cursor-pointer"
-              aria-label="خيارات العقد"
+              className="inline-flex size-8 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-muted hover:text-primary cursor-pointer"
+              aria-label={`خيارات العقد ${item.contractNumber}`}
             >
               <MoreVertical className="size-4" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52 text-xs">
-              <DropdownMenuGroup>
+            <DropdownMenuContent align="end" className="w-52 p-1 text-xs">
+              <DropdownMenuGroup className="space-y-0.5">
+                <DropdownMenuItem
+                  onClick={() => onViewDetails(item)}
+                  className="gap-2 cursor-pointer font-medium transition-colors hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary"
+                >
+                  <Eye className="size-4 text-primary shrink-0" />
+                  <span>معاينة تفاصيل العقد</span>
+                </DropdownMenuItem>
+
                 <DropdownMenuItem
                   render={
                     <Link
                       to={`/contracts/${item.id}`}
                       viewTransition
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 cursor-pointer"
                     />
                   }
-                  className="gap-2 cursor-pointer"
+                  className="gap-2 cursor-pointer font-medium transition-colors hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary"
                 >
-                  <FileText className="size-4 text-primary" />
+                  <FileText className="size-4 text-primary shrink-0" />
                   <span>فتح صفحة العقد المستقلة</span>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
                   onClick={() => onUpdateStatus(item)}
-                  className="gap-2 cursor-pointer"
+                  className="gap-2 cursor-pointer font-medium transition-colors hover:bg-secondary/10 hover:text-secondary focus:bg-secondary/10 focus:text-secondary"
                 >
-                  <RefreshCw className="size-4 text-secondary" />
+                  <RefreshCw className="size-4 text-secondary shrink-0" />
                   <span>تحديث حالة التوثيق</span>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
                   onClick={() => onUpdatePayment(item)}
-                  className="gap-2 cursor-pointer"
+                  className="gap-2 cursor-pointer font-medium transition-colors hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 focus:bg-emerald-500/10 focus:text-emerald-600 dark:focus:text-emerald-400"
                 >
-                  <CreditCard className="size-4 text-emerald-600" />
+                  <CreditCard className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span>تحديث حالة السداد والرسوم</span>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
 
               <DropdownMenuSeparator />
 
-              <DropdownMenuGroup>
+              <DropdownMenuGroup className="space-y-0.5">
                 <DropdownMenuItem
                   onClick={() => onPrintCertificate(item)}
-                  className="gap-2 cursor-pointer"
+                  className="gap-2 cursor-pointer font-medium transition-colors hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
                 >
-                  <Printer className="size-4 text-foreground" />
+                  <Printer className="size-4 text-foreground shrink-0" />
                   <span>طباعة وثيقة العقد الإلكترونية</span>
                 </DropdownMenuItem>
 
@@ -325,9 +320,9 @@ export default function ContractsTable({
                   onClick={() => {
                     window.open(item.ejar.verificationQrUrl, "_blank");
                   }}
-                  className="gap-2 cursor-pointer"
+                  className="gap-2 cursor-pointer font-medium transition-colors hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
                 >
-                  <ExternalLink className="size-4 text-foreground" />
+                  <ExternalLink className="size-4 text-foreground shrink-0" />
                   <span>التحقق في شبكة إيجار</span>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
@@ -393,8 +388,11 @@ export default function ContractsTable({
     <DataTable
       data={contracts}
       columns={columns}
-      title="سجل عقود الإيجار والتوثيق"
-      subtitle="إدارة عقود الإيجار السكنية والتجارية المدفوعة وغير المدفوعة مع إمكانية تحديث الحالة والربط مع شبكة إيجار."
+      title={title}
+      subtitle={subtitle}
+      emptyTitle={emptyTitle}
+      emptyDescription={emptyDescription}
+      syncWithUrl={syncWithUrl}
       searchPlaceholder="بحث برقم العقد، رمز إيجار، العقار، المؤجر، المستأجر، أو المدينة..."
       searchKeys={["contractNumber"]}
       searchFilter={(item, query) => {

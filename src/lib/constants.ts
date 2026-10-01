@@ -37,6 +37,7 @@ export const ROUTES = {
   taxes: "/taxes",
   reports: "/reports",
   notifications: "/notifications",
+  roles: "/roles",
   regions: "/regions",
   unitOptions: "/unit-options",
   partyOptions: "/party-options",

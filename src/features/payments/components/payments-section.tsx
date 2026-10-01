@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CreditCard, Wallet } from "lucide-react";
+import { CreditCard, Plus, RotateCcw, Wallet } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import PageHeader from "@/components/layout/page-header";
 import { FadeIn } from "@/components/animations";
+import { Button } from "@/components/ui/button";
 import { FilterTabs, type FilterTabItem } from "@/components/ui/filter-tabs";
 import { useUrlTab } from "@/hooks/use-url-tab";
 import {
@@ -15,6 +16,7 @@ import {
   type PaymentMethodOption,
 } from "@/features/payments/constants";
 import PaymentFrequenciesTable from "@/features/payments/components/payment-frequencies-table";
+import PaymentFrequencyDialog from "@/features/payments/components/payment-frequency-dialog";
 import PaymentMethodsTable from "@/features/payments/components/payment-methods-table";
 
 const PAYMENTS_TABS = ["frequencies", "methods"] as const;
@@ -26,6 +28,11 @@ export default function PaymentsSection() {
     defaultValue: "frequencies",
     validValues: PAYMENTS_TABS,
   });
+
+  // Dialog state for adding/editing payment frequencies
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  const [editingFrequency, setEditingFrequency] =
+    useState<PaymentFrequencyOption | null>(null);
 
   // Load from localStorage or defaults
   const [frequencies, setFrequencies] = useState<PaymentFrequencyOption[]>(
@@ -54,6 +61,35 @@ export default function PaymentsSection() {
       JSON.stringify(methods),
     );
   }, [methods]);
+
+  const handleOpenAddFrequency = () => {
+    setEditingFrequency(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenEditFrequency = (item: PaymentFrequencyOption) => {
+    setEditingFrequency(item);
+    setIsDialogOpen(true);
+  };
+
+  const handleSaveFrequency = (
+    data: Omit<PaymentFrequencyOption, "id">,
+    id?: string,
+  ) => {
+    if (id) {
+      setFrequencies((prev) =>
+        prev.map((f) => (f.id === id ? { ...f, ...data } : f)),
+      );
+      toast.success("تم تحديث دورية الدفع بنجاح");
+    } else {
+      const newItem: PaymentFrequencyOption = {
+        id: `freq_${Date.now()}`,
+        ...data,
+      };
+      setFrequencies((prev) => [...prev, newItem]);
+      toast.success("تمت إضافة دورية دفع جديدة بنجاح");
+    }
+  };
 
   const handleResetDefaults = () => {
     if (
@@ -92,6 +128,27 @@ export default function PaymentsSection() {
         <PageHeader
           title={PAYMENTS_METADATA.title}
           description={PAYMENTS_METADATA.description}
+          actions={
+            <div className="flex w-full sm:w-auto items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetDefaults}
+                className="gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <RotateCcw className="size-3.5" />
+                <span>استعادة الافتراضي</span>
+              </Button>
+              <Button
+                onClick={handleOpenAddFrequency}
+                size="sm"
+                className="gap-1.5 cursor-pointer font-bold shadow-xs shrink-0"
+              >
+                <Plus className="size-4" />
+                <span>إضافة طريقة دفعات</span>
+              </Button>
+            </div>
+          }
         />
       </FadeIn>
 
@@ -123,7 +180,7 @@ export default function PaymentsSection() {
             <PaymentFrequenciesTable
               frequencies={frequencies}
               onFrequenciesChange={setFrequencies}
-              onResetDefaults={handleResetDefaults}
+              onEdit={handleOpenEditFrequency}
             />
           </motion.div>
         ) : (
@@ -141,6 +198,14 @@ export default function PaymentsSection() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Add / Edit Frequency Dialog */}
+      <PaymentFrequencyDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        frequency={editingFrequency}
+        onSave={handleSaveFrequency}
+      />
     </div>
   );
 }

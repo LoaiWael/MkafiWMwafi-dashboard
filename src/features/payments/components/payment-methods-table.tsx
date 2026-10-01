@@ -7,6 +7,7 @@ import {
   type DataTableFilterConfig,
 } from "@/components/ui/data-table";
 import { Switch } from "@/components/ui/switch";
+import { FadeIn } from "@/components/animations";
 import type { PaymentMethodOption } from "@/features/payments/constants";
 
 interface PaymentMethodsTableProps {
@@ -126,16 +127,18 @@ export default function PaymentMethodsTable({
   ];
 
   return (
-    <DataTable
-      data={methods}
-      columns={columns}
-      title="قنوات وطرق الدفع الإلكتروني"
-      subtitle="بوابات وطرق الدفع المعتمدة لسداد رسوم توثيق العقود السكنية والتجارية عبر المنصة."
-      searchPlaceholder="بحث باسم القناة، الرمز، أو الوصف..."
-      searchKeys={["nameAr", "code", "description"]}
-      filters={filterConfigs}
-      pageSize={10}
-      pageSizeOptions={[5, 10, 20]}
-    />
+    <FadeIn duration={0.3} delay={0.05}>
+      <DataTable
+        data={methods}
+        columns={columns}
+        title="قنوات وطرق الدفع الإلكتروني"
+        subtitle="بوابات وطرق الدفع المعتمدة لسداد رسوم توثيق العقود السكنية والتجارية عبر المنصة."
+        searchPlaceholder="بحث باسم القناة، الرمز، أو الوصف..."
+        searchKeys={["nameAr", "code", "description"]}
+        filters={filterConfigs}
+        pageSize={10}
+        pageSizeOptions={[5, 10, 20]}
+      />
+    </FadeIn>
   );
 }

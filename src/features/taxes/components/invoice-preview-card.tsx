@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FadeIn } from "@/components/animations";
 import type { TaxSetting } from "@/features/taxes/constants";
 import {
   CONTRACT_PRICING_PLANS,
@@ -83,100 +84,105 @@ export default function InvoicePreviewCard({ taxes }: InvoicePreviewCardProps) {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col space-y-4 sm:space-y-6">
       {/* Simulation Controls Toolbar & Optimized Tabs */}
-      <Card className="border-border/80 bg-card shadow-xs overflow-hidden">
-        <CardContent className="p-3.5 sm:p-5">
-          <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between">
-            {/* Contract Type Segmented Tabs */}
-            <div className="space-y-1.5 sm:space-y-2">
-              <div className="flex items-center gap-2">
-                <Sparkles className="size-3.5 sm:size-4 text-primary" />
-                <span className="text-xs font-bold text-foreground">
-                  نوع العقد للتجربة والمحاكاة:
-                </span>
+      <FadeIn duration={0.3}>
+        <Card className="border-border/80 bg-card shadow-xs overflow-hidden">
+          <CardContent className="p-3.5 sm:p-5">
+            <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between">
+              {/* Contract Type Segmented Tabs */}
+              <div className="space-y-1.5 sm:space-y-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="size-3.5 sm:size-4 text-primary" />
+                  <span className="text-xs font-bold text-foreground">
+                    نوع العقد للتجربة والمحاكاة:
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 rounded-xl border border-border bg-muted/40 p-1 gap-1 sm:inline-flex">
+                  <button
+                    type="button"
+                    onClick={() => setContractType("residential")}
+                    className={`flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 text-xs font-bold transition-all duration-200 cursor-pointer ${
+                      contractType === "residential"
+                        ? "bg-linear-to-r from-primary-800 via-primary to-primary-400 text-primary-foreground shadow-md shadow-inner-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    <Home className="size-3.5 sm:size-4 shrink-0" />
+                    <span>عقد سكني</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setContractType("commercial")}
+                    className={`flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 text-xs font-bold transition-all duration-200 cursor-pointer ${
+                      contractType === "commercial"
+                        ? "bg-linear-to-r from-primary-800 via-primary to-primary-400 text-primary-foreground shadow-md shadow-inner-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    <Building2 className="size-3.5 sm:size-4 shrink-0" />
+                    <span>عقد تجاري</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 rounded-xl border border-border bg-muted/40 p-1 gap-1 sm:inline-flex">
-                <button
-                  type="button"
-                  onClick={() => setContractType("residential")}
-                  className={`flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 text-xs font-bold transition-all duration-200 cursor-pointer ${
-                    contractType === "residential"
-                      ? "bg-linear-to-r from-primary-800 via-primary to-primary-400 text-primary-foreground shadow-md shadow-inner-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
+              {/* Duration Selector */}
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label
+                  htmlFor="plan-select"
+                  className="text-xs font-bold text-foreground block"
                 >
-                  <Home className="size-3.5 sm:size-4 shrink-0" />
-                  <span>عقد سكني</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setContractType("commercial")}
-                  className={`flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 text-xs font-bold transition-all duration-200 cursor-pointer ${
-                    contractType === "commercial"
-                      ? "bg-linear-to-r from-primary-800 via-primary to-primary-400 text-primary-foreground shadow-md shadow-inner-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
+                  مدة العقد المعتمدة:
+                </Label>
+                <Select
+                  value={selectedPlanId}
+                  onValueChange={(val) => {
+                    if (val) setSelectedPlanId(val);
+                  }}
                 >
-                  <Building2 className="size-3.5 sm:size-4 shrink-0" />
-                  <span>عقد تجاري</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Duration Selector */}
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label
-                htmlFor="plan-select"
-                className="text-xs font-bold text-foreground block"
-              >
-                مدة العقد المعتمدة:
-              </Label>
-              <Select
-                value={selectedPlanId}
-                onValueChange={(val) => {
-                  if (val) setSelectedPlanId(val);
-                }}
-              >
-                <SelectTrigger
-                  id="plan-select"
-                  className="h-9 sm:h-9.5 w-full sm:w-60 bg-background text-xs font-semibold"
-                >
-                  <SelectValue placeholder="اختر مدة العقد" />
-                </SelectTrigger>
-                <SelectContent align="end">
-                  {plans.map((p) => (
-                    <SelectItem
-                      key={p.id}
-                      value={p.id}
-                      className="text-xs font-medium py-2"
-                    >
-                      <div className="flex items-center justify-between w-full gap-3">
-                        <span className="font-bold">{p.duration}</span>
-                        <div className="flex items-center gap-1 text-primary font-bold">
-                          <span>{p.amount.toLocaleString("en-US")}</span>
-                          <SaudiRiyal className="size-3 shrink-0" />
+                  <SelectTrigger
+                    id="plan-select"
+                    className="h-9 sm:h-9.5 w-full sm:w-60 bg-background text-xs font-semibold"
+                  >
+                    <SelectValue placeholder="اختر مدة العقد" />
+                  </SelectTrigger>
+                  <SelectContent align="end">
+                    {plans.map((p) => (
+                      <SelectItem
+                        key={p.id}
+                        value={p.id}
+                        className="text-xs font-medium py-2"
+                      >
+                        <div className="flex items-center justify-between w-full gap-3">
+                          <span className="font-bold">{p.duration}</span>
+                          <div className="flex items-center gap-1 text-primary font-bold">
+                            <span>{p.amount.toLocaleString("en-US")}</span>
+                            <SaudiRiyal className="size-3 shrink-0" />
+                          </div>
                         </div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </FadeIn>
 
       {/* Header */}
-      <div className="space-y-1 text-center sm:text-start">
-        <h2 className="text-lg font-extrabold text-primary-950 sm:text-2xl tracking-tight">
-          مراجعة الحساب وتأكيد السداد
-        </h2>
-      </div>
+      <FadeIn duration={0.3} delay={0.05}>
+        <div className="space-y-1 text-center sm:text-start">
+          <h2 className="text-lg font-extrabold text-primary-950 sm:text-2xl tracking-tight">
+            مراجعة الحساب وتأكيد السداد
+          </h2>
+        </div>
+      </FadeIn>
 
-      <div className="space-y-4 sm:space-y-6">
-        {/* Luxury Itemized Financial Summary Card */}
-        <div className="rounded-2xl border border-border/80 bg-card p-3 sm:p-6 shadow-xs relative overflow-hidden sm:rounded-3xl">
+      <FadeIn duration={0.3} delay={0.1}>
+        <div className="space-y-4 sm:space-y-6">
+          {/* Luxury Itemized Financial Summary Card */}
+          <div className="rounded-2xl border border-border/80 bg-card p-3 sm:p-6 shadow-xs relative overflow-hidden sm:rounded-3xl">
             {/* Top Bar of the Card */}
             <div className="flex items-center justify-between gap-2.5 border-b border-border/60 pb-3 sm:pb-4">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -377,7 +383,8 @@ export default function InvoicePreviewCard({ taxes }: InvoicePreviewCardProps) {
               </div>
             </div>
           </div>
-      </div>
+        </div>
+      </FadeIn>
     </div>
   );
 }
