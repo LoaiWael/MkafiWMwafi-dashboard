@@ -11,7 +11,6 @@ import {
   Layers,
   MapPin,
   Plus,
-  SaudiRiyal,
   UserCheck,
 } from "lucide-react";
 import { Link } from "react-router";
@@ -266,7 +265,7 @@ export default function PropertyDetailsView({
       </FadeIn>
 
       {/* 3. Hero Metric Cards (Staggered) */}
-      <StaggerContainer className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
+      <StaggerContainer className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
         <StaggerItem className="h-full">
           <div className="h-full rounded-xl sm:rounded-2xl border border-primary-100/80 bg-primary-50/50 dark:border-primary-900/40 dark:bg-primary-950/25 p-2.5 sm:p-3.5 shadow-2xs text-start flex flex-col justify-between gap-1.5 transition-colors">
             <span className="text-[11px] sm:text-xs text-muted-foreground flex items-center gap-1 font-medium">
@@ -319,23 +318,6 @@ export default function PropertyDetailsView({
         </StaggerItem>
 
         <StaggerItem className="h-full">
-          <div className="h-full rounded-xl sm:rounded-2xl border border-secondary-100/80 bg-secondary-50/50 dark:border-secondary-900/40 dark:bg-secondary-950/25 p-2.5 sm:p-3.5 shadow-2xs text-start flex flex-col justify-between gap-1.5 transition-colors">
-            <span className="text-[11px] sm:text-xs text-muted-foreground flex items-center gap-1 font-medium">
-              <SaudiRiyal className="size-3.5 text-secondary" />
-              الدخل السنوي
-            </span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-base sm:text-xl font-bold text-secondary-700 dark:text-secondary-300">
-                {property.totalAnnualRevenue?.toLocaleString("en-US")}
-              </span>
-              <span className="text-[10px] sm:text-[11px] text-muted-foreground">
-                ر.س
-              </span>
-            </div>
-          </div>
-        </StaggerItem>
-
-        <StaggerItem className="col-span-2 sm:col-span-2 lg:col-span-1 h-full">
           <div className="h-full rounded-xl sm:rounded-2xl border border-border/80 bg-muted/40 dark:border-border/50 dark:bg-muted/20 p-2.5 sm:p-3.5 shadow-2xs text-start flex flex-col justify-between gap-1.5 transition-colors">
             <span className="text-[11px] sm:text-xs text-muted-foreground flex items-center gap-1 font-medium">
               <Building2 className="size-3.5 text-muted-foreground" />

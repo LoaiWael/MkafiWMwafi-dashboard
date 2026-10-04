@@ -236,8 +236,7 @@ export default function ContractDetailsView({
     contract.financials.paymentStatus === "partially_paid";
 
   const isReviewDone =
-    contract.status === "pending_approval" ||
-    contract.status === "certified";
+    contract.status === "pending_approval" || contract.status === "certified";
 
   const isApprovalDone = contract.status === "certified";
   const isEjarDone = contract.status === "certified";
@@ -606,7 +605,7 @@ export default function ContractDetailsView({
                       className="gap-1 border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] sm:text-xs font-medium px-2 py-0.5"
                     >
                       <BadgeCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>موثق نفاذ الوطني</span>
+                      <span>موثق</span>
                     </Badge>
                   )}
                 </div>
@@ -722,7 +721,9 @@ export default function ContractDetailsView({
               <SaudiRiyal className="size-3 sm:size-4 text-muted-foreground shrink-0" />
             </div>
             <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground pt-0.5">
-              <span className="truncate">{contract.financials.paymentFrequencyLabel}</span>
+              <span className="truncate">
+                {contract.financials.paymentFrequencyLabel}
+              </span>
               <span className="font-semibold text-foreground shrink-0 ms-1">
                 {contract.financials.installments.length} دفعات
               </span>
@@ -753,9 +754,7 @@ export default function ContractDetailsView({
             </span>
             <div className="flex items-center gap-1 text-xs font-bold text-tertiary-700 dark:text-tertiary-300 sm:text-base">
               <ShieldCheck className="size-3 sm:size-4 shrink-0" />
-              <span className="truncate">
-                {contract.ejar.ejarStatusLabel}
-              </span>
+              <span className="truncate">{contract.ejar.ejarStatusLabel}</span>
             </div>
             <div className="text-[10px] sm:text-xs font-mono text-muted-foreground pt-0.5 truncate">
               {contract.ejar.ejarContractNumber}
@@ -811,7 +810,8 @@ export default function ContractDetailsView({
                       </h3>
                     </div>
                     <p className="text-[11px] sm:text-xs text-muted-foreground">
-                      متابعة حية لتقدم مراحل إصدار العقد من الإنشاء حتى الاعتماد الرسمي في شبكة إيجار
+                      متابعة حية لتقدم مراحل إصدار العقد من الإنشاء حتى الاعتماد
+                      الرسمي في شبكة إيجار
                     </p>
                   </div>
 
@@ -913,8 +913,10 @@ export default function ContractDetailsView({
                           <h4
                             className={cn(
                               "text-xs font-bold leading-snug",
-                              isDone && "text-emerald-950 dark:text-emerald-100",
-                              isCurrent && "text-primary-950 dark:text-primary-100 font-extrabold",
+                              isDone &&
+                                "text-emerald-950 dark:text-emerald-100",
+                              isCurrent &&
+                                "text-primary-950 dark:text-primary-100 font-extrabold",
                               isUpcoming && "text-foreground/80",
                               isFailedStep && "text-destructive",
                             )}
@@ -925,8 +927,10 @@ export default function ContractDetailsView({
                           <p
                             className={cn(
                               "text-[11px] leading-tight line-clamp-1",
-                              isDone && "text-emerald-700 dark:text-emerald-300 font-medium",
-                              isCurrent && "text-primary-700 dark:text-primary-300 font-semibold",
+                              isDone &&
+                                "text-emerald-700 dark:text-emerald-300 font-medium",
+                              isCurrent &&
+                                "text-primary-700 dark:text-primary-300 font-semibold",
                               isUpcoming && "text-muted-foreground",
                               isFailedStep && "text-destructive/80",
                             )}
@@ -971,7 +975,9 @@ export default function ContractDetailsView({
 
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 text-xs">
                     <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
-                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">رقم العقد:</span>
+                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
+                        رقم العقد:
+                      </span>
                       <div className="flex items-center gap-1 font-mono font-semibold text-foreground text-[11px] sm:text-xs">
                         <span>{contract.contractNumber}</span>
                         <CopyButton
@@ -982,7 +988,9 @@ export default function ContractDetailsView({
                     </div>
 
                     <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
-                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">نوع العقد:</span>
+                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
+                        نوع العقد:
+                      </span>
                       <span className="font-semibold text-foreground text-end text-[11px] sm:text-xs truncate">
                         {contract.typeLabel} ({contract.property.typeLabel})
                       </span>
@@ -1059,28 +1067,36 @@ export default function ContractDetailsView({
 
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 text-xs">
                     <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
-                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">اسم العقار:</span>
+                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
+                        اسم العقار:
+                      </span>
                       <span className="font-semibold text-foreground text-end text-[11px] sm:text-xs truncate">
                         {contract.property.name}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
-                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">رقم الوحدة:</span>
+                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
+                        رقم الوحدة:
+                      </span>
                       <span className="font-semibold text-foreground text-[11px] sm:text-xs">
                         {contract.property.unitNumber}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
-                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">الموقع:</span>
+                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
+                        الموقع:
+                      </span>
                       <span className="font-semibold text-foreground text-end text-[11px] sm:text-xs truncate">
                         {contract.property.city} — {contract.property.district}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
-                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">المساحة:</span>
+                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
+                        المساحة:
+                      </span>
                       <span className="font-semibold text-foreground text-[11px] sm:text-xs">
                         {contract.property.areaSqm} م²
                       </span>
@@ -1101,21 +1117,27 @@ export default function ContractDetailsView({
                     </div>
 
                     <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
-                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">دورية الدفع:</span>
+                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
+                        دورية الدفع:
+                      </span>
                       <span className="font-semibold text-foreground text-[11px] sm:text-xs">
                         {contract.financials.paymentFrequencyLabel}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
-                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">مبلغ الضمان:</span>
+                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
+                        مبلغ الضمان:
+                      </span>
                       <span className="font-semibold text-foreground text-[11px] sm:text-xs">
                         {contract.financials.securityDepositFormatted}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
-                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">حالة السداد:</span>
+                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
+                        حالة السداد:
+                      </span>
                       <span className="font-semibold text-emerald-600 text-[11px] sm:text-xs">
                         {contract.financials.paymentStatusLabel}
                       </span>
@@ -1123,16 +1145,6 @@ export default function ContractDetailsView({
                   </div>
                 </div>
               </div>
-
-              {/* Notes banner */}
-              {contract.notes && (
-                <div className="rounded-2xl border border-primary-200 bg-primary-50/40 p-3.5 sm:p-4 text-xs dark:border-primary-800 dark:bg-primary-950/20">
-                  <span className="block mb-1 font-bold text-primary-800 dark:text-primary-300 text-[11px] sm:text-xs">
-                    ملاحظات الإدارة والمطابقة:
-                  </span>
-                  <p className="text-muted-foreground text-[11px] sm:text-xs leading-relaxed">{contract.notes}</p>
-                </div>
-              )}
             </FadeIn>
           )}
 
@@ -1208,7 +1220,9 @@ export default function ContractDetailsView({
                         البريد الإلكتروني:
                       </span>
                       <div className="flex items-center gap-1 font-medium text-foreground text-xs min-w-0">
-                        <span className="truncate">{contract.lessor.email}</span>
+                        <span className="truncate">
+                          {contract.lessor.email}
+                        </span>
                         <CopyButton
                           value={contract.lessor.email}
                           label="نسخ البريد"
@@ -1304,7 +1318,9 @@ export default function ContractDetailsView({
                         البريد الإلكتروني:
                       </span>
                       <div className="flex items-center gap-1 font-medium text-foreground text-xs min-w-0">
-                        <span className="truncate">{contract.lessee.email}</span>
+                        <span className="truncate">
+                          {contract.lessee.email}
+                        </span>
                         <CopyButton
                           value={contract.lessee.email}
                           label="نسخ البريد"
@@ -1413,14 +1429,18 @@ export default function ContractDetailsView({
 
                   <div className="grid grid-cols-2 gap-2.5 sm:gap-4 text-xs">
                     <div className="rounded-xl sm:rounded-2xl border border-border/80 bg-muted/20 p-2.5 sm:p-3 space-y-1">
-                      <span className="text-[10px] sm:text-[11px] text-muted-foreground">نوع الوحدة:</span>
+                      <span className="text-[10px] sm:text-[11px] text-muted-foreground">
+                        نوع الوحدة:
+                      </span>
                       <div className="font-bold text-foreground text-xs sm:text-sm truncate">
                         {contract.property.typeLabel}
                       </div>
                     </div>
 
                     <div className="rounded-xl sm:rounded-2xl border border-border/80 bg-muted/20 p-2.5 sm:p-3 space-y-1">
-                      <span className="text-[10px] sm:text-[11px] text-muted-foreground">رقم الوحدة:</span>
+                      <span className="text-[10px] sm:text-[11px] text-muted-foreground">
+                        رقم الوحدة:
+                      </span>
                       <div className="font-bold text-foreground text-xs sm:text-sm truncate">
                         {contract.property.unitNumber}
                       </div>
@@ -1532,7 +1552,9 @@ export default function ContractDetailsView({
                     </div>
 
                     <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5">
-                      <span className="text-[11px] sm:text-xs text-muted-foreground shrink-0">اسم الشارع:</span>
+                      <span className="text-[11px] sm:text-xs text-muted-foreground shrink-0">
+                        اسم الشارع:
+                      </span>
                       <span className="font-semibold text-foreground text-end text-[11px] sm:text-xs truncate">
                         {contract.property.street}
                       </span>
@@ -1891,33 +1913,15 @@ export default function ContractDetailsView({
                       fill="currentColor"
                     >
                       <rect x="10" y="10" width="30" height="30" rx="4" />
-                      <rect
-                        x="16"
-                        y="16"
-                        width="18"
-                        height="18"
-                        fill="white"
-                      />
+                      <rect x="16" y="16" width="18" height="18" fill="white" />
                       <rect x="20" y="20" width="10" height="10" />
 
                       <rect x="60" y="10" width="30" height="30" rx="4" />
-                      <rect
-                        x="66"
-                        y="16"
-                        width="18"
-                        height="18"
-                        fill="white"
-                      />
+                      <rect x="66" y="16" width="18" height="18" fill="white" />
                       <rect x="70" y="20" width="10" height="10" />
 
                       <rect x="10" y="60" width="30" height="30" rx="4" />
-                      <rect
-                        x="16"
-                        y="66"
-                        width="18"
-                        height="18"
-                        fill="white"
-                      />
+                      <rect x="16" y="66" width="18" height="18" fill="white" />
                       <rect x="20" y="70" width="10" height="10" />
 
                       <rect x="45" y="15" width="8" height="8" />
@@ -2048,7 +2052,8 @@ export default function ContractDetailsView({
                     const isPayment =
                       log.action.includes("سداد") || log.action.includes("دفع");
                     const isVerification =
-                      log.action.includes("نفاذ") || log.action.includes("قبول");
+                      log.action.includes("نفاذ") ||
+                      log.action.includes("قبول");
                     const isEjar =
                       log.action.includes("إيجار") ||
                       log.action.includes("توثيق") ||

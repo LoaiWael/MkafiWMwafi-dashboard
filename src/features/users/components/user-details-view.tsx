@@ -116,18 +116,20 @@ export default function UserDetailsView({ userId }: UserDetailsViewProps) {
         />
       </FadeIn>
 
-      <FilterTabs
-        items={tabs}
-        value={activeTab}
-        onValueChange={setActiveTab}
-        paramKey={USER_DETAIL_TAB_PARAM}
-        defaultValue={USER_DETAIL_TAB.facts}
-        clearDefaultFromUrl
-        layout="grid"
-        gridColsClass="grid-cols-1 sm:grid-cols-3"
-        ariaLabel="أقسام ملف العميل"
-        idPrefix="user-detail"
-      />
+      <FadeIn delay={0.1}>
+        <FilterTabs
+          items={tabs}
+          value={activeTab}
+          onValueChange={setActiveTab}
+          paramKey={USER_DETAIL_TAB_PARAM}
+          defaultValue={USER_DETAIL_TAB.facts}
+          clearDefaultFromUrl
+          layout="grid"
+          gridColsClass="grid-cols-1 sm:grid-cols-3"
+          ariaLabel="أقسام ملف العميل"
+          idPrefix="user-detail"
+        />
+      </FadeIn>
 
       <AnimatePresence mode="wait">
         {activeTab === USER_DETAIL_TAB.facts ? (

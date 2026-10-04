@@ -38,6 +38,8 @@ export const ROUTES = {
   reports: "/reports",
   notifications: "/notifications",
   roles: "/roles",
+  roleCreate: "/roles/new",
+  roleDetails: (id: string) => `/roles/${id}`,
   regions: "/regions",
   unitOptions: "/unit-options",
   partyOptions: "/party-options",

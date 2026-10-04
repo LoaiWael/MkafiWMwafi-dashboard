@@ -16,3 +16,10 @@ export function useRoles() {
     getRoles,
   );
 }
+
+export function useRole(id: string | undefined) {
+  const roles = useRoles();
+  if (!id) return undefined;
+  return roles.find((role) => role.id === id);
+}
+

@@ -6,7 +6,12 @@ import {
   ShieldCheck,
   Trash2,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarGroup, AvatarImage } from "@/components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarGroup,
+  AvatarImage,
+} from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   DataTable,
@@ -51,13 +56,17 @@ export default function RolesTable({
       accessorKey: "name",
       minWidth: "220px",
       cell: (item) => (
-        <div className="flex items-start gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary mt-0.5">
+        <button
+          type="button"
+          onClick={() => onViewPermissions(item)}
+          className="flex items-start gap-3 text-start cursor-pointer group"
+        >
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary mt-0.5 transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
             <ShieldCheck className="size-4" />
           </div>
           <div className="space-y-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-foreground">
+              <span className="text-sm font-bold text-foreground transition-colors group-hover:text-primary">
                 {item.name}
               </span>
               {item.isSystem ? (
@@ -79,7 +88,7 @@ export default function RolesTable({
               </p>
             ) : null}
           </div>
-        </div>
+        </button>
       ),
     },
     {
@@ -133,7 +142,11 @@ export default function RolesTable({
                   <bdi>{count}</bdi> موظف
                 </span>
               </TooltipTrigger>
-              <TooltipContent side="top" sideOffset={6} className="text-xs max-w-xs">
+              <TooltipContent
+                side="top"
+                sideOffset={6}
+                className="text-xs max-w-xs"
+              >
                 <p className="font-semibold mb-1">الموظفون المسند إليهم:</p>
                 <p className="text-muted-foreground">
                   {employees.map((e) => e.name).join("، ")}
@@ -245,7 +258,9 @@ export default function RolesTable({
                     className="gap-2 cursor-pointer font-medium text-destructive transition-colors hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Trash2 className="size-4 text-destructive shrink-0" />
-                    <span>{item.isSystem ? "دور أساسي (لا يحذف)" : "حذف الدور"}</span>
+                    <span>
+                      {item.isSystem ? "دور أساسي (لا يحذف)" : "حذف الدور"}
+                    </span>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
@@ -276,8 +291,6 @@ export default function RolesTable({
     <DataTable
       data={[...roles]}
       columns={columns}
-      title="مصفوفة الأدوار والصلاحيات"
-      subtitle="استعراض وتعديل كافة الأدوار الوظيفية المعتمدة ومستوى الوصول الممنوح لكل دور في لوحة التحكم."
       searchPlaceholder="البحث باسم الدور أو الصلاحية أو الوصف..."
       searchFilter={(item, query) => {
         const haystack = [

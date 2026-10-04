@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CreditCard, Plus, RotateCcw, Wallet } from "lucide-react";
+import { Plus, ReceiptText, RotateCcw, Wallet } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import PageHeader from "@/components/layout/page-header";
 import { FadeIn } from "@/components/animations";
@@ -9,23 +9,24 @@ import { FilterTabs, type FilterTabItem } from "@/components/ui/filter-tabs";
 import { useUrlTab } from "@/hooks/use-url-tab";
 import {
   INITIAL_PAYMENT_FREQUENCIES,
-  INITIAL_PAYMENT_METHODS,
+  MOCK_PAYMENT_REPORTS,
   PAYMENTS_METADATA,
   PAYMENTS_STORAGE_KEYS,
   type PaymentFrequencyOption,
-  type PaymentMethodOption,
+  type PaymentReportRecord,
 } from "@/features/payments/constants";
 import PaymentFrequenciesTable from "@/features/payments/components/payment-frequencies-table";
 import PaymentFrequencyDialog from "@/features/payments/components/payment-frequency-dialog";
-import PaymentMethodsTable from "@/features/payments/components/payment-methods-table";
+import PaymentReportsTable from "@/features/payments/components/payment-reports-table";
 
-const PAYMENTS_TABS = ["frequencies", "methods"] as const;
+const PAYMENTS_TABS = ["reports", "frequencies"] as const;
 type PaymentsTab = (typeof PAYMENTS_TABS)[number];
 
 export default function PaymentsSection() {
   const [activeTab, setActiveTab] = useUrlTab<PaymentsTab>({
     paramKey: "tab",
-    defaultValue: "frequencies",
+    defaultValue: "reports",
+    clearDefaultFromUrl: true,
     validValues: PAYMENTS_TABS,
   });
 
@@ -34,7 +35,7 @@ export default function PaymentsSection() {
   const [editingFrequency, setEditingFrequency] =
     useState<PaymentFrequencyOption | null>(null);
 
-  // Load from localStorage or defaults
+  // Load frequencies from localStorage or defaults
   const [frequencies, setFrequencies] = useState<PaymentFrequencyOption[]>(
     () => {
       const saved = localStorage.getItem(PAYMENTS_STORAGE_KEYS.frequencies);
@@ -42,12 +43,13 @@ export default function PaymentsSection() {
     },
   );
 
-  const [methods, setMethods] = useState<PaymentMethodOption[]>(() => {
-    const saved = localStorage.getItem(PAYMENTS_STORAGE_KEYS.methods);
-    return saved ? JSON.parse(saved) : [...INITIAL_PAYMENT_METHODS];
+  // Load payment reports from localStorage or defaults
+  const [reports, setReports] = useState<PaymentReportRecord[]>(() => {
+    const saved = localStorage.getItem(PAYMENTS_STORAGE_KEYS.reports);
+    return saved ? JSON.parse(saved) : [...MOCK_PAYMENT_REPORTS];
   });
 
-  // Save to localStorage
+  // Save frequencies to localStorage
   useEffect(() => {
     localStorage.setItem(
       PAYMENTS_STORAGE_KEYS.frequencies,
@@ -55,12 +57,13 @@ export default function PaymentsSection() {
     );
   }, [frequencies]);
 
+  // Save reports to localStorage
   useEffect(() => {
     localStorage.setItem(
-      PAYMENTS_STORAGE_KEYS.methods,
-      JSON.stringify(methods),
+      PAYMENTS_STORAGE_KEYS.reports,
+      JSON.stringify(reports),
     );
-  }, [methods]);
+  }, [reports]);
 
   const handleOpenAddFrequency = () => {
     setEditingFrequency(null);
@@ -94,31 +97,31 @@ export default function PaymentsSection() {
   const handleResetDefaults = () => {
     if (
       window.confirm(
-        "هل ترغب بإعادة تعيين خيارات الدفع والبيانات المالية إلى الافتراضي؟",
+        "هل ترغب بإعادة تعيين البيانات وسجلات المدفوعات إلى الافتراضي؟",
       )
     ) {
       setFrequencies([...INITIAL_PAYMENT_FREQUENCIES]);
-      setMethods([...INITIAL_PAYMENT_METHODS]);
+      setReports([...MOCK_PAYMENT_REPORTS]);
       localStorage.removeItem(PAYMENTS_STORAGE_KEYS.frequencies);
-      localStorage.removeItem(PAYMENTS_STORAGE_KEYS.methods);
+      localStorage.removeItem(PAYMENTS_STORAGE_KEYS.reports);
       toast.success(
-        "تمت استعادة خيارات الدفع والبيانات المالية الافتراضية بنجاح",
+        "تمت استعادة خيارات وسجلات المدفوعات الافتراضية بنجاح",
       );
     }
   };
 
   const filterTabs: FilterTabItem<PaymentsTab>[] = [
     {
+      id: "reports",
+      label: "سجل وتقارير المدفوعات",
+      icon: ReceiptText,
+      count: reports.length,
+    },
+    {
       id: "frequencies",
       label: "طريقة وتكرار الدفعات",
       icon: Wallet,
       count: frequencies.length,
-    },
-    {
-      id: "methods",
-      label: "قنوات وطرق السداد",
-      icon: CreditCard,
-      count: methods.length,
     },
   ];
 
@@ -139,20 +142,22 @@ export default function PaymentsSection() {
                 <RotateCcw className="size-3.5" />
                 <span>استعادة الافتراضي</span>
               </Button>
-              <Button
-                onClick={handleOpenAddFrequency}
-                size="sm"
-                className="gap-1.5 cursor-pointer font-bold shadow-xs shrink-0"
-              >
-                <Plus className="size-4" />
-                <span>إضافة طريقة دفعات</span>
-              </Button>
+              {activeTab === "frequencies" && (
+                <Button
+                  onClick={handleOpenAddFrequency}
+                  size="sm"
+                  className="gap-1.5 cursor-pointer font-bold shadow-xs shrink-0"
+                >
+                  <Plus className="size-4" />
+                  <span>إضافة طريقة دفعات</span>
+                </Button>
+              )}
             </div>
           }
         />
       </FadeIn>
 
-      {/* Filter Tabs Navigation */}
+      {/* Main Section Navigation Tabs */}
       <FadeIn duration={0.3} delay={0.04}>
         <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
           <FilterTabs
@@ -161,15 +166,28 @@ export default function PaymentsSection() {
             onValueChange={setActiveTab}
             layout="scroll"
             className="w-full sm:w-auto"
-            ariaLabel="تبويبات خيارات الدفع"
-            idPrefix="payments-tab"
+            ariaLabel="تبويبات إدارة وسجلات المدفوعات"
+            idPrefix="payments-main-tab"
           />
         </div>
       </FadeIn>
 
       {/* Tab Panels */}
       <AnimatePresence mode="wait">
-        {activeTab === "frequencies" ? (
+        {activeTab === "reports" ? (
+          <motion.div
+            key="reports"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.22, ease: [0.21, 0.47, 0.32, 0.98] }}
+          >
+            <PaymentReportsTable
+              reports={reports}
+              onReportsChange={setReports}
+            />
+          </motion.div>
+        ) : (
           <motion.div
             key="frequencies"
             initial={{ opacity: 0, y: 12 }}
@@ -181,19 +199,6 @@ export default function PaymentsSection() {
               frequencies={frequencies}
               onFrequenciesChange={setFrequencies}
               onEdit={handleOpenEditFrequency}
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="methods"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.22, ease: [0.21, 0.47, 0.32, 0.98] }}
-          >
-            <PaymentMethodsTable
-              methods={methods}
-              onMethodsChange={setMethods}
             />
           </motion.div>
         )}

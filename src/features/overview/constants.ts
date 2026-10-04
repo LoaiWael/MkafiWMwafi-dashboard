@@ -1,7 +1,7 @@
 import {
   Building2,
   FileText,
-  Hourglass,
+  SaudiRiyal,
   Store,
   Users,
   Wallet,
@@ -15,6 +15,7 @@ export interface OverviewStatItem {
   value: string;
   numericValue: number;
   unit?: string;
+  unitIcon?: LucideIcon;
   description: string;
   href: string;
   icon: LucideIcon;
@@ -41,9 +42,9 @@ export const OVERVIEW_STATS: OverviewStatItem[] = [
     trendPositive: true,
     colorScheme: "primary",
     subMetrics: [
-      { label: "موثق نشط", value: "1,140" },
+      { label: "موثق ونشط", value: "1,140" },
       { label: "قيد المراجعة", value: "112" },
-      { label: "بانتظار الموافقة", value: "32" },
+      { label: "بانتظار السداد", value: "32" },
     ],
   },
   {
@@ -59,8 +60,8 @@ export const OVERVIEW_STATS: OverviewStatItem[] = [
     trendPositive: true,
     colorScheme: "secondary",
     subMetrics: [
-      { label: "موثق نشط", value: "394" },
-      { label: "قيد التدقيق", value: "48" },
+      { label: "موثق ونشط", value: "394" },
+      { label: "قيد المراجعة", value: "48" },
       { label: "بانتظار السداد", value: "16" },
     ],
   },
@@ -77,26 +78,10 @@ export const OVERVIEW_STATS: OverviewStatItem[] = [
     trendPositive: true,
     colorScheme: "primary",
     subMetrics: [
+      { label: "عقارات سكنية", value: "580" },
+      { label: "عقارات تجارية", value: "312" },
       { label: "وحدات سكنية", value: "640" },
-      { label: "منشآت تجارية", value: "252" },
-    ],
-  },
-  {
-    id: "requests",
-    label: "طلبات التوثيق",
-    value: "196",
-    numericValue: 196,
-    unit: "طلب جاري",
-    description: "طلبات توثيق قيد المراجعة من تدقيق المستندات حتى التسليم.",
-    href: `${ROUTES.contracts}?status=under_review`,
-    icon: Hourglass,
-    trend: "34 طلب جديد اليوم",
-    trendPositive: true,
-    colorScheme: "tertiary",
-    subMetrics: [
-      { label: "تدقيق مستندات", value: "82" },
-      { label: "بانتظار إيجار", value: "64" },
-      { label: "جاهزة للتسليم", value: "50" },
+      { label: "وحدات تجارية", value: "252" },
     ],
   },
   {
@@ -121,7 +106,7 @@ export const OVERVIEW_STATS: OverviewStatItem[] = [
     label: "إجمالي رسوم التوثيق",
     value: "479,250",
     numericValue: 479250,
-    unit: "ر.س",
+    unitIcon: SaudiRiyal,
     description: "إجمالي رسوم التوثيق المحصلة للعقود السكنية والتجارية.",
     href: ROUTES.payments,
     icon: Wallet,
@@ -129,8 +114,8 @@ export const OVERVIEW_STATS: OverviewStatItem[] = [
     trendPositive: true,
     colorScheme: "tertiary",
     subMetrics: [
-      { label: "عقود سكنية", value: "319,716 ر.س" },
-      { label: "عقود تجارية", value: "159,534 ر.س" },
+      { label: "عقود سكنية", value: "319,716" },
+      { label: "عقود تجارية", value: "159,534" },
     ],
   },
 ];

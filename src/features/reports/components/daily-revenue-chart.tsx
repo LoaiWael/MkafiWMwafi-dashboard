@@ -1,19 +1,6 @@
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { SaudiRiyal, TrendingUp } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
   ChartLegend,
@@ -29,55 +16,48 @@ interface DailyRevenueChartProps {
 }
 
 export default function DailyRevenueChart({ data }: DailyRevenueChartProps) {
-  const chartData = [...data]
-    .reverse()
-    .map((item) => {
-      const parts = item.date.split("-");
-      const shortDate = `${parts[1]}/${parts[2]}`;
-      return {
-        date: item.date,
-        displayDate: shortDate,
-        dayName: item.dayName,
-        totalRevenue: item.totalRevenue,
-        requestsCount: item.requestsCount,
-      };
-    });
-
-  const totalPeriodRevenue = data.reduce((acc, curr) => acc + curr.totalRevenue, 0);
+  const chartData = [...data].reverse().map((item) => {
+    const parts = item.date.split("-");
+    const shortDate = `${parts[1]}/${parts[2]}`;
+    return {
+      date: item.date,
+      displayDate: shortDate,
+      dayName: item.dayName,
+      totalRevenue: item.totalRevenue,
+      requestsCount: item.requestsCount,
+    };
+  });
 
   const maxRevenueDay =
     data.length > 0
       ? [...data].sort((a, b) => b.totalRevenue - a.totalRevenue)[0]
       : null;
 
+  const maxRevenueDayDisplayDate = maxRevenueDay
+    ? maxRevenueDay.date.split("-").slice(1).join("/")
+    : "";
+
   return (
     <Card className="border-border/70 shadow-xs">
       <CardHeader className="flex flex-col gap-3 border-b border-border/50 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <CardTitle className="text-base font-bold text-foreground sm:text-lg">
-              الإيرادات اليومية وحركة الطلبات
-            </CardTitle>
-            <Badge variant="outline" className="gap-1 text-xs border-tertiary/40 text-tertiary-700 dark:text-tertiary-300">
-              <SaudiRiyal className="size-3.5" />
-              <span>{totalPeriodRevenue.toLocaleString()}</span>
-            </Badge>
-          </div>
-          <CardDescription className="mt-1 text-xs text-muted-foreground">
-            إجمالي رسوم التوثيق المحصلة ومقارنتها بعدد الطلبات الواردة يومياً
-          </CardDescription>
+          <CardTitle className="text-base font-bold text-foreground sm:text-lg">
+            الإيرادات اليومية وحركة الطلبات
+          </CardTitle>
         </div>
 
         {maxRevenueDay && (
-          <div className="flex items-center gap-2 rounded-lg bg-tertiary-50/70 dark:bg-tertiary-950/40 border border-tertiary-200/60 dark:border-tertiary-900/50 px-3 py-1.5 text-xs">
-            <TrendingUp className="size-4 text-tertiary" />
-            <div>
-              <span className="text-muted-foreground">أعلى يوم: </span>
-              <strong className="inline-flex items-center gap-1 font-semibold text-foreground">
-                <span>{maxRevenueDay.dayName} ({maxRevenueDay.totalRevenue.toLocaleString()}</span>
-                <SaudiRiyal className="size-3 text-muted-foreground" />
-                <span>)</span>
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-tertiary-200/60 bg-tertiary-50/60 px-3 py-1.5 text-xs dark:border-tertiary-900/50 dark:bg-tertiary-950/40 sm:gap-2.5">
+            <div className="flex items-center gap-1.5">
+              <TrendingUp className="size-3.5 text-tertiary" />
+              <span className="text-muted-foreground">أعلى يوم:</span>
+              <strong className="font-semibold text-foreground">
+                {maxRevenueDay.dayName} ({maxRevenueDayDisplayDate})
               </strong>
+            </div>
+            <div className="inline-flex items-center gap-1 rounded-md bg-tertiary/15 px-2 py-0.5 font-bold text-tertiary dark:bg-tertiary-500/20">
+              <span>{maxRevenueDay.totalRevenue.toLocaleString()}</span>
+              <SaudiRiyal className="size-3.5" />
             </div>
           </div>
         )}
@@ -91,12 +71,30 @@ export default function DailyRevenueChart({ data }: DailyRevenueChartProps) {
               margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
             >
               <defs>
-                <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--tertiary)" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="var(--tertiary)" stopOpacity={0.0} />
+                <linearGradient
+                  id="revenueGradient"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="5%"
+                    stopColor="var(--tertiary)"
+                    stopOpacity={0.4}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--tertiary)"
+                    stopOpacity={0.0}
+                  />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border/40" />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                className="stroke-border/40"
+              />
               <XAxis
                 dataKey="displayDate"
                 tickLine={false}
@@ -118,7 +116,9 @@ export default function DailyRevenueChart({ data }: DailyRevenueChartProps) {
                       if (name === "totalRevenue") {
                         return (
                           <div className="flex w-full items-center justify-between gap-2">
-                            <span className="text-muted-foreground">الإيراد:</span>
+                            <span className="text-muted-foreground">
+                              الإيراد:
+                            </span>
                             <span className="inline-flex items-center gap-0.5 font-bold text-foreground">
                               <span>{Number(value).toLocaleString()}</span>
                               <SaudiRiyal className="size-3 text-muted-foreground" />
@@ -128,7 +128,9 @@ export default function DailyRevenueChart({ data }: DailyRevenueChartProps) {
                       }
                       return (
                         <div className="flex w-full items-center justify-between gap-2">
-                          <span className="text-muted-foreground">الطلبات:</span>
+                          <span className="text-muted-foreground">
+                            الطلبات:
+                          </span>
                           <span className="font-bold text-foreground">
                             {Number(value)} طلب
                           </span>

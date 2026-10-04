@@ -1,15 +1,4 @@
-import {
-  BadgeCheck,
-  Building2,
-  CheckCircle2,
-  Clock,
-  FileCheck2,
-  Plus,
-  SaudiRiyal,
-  ShieldCheck,
-  TrendingUp,
-  Zap,
-} from "lucide-react";
+import { Building2, FileCheck2, SaudiRiyal, TrendingUp } from "lucide-react";
 import { Link } from "react-router";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
@@ -31,15 +20,15 @@ export default function OverviewSection() {
         actions={
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <Link
-              to={ROUTES.contracts}
+              to={ROUTES.properties}
               viewTransition
               className={cn(
                 buttonVariants({ variant: "outline", size: "sm" }),
                 "h-8.5 sm:h-9 flex-1 sm:flex-initial gap-1.5 rounded-xl px-3 text-[11px] sm:text-xs font-semibold active:scale-98",
               )}
             >
-              <FileCheck2 className="size-4 text-primary shrink-0" />
-              <span>استعراض العقود</span>
+              <Building2 className="size-4 text-primary shrink-0" />
+              <span>عرض العقارات</span>
             </Link>
 
             <Link
@@ -50,78 +39,32 @@ export default function OverviewSection() {
                 "h-8.5 sm:h-9 flex-1 sm:flex-initial gap-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 px-3 text-[11px] sm:text-xs font-semibold shadow-xs active:scale-98",
               )}
             >
-              <Plus className="size-4 shrink-0" />
-              <span>توثيق عقد جديد</span>
+              <FileCheck2 className="size-4 shrink-0" />
+              <span>عرض العقود</span>
             </Link>
           </div>
         }
       />
 
-      {/* 2. Official Regulatory Gateway Integration Live Status Strip */}
-      <FadeIn duration={0.3} delay={0.05}>
-        <div className="rounded-2xl border border-border bg-card p-3 sm:p-4 shadow-xs">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            {/* Live Integrations Badges */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                <span className="relative flex size-2">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
-                </span>
-                <span>حالة الربط المباشر:</span>
-              </div>
-
-              <div className="flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                <ShieldCheck className="size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span>شبكة إيجار (نشط ومزامن)</span>
-              </div>
-
-              <div className="flex items-center gap-1 rounded-lg border border-primary-200 bg-primary-50/80 px-2.5 py-1 text-[11px] font-semibold text-primary-800 dark:border-primary-800 dark:bg-primary-950/60 dark:text-primary-300">
-                <BadgeCheck className="size-3.5 text-primary-600 dark:text-primary-400 shrink-0" />
-                <span>نفاذ الوطني (موثق)</span>
-              </div>
-
-              <div className="flex items-center gap-1 rounded-lg border border-secondary-200 bg-secondary-50/80 px-2.5 py-1 text-[11px] font-semibold text-secondary-800 dark:border-secondary-800 dark:bg-secondary-950/60 dark:text-secondary-300">
-                <CheckCircle2 className="size-3.5 text-secondary-600 dark:text-secondary-400 shrink-0" />
-                <span>رخصة فال (REGA)</span>
-              </div>
-            </div>
-
-            {/* Quick System Metric */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] text-muted-foreground border-t border-border/40 pt-2 lg:border-t-0 lg:pt-0">
-              <span className="flex items-center gap-1">
-                <Clock className="size-3.5" />
-                متوسط وقت التوثيق: <strong className="text-foreground">12 دقيقة</strong>
-              </span>
-              <span className="hidden sm:inline">•</span>
-              <span className="flex items-center gap-1">
-                <Zap className="size-3.5 text-amber-500" />
-                المطابقة الفورية للصكوك: <strong className="text-emerald-600">99.8%</strong>
-              </span>
-            </div>
-          </div>
-        </div>
-      </FadeIn>
-
-      {/* 3. Status Cards Grid with Numbers */}
+      {/* 2. Status Cards Grid with Numbers */}
       <section aria-label="إحصائيات وحالة المنصة">
         <StaggerContainer
           staggerDelay={0.06}
-          className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
+          className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 items-stretch"
         >
           {OVERVIEW_STATS.map((stat) => (
-            <StaggerItem key={stat.id}>
-              <OverviewStatCard stat={stat} />
+            <StaggerItem key={stat.id} className="flex h-full">
+              <OverviewStatCard stat={stat} className="w-full flex-1" />
             </StaggerItem>
           ))}
         </StaggerContainer>
       </section>
 
-      {/* 4. Quick Operational Insights Strip */}
+      {/* 3. Quick Operational Insights Strip */}
       <FadeIn duration={0.3} delay={0.15}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 items-stretch">
           {/* Card 1: Contracts Mix Ratio */}
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-2xs space-y-3">
+          <div className="flex flex-col justify-between rounded-2xl border border-border bg-card p-4 shadow-2xs space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="flex size-7 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-950">
@@ -164,33 +107,8 @@ export default function OverviewSection() {
             </div>
           </div>
 
-          {/* Card 2: Ejar Network Live Sync Efficiency */}
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-2xs space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex size-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950">
-                  <ShieldCheck className="size-4" />
-                </div>
-                <h4 className="text-xs font-bold text-foreground">
-                  كفاءة المزامنة التلقائية
-                </h4>
-              </div>
-              <Badge
-                variant="outline"
-                className="border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-bold"
-              >
-                99.4% نجاح
-              </Badge>
-            </div>
-
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              إصدار العقود ومطابقة الصكوك العقارية وسجلات المنشآت اللحظية عبر
-              بوابات الربط المعتمدة دون أي تأخير يدوي.
-            </p>
-          </div>
-
-          {/* Card 3: Financial Summary Callout */}
-          <div className="rounded-2xl border border-border bg-card p-4 shadow-2xs space-y-3 sm:col-span-2 lg:col-span-1">
+          {/* Card 2: Financial Summary Callout */}
+          <div className="flex flex-col justify-between rounded-2xl border border-border bg-card p-4 shadow-2xs space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="flex size-7 items-center justify-center rounded-lg bg-tertiary-50 text-tertiary-600 dark:bg-tertiary-950">
@@ -228,7 +146,7 @@ export default function OverviewSection() {
         </div>
       </FadeIn>
 
-      {/* 5. Overview Contracts & Real Estate Data Table */}
+      {/* 4. Overview Contracts & Real Estate Data Table */}
       <section aria-label="جدول العقود والعقارات الأخيرة">
         <FadeIn direction="none" delay={0.2} duration={0.4}>
           <OverviewContractsTable />

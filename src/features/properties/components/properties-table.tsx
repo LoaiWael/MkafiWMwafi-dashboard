@@ -3,7 +3,6 @@ import {
   Home,
   Layers,
   MapPin,
-  SaudiRiyal,
   Store,
   UserCheck,
 } from "lucide-react";
@@ -217,25 +216,7 @@ export default function PropertiesTable({
         );
       },
     },
-    {
-      id: "revenue",
-      header: "العائد السنوي التقديري",
-      sortable: true,
-      sortValue: (item) => item.totalAnnualRevenue,
-      align: "end",
-      minWidth: "150px",
-      cell: (item) => (
-        <div className="text-end space-y-0.5">
-          <div className="flex items-center justify-end gap-1 text-sm font-bold text-foreground">
-            <span>{item.totalAnnualRevenue.toLocaleString("en-US")}</span>
-            <SaudiRiyal className="size-3.5 text-muted-foreground shrink-0" />
-          </div>
-          <div className="text-[10px] text-muted-foreground">
-            سنوياً ({item.activeContractsCount} عقود نشطة)
-          </div>
-        </div>
-      ),
-    },
+
     {
       id: "actions",
       header: "الإجراءات",

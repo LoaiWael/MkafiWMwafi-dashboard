@@ -698,3 +698,30 @@
   content: attr(data-placeholder);
   pointer-events: none;
 }
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #certified-payment-receipt,
+  #certified-payment-receipt * {
+    visibility: visible !important;
+  }
+  #certified-payment-receipt {
+    position: absolute !important;
+    inset-inline-start: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 1.5rem !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 0.75rem !important;
+    box-shadow: none !important;
+    background-color: #ffffff !important;
+    color: #0d2426 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+

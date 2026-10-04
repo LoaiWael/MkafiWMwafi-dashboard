@@ -11,19 +11,11 @@ import {
 import {
   BarChart2,
   Building2,
-  FileCheck2,
   Home,
   LineChart as LineChartIcon,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
   ChartLegend,
@@ -38,46 +30,48 @@ interface DailyContractsChartProps {
   data: DailyReportRecord[];
 }
 
-export default function DailyContractsChart({ data }: DailyContractsChartProps) {
+export default function DailyContractsChart({
+  data,
+}: DailyContractsChartProps) {
   const [chartType, setChartType] = useState<"area" | "bar">("area");
-  const [activeFilter, setActiveFilter] = useState<"all" | "residential" | "commercial">("all");
+  const [activeFilter, setActiveFilter] = useState<
+    "all" | "residential" | "commercial"
+  >("all");
 
   // Format data for chart (sorted chronological for the x-axis)
-  const chartData = [...data]
-    .reverse()
-    .map((item) => {
-      const parts = item.date.split("-");
-      const shortDate = `${parts[1]}/${parts[2]}`; // MM/DD
-      return {
-        date: item.date,
-        displayDate: shortDate,
-        dayName: item.dayName,
-        totalContracts: item.totalContracts,
-        residentialContracts: item.residentialContracts,
-        commercialContracts: item.commercialContracts,
-      };
-    });
+  const chartData = [...data].reverse().map((item) => {
+    const parts = item.date.split("-");
+    const shortDate = `${parts[1]}/${parts[2]}`; // MM/DD
+    return {
+      date: item.date,
+      displayDate: shortDate,
+      dayName: item.dayName,
+      totalContracts: item.totalContracts,
+      residentialContracts: item.residentialContracts,
+      commercialContracts: item.commercialContracts,
+    };
+  });
 
-  const totalContractsInPeriod = data.reduce((acc, curr) => acc + curr.totalContracts, 0);
-  const totalResidential = data.reduce((acc, curr) => acc + curr.residentialContracts, 0);
-  const totalCommercial = data.reduce((acc, curr) => acc + curr.commercialContracts, 0);
+  const totalContractsInPeriod = data.reduce(
+    (acc, curr) => acc + curr.totalContracts,
+    0,
+  );
+  const totalResidential = data.reduce(
+    (acc, curr) => acc + curr.residentialContracts,
+    0,
+  );
+  const totalCommercial = data.reduce(
+    (acc, curr) => acc + curr.commercialContracts,
+    0,
+  );
 
   return (
     <Card className="border-border/70 shadow-xs">
       <CardHeader className="flex flex-col gap-4 border-b border-border/50 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <CardTitle className="text-base font-bold text-foreground sm:text-lg">
-              حجم توثيق العقود اليومي (سكني وتجاري)
-            </CardTitle>
-            <Badge variant="secondary" className="gap-1 text-xs">
-              <FileCheck2 className="size-3 text-primary" />
-              <span>{totalContractsInPeriod} عقد</span>
-            </Badge>
-          </div>
-          <CardDescription className="mt-1 text-xs text-muted-foreground">
-            تطور أعداد العقود المعتمدة رسمياً بشبكة إيجار يومياً حسب نوع النشاط
-          </CardDescription>
+          <CardTitle className="text-base font-bold text-foreground sm:text-lg">
+            حجم توثيق العقود اليومي
+          </CardTitle>
         </div>
 
         {/* Controls */}
@@ -144,41 +138,88 @@ export default function DailyContractsChart({ data }: DailyContractsChartProps) 
               <span className="size-2.5 rounded-full bg-primary" />
               <span className="text-muted-foreground">عقود سكنية:</span>
               <span className="font-bold text-foreground">
-                {totalResidential.toLocaleString()} ({Math.round((totalResidential / (totalContractsInPeriod || 1)) * 100)}%)
+                {totalResidential.toLocaleString()} (
+                {Math.round(
+                  (totalResidential / (totalContractsInPeriod || 1)) * 100,
+                )}
+                %)
               </span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-full bg-secondary" />
               <span className="text-muted-foreground">عقود تجارية:</span>
               <span className="font-bold text-foreground">
-                {totalCommercial.toLocaleString()} ({Math.round((totalCommercial / (totalContractsInPeriod || 1)) * 100)}%)
+                {totalCommercial.toLocaleString()} (
+                {Math.round(
+                  (totalCommercial / (totalContractsInPeriod || 1)) * 100,
+                )}
+                %)
               </span>
             </div>
           </div>
           <div className="text-muted-foreground">
-            المتوسط اليومي: <strong className="text-foreground">{Math.round(totalContractsInPeriod / (chartData.length || 1))} عقد/يوم</strong>
+            المتوسط اليومي:{" "}
+            <strong className="text-foreground">
+              {Math.round(totalContractsInPeriod / (chartData.length || 1))}{" "}
+              عقد/يوم
+            </strong>
           </div>
         </div>
 
         {/* Chart Viewport */}
         <div className="h-72 w-full sm:h-80">
-          <ChartContainer config={contractsChartConfig} className="h-full w-full">
+          <ChartContainer
+            config={contractsChartConfig}
+            className="h-full w-full"
+          >
             {chartType === "area" ? (
               <AreaChart
                 data={chartData}
                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
               >
                 <defs>
-                  <linearGradient id="residentialGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.0} />
+                  <linearGradient
+                    id="residentialGradient"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="5%"
+                      stopColor="var(--primary)"
+                      stopOpacity={0.4}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor="var(--primary)"
+                      stopOpacity={0.0}
+                    />
                   </linearGradient>
-                  <linearGradient id="commercialGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--secondary)" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="var(--secondary)" stopOpacity={0.0} />
+                  <linearGradient
+                    id="commercialGradient"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="5%"
+                      stopColor="var(--secondary)"
+                      stopOpacity={0.4}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor="var(--secondary)"
+                      stopOpacity={0.0}
+                    />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border/40" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  className="stroke-border/40"
+                />
                 <XAxis
                   dataKey="displayDate"
                   tickLine={false}
@@ -231,7 +272,11 @@ export default function DailyContractsChart({ data }: DailyContractsChartProps) 
                 data={chartData}
                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border/40" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  className="stroke-border/40"
+                />
                 <XAxis
                   dataKey="displayDate"
                   tickLine={false}

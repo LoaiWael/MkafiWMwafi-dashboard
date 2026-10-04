@@ -57,7 +57,8 @@ export default function ReportsStatCards({
       ],
       colorStyle: {
         card: "bg-primary-50/50 border-primary-100/70 dark:bg-primary-950/20 dark:border-primary-900/40",
-        iconBg: "bg-primary-100 text-primary-700 dark:bg-primary-900/60 dark:text-primary-300",
+        iconBg:
+          "bg-primary-100 text-primary-700 dark:bg-primary-900/60 dark:text-primary-300",
       },
     },
     {
@@ -68,21 +69,10 @@ export default function ReportsStatCards({
       growth: summary.revenueGrowthRate,
       icon: SaudiRiyal,
       description: `رسوم التوثيق والخدمات الإلكترونية المعتمدة`,
-      subMetrics: [
-        {
-          label: "معدل اليوم",
-          value: Math.round(summary.totalRevenue / 30).toLocaleString(),
-          isCurrency: true,
-        },
-        {
-          label: "متوسط العقد",
-          value: Math.round(summary.totalRevenue / (summary.totalContracts || 1)).toLocaleString(),
-          isCurrency: true,
-        },
-      ],
       colorStyle: {
         card: "bg-tertiary-50/50 border-tertiary-100/70 dark:bg-tertiary-950/20 dark:border-tertiary-900/40",
-        iconBg: "bg-tertiary-100 text-tertiary-700 dark:bg-tertiary-900/60 dark:text-tertiary-300",
+        iconBg:
+          "bg-tertiary-100 text-tertiary-700 dark:bg-tertiary-900/60 dark:text-tertiary-300",
       },
     },
     {
@@ -93,13 +83,10 @@ export default function ReportsStatCards({
       growth: 0.8,
       icon: ShieldCheck,
       description: "توثيق رسمي متوافق مع الهيئة العامة للعقار وأبشر",
-      subMetrics: [
-        { label: "حساب المواطن", value: "متوافق 100%" },
-        { label: "الضمان المطور", value: "متوافق 100%" },
-      ],
       colorStyle: {
         card: "bg-secondary-50/50 border-secondary-100/70 dark:bg-secondary-950/20 dark:border-secondary-900/40",
-        iconBg: "bg-secondary-100 text-secondary-700 dark:bg-secondary-900/60 dark:text-secondary-300",
+        iconBg:
+          "bg-secondary-100 text-secondary-700 dark:bg-secondary-900/60 dark:text-secondary-300",
       },
     },
     {
@@ -111,13 +98,10 @@ export default function ReportsStatCards({
       growthIsPositiveGood: false,
       icon: Clock,
       description: "من تقديم الطلب حتى إصدار العقد المعتمد",
-      subMetrics: [
-        { label: "الطلبات الواردة", value: summary.totalRequests.toLocaleString() },
-        { label: "نسبة الإنجاز", value: `${summary.completionRate}%` },
-      ],
       colorStyle: {
         card: "bg-muted/40 border-border/80 dark:bg-card dark:border-border/60",
-        iconBg: "bg-primary-100 text-primary-700 dark:bg-primary-900/60 dark:text-primary-300",
+        iconBg:
+          "bg-primary-100 text-primary-700 dark:bg-primary-900/60 dark:text-primary-300",
       },
     },
   ];
@@ -134,7 +118,7 @@ export default function ReportsStatCards({
           <Card
             key={card.id}
             className={cn(
-              "relative overflow-hidden border transition-all duration-200 hover:shadow-sm",
+              "relative flex flex-col justify-between overflow-hidden border transition-all duration-200 hover:shadow-sm",
               card.colorStyle.card,
             )}
           >
@@ -167,8 +151,27 @@ export default function ReportsStatCards({
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-3 pt-1">
-              <div className="flex items-center justify-between text-xs">
+            <CardContent className="flex flex-1 flex-col justify-end space-y-3 pt-1">
+              {card.subMetrics && card.subMetrics.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pb-0.5">
+                  {card.subMetrics.map((sub, idx) => (
+                    <div
+                      key={idx}
+                      className="inline-flex items-center gap-1 rounded-md bg-background/80 px-2 py-0.5 text-[11px] font-medium text-muted-foreground shadow-2xs"
+                    >
+                      <span>{sub.label}:</span>
+                      <span className="inline-flex items-center gap-0.5 font-semibold text-foreground">
+                        <span>{sub.value}</span>
+                        {sub.isCurrency && (
+                          <SaudiRiyal className="size-3 text-muted-foreground" />
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between border-t border-border/60 pt-2.5 text-xs">
                 <div
                   className={cn(
                     "inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 font-semibold",
@@ -188,25 +191,6 @@ export default function ReportsStatCards({
                   {card.description}
                 </span>
               </div>
-
-              {card.subMetrics && card.subMetrics.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-2.5">
-                  {card.subMetrics.map((sub, idx) => (
-                    <div
-                      key={idx}
-                      className="inline-flex items-center gap-1 rounded-md bg-background/80 px-2 py-0.5 text-[11px] font-medium text-muted-foreground shadow-2xs"
-                    >
-                      <span>{sub.label}:</span>
-                      <span className="inline-flex items-center gap-0.5 font-semibold text-foreground">
-                        <span>{sub.value}</span>
-                        {sub.isCurrency && (
-                          <SaudiRiyal className="size-3 text-muted-foreground" />
-                        )}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
             </CardContent>
           </Card>
         );

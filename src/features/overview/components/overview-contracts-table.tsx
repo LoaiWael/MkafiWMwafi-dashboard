@@ -1,9 +1,9 @@
 import {
   Building2,
-  ChevronLeft,
   Eye,
   FileText,
   MapPin,
+  SaudiRiyal,
   Store,
 } from "lucide-react";
 import { Link } from "react-router";
@@ -24,7 +24,6 @@ import {
   type OverviewContract,
   RECENT_CONTRACTS_DATA,
 } from "@/features/overview/constants";
-import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export default function OverviewContractsTable() {
@@ -33,7 +32,6 @@ export default function OverviewContractsTable() {
       id: "contractNumber",
       header: "رقم العقد والتوثيق",
       accessorKey: "contractNumber",
-      sortable: true,
       minWidth: "180px",
       cell: (item) => {
         const isResidential = item.type === "residential";
@@ -92,7 +90,6 @@ export default function OverviewContractsTable() {
       id: "propertyTitle",
       header: "العقار والوحدة",
       accessorKey: "propertyTitle",
-      sortable: true,
       minWidth: "200px",
       cell: (item) => (
         <div className="space-y-1">
@@ -142,7 +139,6 @@ export default function OverviewContractsTable() {
       id: "type",
       header: "نوع العقد",
       accessorKey: "type",
-      sortable: true,
       align: "center",
       minWidth: "100px",
       cell: (item) => {
@@ -170,9 +166,10 @@ export default function OverviewContractsTable() {
       minWidth: "130px",
       cell: (item) => (
         <div className="text-end">
-          <span className="text-sm font-semibold text-foreground sm:text-base">
-            {item.rentalAmountFormatted}
-          </span>
+          <div className="inline-flex items-center gap-1 font-semibold text-foreground text-sm sm:text-base">
+            <span>{item.rentalAmount.toLocaleString()}</span>
+            <SaudiRiyal className="size-3.5 text-muted-foreground shrink-0" />
+          </div>
           <div className="text-xs text-muted-foreground">
             {item.durationMonths} شهر
           </div>
@@ -183,7 +180,6 @@ export default function OverviewContractsTable() {
       id: "status",
       header: "حالة التوثيق",
       accessorKey: "status",
-      sortable: true,
       align: "center",
       minWidth: "150px",
       cell: (item) => (
@@ -304,16 +300,6 @@ export default function OverviewContractsTable() {
       filters={filterConfigs}
       pageSize={5}
       pageSizeOptions={[5, 10, 20]}
-      toolbarActions={
-        <Link
-          to={ROUTES.contracts}
-          viewTransition
-          className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border bg-card px-3 text-xs font-semibold text-foreground transition-all hover:bg-muted active:scale-98"
-        >
-          <span>عرض جميع العقود</span>
-          <ChevronLeft className="size-3.5 text-muted-foreground" />
-        </Link>
-      }
     />
   );
 }

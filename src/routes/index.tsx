@@ -17,6 +17,7 @@ import TaxesPage from "@/routes/dashboard/taxes-page";
 import ReportsPage from "@/routes/dashboard/reports-page";
 import NotificationsPage from "@/routes/dashboard/notifications-page";
 import RolesPage from "@/routes/dashboard/roles-page";
+import RoleEditorPage from "@/routes/dashboard/role-editor-page";
 import RegionsPage from "@/routes/dashboard/regions-page";
 import UnitOptionsPage from "@/routes/dashboard/unit-options-page";
 import PartyOptionsPage from "@/routes/dashboard/party-options-page";
@@ -48,6 +49,8 @@ export const router = createBrowserRouter([
       { path: "reports", Component: ReportsPage },
       { path: "notifications", Component: NotificationsPage },
       { path: "roles", Component: RolesPage },
+      { path: "roles/new", Component: RoleEditorPage },
+      { path: "roles/:id", Component: RoleEditorPage },
       { path: "regions", Component: RegionsPage },
       { path: "unit-options", Component: UnitOptionsPage },
       { path: "party-options", Component: PartyOptionsPage },

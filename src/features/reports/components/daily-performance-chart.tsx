@@ -1,19 +1,6 @@
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { Clock, ShieldCheck, Zap } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import { Clock, ShieldCheck } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
   ChartLegend,
@@ -28,45 +15,41 @@ interface DailyPerformanceChartProps {
   data: DailyReportRecord[];
 }
 
-export default function DailyPerformanceChart({ data }: DailyPerformanceChartProps) {
-  const chartData = [...data]
-    .reverse()
-    .map((item) => {
-      const parts = item.date.split("-");
-      const shortDate = `${parts[1]}/${parts[2]}`;
-      return {
-        date: item.date,
-        displayDate: shortDate,
-        dayName: item.dayName,
-        ejarSuccessRate: item.ejarSuccessRate,
-        avgProcessingTimeMin: item.avgProcessingTimeMin,
-      };
-    });
+export default function DailyPerformanceChart({
+  data,
+}: DailyPerformanceChartProps) {
+  const chartData = [...data].reverse().map((item) => {
+    const parts = item.date.split("-");
+    const shortDate = `${parts[1]}/${parts[2]}`;
+    return {
+      date: item.date,
+      displayDate: shortDate,
+      dayName: item.dayName,
+      ejarSuccessRate: item.ejarSuccessRate,
+      avgProcessingTimeMin: item.avgProcessingTimeMin,
+    };
+  });
 
   const avgSuccessRate = data.length
-    ? (data.reduce((acc, curr) => acc + curr.ejarSuccessRate, 0) / data.length).toFixed(1)
+    ? (
+        data.reduce((acc, curr) => acc + curr.ejarSuccessRate, 0) / data.length
+      ).toFixed(1)
     : "0";
 
   const avgTime = data.length
-    ? (data.reduce((acc, curr) => acc + curr.avgProcessingTimeMin, 0) / data.length).toFixed(1)
+    ? (
+        data.reduce((acc, curr) => acc + curr.avgProcessingTimeMin, 0) /
+        data.length
+      ).toFixed(1)
     : "0";
 
   return (
     <Card className="border-border/70 shadow-xs">
       <CardHeader className="flex flex-col gap-3 border-b border-border/50 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <CardTitle className="text-base font-bold text-foreground sm:text-lg">
-              كفاءة التشغيل وسرعة الربط مع إيجار
-            </CardTitle>
-            <Badge variant="secondary" className="gap-1 text-xs">
-              <Zap className="size-3 text-secondary" />
-              <span>معدل {avgSuccessRate}%</span>
-            </Badge>
-          </div>
-          <CardDescription className="mt-1 text-xs text-muted-foreground">
-            تتبع نسبة التوثيق الفوري مع شبكة إيجار ومتوسط زمن إنهاء واستلام العقد
-          </CardDescription>
+          <CardTitle className="text-base font-bold text-foreground sm:text-lg">
+            كفاءة التشغيل وسرعة الربط مع إيجار
+          </CardTitle>
         </div>
 
         <div className="flex items-center gap-3 text-xs">
@@ -83,12 +66,19 @@ export default function DailyPerformanceChart({ data }: DailyPerformanceChartPro
 
       <CardContent className="pt-6">
         <div className="h-72 w-full sm:h-80">
-          <ChartContainer config={performanceChartConfig} className="h-full w-full">
+          <ChartContainer
+            config={performanceChartConfig}
+            className="h-full w-full"
+          >
             <LineChart
               data={chartData}
               margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
             >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border/40" />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                className="stroke-border/40"
+              />
               <XAxis
                 dataKey="displayDate"
                 tickLine={false}
@@ -122,15 +112,23 @@ export default function DailyPerformanceChart({ data }: DailyPerformanceChartPro
                       if (name === "ejarSuccessRate") {
                         return (
                           <div className="flex w-full items-center justify-between gap-2">
-                            <span className="text-muted-foreground">نجاح إيجار:</span>
-                            <span className="font-bold text-foreground">{Number(value)}%</span>
+                            <span className="text-muted-foreground">
+                              نجاح إيجار:
+                            </span>
+                            <span className="font-bold text-foreground">
+                              {Number(value)}%
+                            </span>
                           </div>
                         );
                       }
                       return (
                         <div className="flex w-full items-center justify-between gap-2">
-                          <span className="text-muted-foreground">زمن المعالجة:</span>
-                          <span className="font-bold text-foreground">{Number(value)} دقيقة</span>
+                          <span className="text-muted-foreground">
+                            زمن المعالجة:
+                          </span>
+                          <span className="font-bold text-foreground">
+                            {Number(value)} دقيقة
+                          </span>
                         </div>
                       );
                     }}

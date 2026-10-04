@@ -50,7 +50,7 @@ export default function ContractsTable({
   onUpdatePayment,
   onPrintCertificate,
   title = "سجل عقود الإيجار والتوثيق",
-  subtitle = "إدارة عقود الإيجار السكنية والتجارية المدفوعة وغير المدفوعة مع إمكانية تحديث الحالة والربط مع شبكة إيجار.",
+  subtitle = "إدارة عقود الإيجار السكنية والتجارية المدفوعة وغير المدفوعة مع إمكانية تحديث الحالة.",
   emptyTitle,
   emptyDescription,
   syncWithUrl,
@@ -148,7 +148,10 @@ export default function ContractsTable({
             <span className="text-xs font-medium text-muted-foreground">
               المؤجر:
             </span>
-            <span className="font-medium text-foreground truncate max-w-[140px]" title={item.lessor.name}>
+            <span
+              className="font-medium text-foreground truncate max-w-[140px]"
+              title={item.lessor.name}
+            >
               {item.lessor.name}
             </span>
           </div>
@@ -156,7 +159,10 @@ export default function ContractsTable({
             <span className="text-xs font-medium text-muted-foreground">
               المستأجر:
             </span>
-            <span className="font-medium text-foreground truncate max-w-[140px]" title={item.lessee.name}>
+            <span
+              className="font-medium text-foreground truncate max-w-[140px]"
+              title={item.lessee.name}
+            >
               {item.lessee.name}
             </span>
           </div>
@@ -353,9 +359,7 @@ export default function ContractsTable({
         { value: "refunded", label: "مسترد / ملغي" },
       ],
       filterFn: (item, val) =>
-        !val ||
-        val === "all" ||
-        item.financials.paymentStatus === val,
+        !val || val === "all" || item.financials.paymentStatus === val,
     },
     {
       id: "status",

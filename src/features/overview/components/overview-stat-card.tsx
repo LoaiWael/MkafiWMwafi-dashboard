@@ -3,7 +3,6 @@ import { Link } from "react-router";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -47,6 +46,7 @@ export default function OverviewStatCard({
   className,
 }: OverviewStatCardProps) {
   const Icon = stat.icon;
+  const UnitIcon = stat.unitIcon;
   const style = colorStyles[stat.colorScheme] ?? colorStyles.primary;
 
   return (
@@ -92,17 +92,15 @@ export default function OverviewStatCard({
               <span className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                 {stat.value}
               </span>
-              {stat.unit ? (
+              {UnitIcon ? (
+                <UnitIcon className="size-4.5 text-muted-foreground shrink-0 self-center" />
+              ) : stat.unit ? (
                 <span className="text-xs font-medium text-muted-foreground">
                   {stat.unit}
                 </span>
               ) : null}
             </div>
           </div>
-
-          <CardDescription className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-            {stat.description}
-          </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-3 pt-0">
@@ -113,10 +111,14 @@ export default function OverviewStatCard({
                   key={idx}
                   className="inline-flex items-center gap-1 rounded-md bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-foreground"
                 >
-                  <span className="text-muted-foreground">{sub.label}:</span>
-                  <span className="font-semibold text-foreground">
-                    {sub.value}
+                  <span className={sub.value ? "text-muted-foreground" : "font-medium text-foreground"}>
+                    {sub.label}
                   </span>
+                  {sub.value ? (
+                    <span className="font-semibold text-foreground">
+                      {sub.value}
+                    </span>
+                  ) : null}
                 </div>
               ))}
             </div>

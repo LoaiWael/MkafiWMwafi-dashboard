@@ -147,14 +147,15 @@ export function DataTableToolbar<TData>({
             );
           })}
 
-          <AnimatePresence initial={false} mode="popLayout">
+          <AnimatePresence initial={false}>
             {hasActiveFilters ? (
               <motion.div
                 key="clear-filters-btn"
-                initial={{ opacity: 0, scale: 0.92 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.92 }}
-                transition={{ duration: 0.12, ease: TOOLBAR_EASE }}
+                initial={{ opacity: 0, scale: 0.9, width: 0 }}
+                animate={{ opacity: 1, scale: 1, width: "auto" }}
+                exit={{ opacity: 0, scale: 0.9, width: 0 }}
+                transition={{ duration: 0.2, ease: TOOLBAR_EASE }}
+                className="overflow-hidden"
               >
                 <TooltipProvider delay={150}>
                   <Tooltip>
