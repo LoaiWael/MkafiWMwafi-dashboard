@@ -43,7 +43,7 @@ export default function RoleDeleteDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-w-md">
         <AlertDialogHeader className="space-y-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-500">
             <AlertTriangle className="size-5" />
           </div>
           <AlertDialogTitle className="text-base sm:text-lg font-bold">
@@ -51,7 +51,7 @@ export default function RoleDeleteDialog({
           </AlertDialogTitle>
           <AlertDialogDescription className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
             {assignedCount > 0 ? (
-              <span className="text-destructive font-medium">
+              <span className="text-rose-600 dark:text-rose-500 font-medium">
                 تنبيه: يوجد ({assignedCount}) موظف مسند إليهم هذا الدور. لا يمكن حذف الدور قبل إعادة تعيين أو نقل الموظفين لدور آخر.
               </span>
             ) : (
@@ -66,7 +66,7 @@ export default function RoleDeleteDialog({
           <AlertDialogAction
             onClick={handleConfirm}
             disabled={assignedCount > 0 || role.isSystem}
-            className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer font-semibold"
+            className="rounded-xl bg-rose-600 text-white hover:bg-rose-700 shadow-none cursor-pointer font-semibold"
           >
             تأكيد الحذف
           </AlertDialogAction>

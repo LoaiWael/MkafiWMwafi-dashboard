@@ -29,7 +29,7 @@ export default function AppCtaSection() {
             className="pointer-events-none absolute -inset-s-16 -top-16 size-72 rounded-full bg-primary-foreground/15 blur-3xl sm:size-80"
           />
 
-          <div className="relative z-30 max-w-xl px-4 py-6 text-start sm:px-10 sm:py-10 lg:px-14 lg:py-14">
+          <div className="relative z-10 max-w-xl px-4 py-6 text-start sm:px-10 sm:py-10 lg:px-14 lg:py-14">
             <FadeIn direction="up" delay={0.1} distance={16}>
               <p className="flex items-center gap-2 text-xs font-medium text-primary-foreground/90 sm:gap-2.5 sm:text-sm">
                 <span className="h-px w-5 bg-primary sm:w-8" aria-hidden="true" />

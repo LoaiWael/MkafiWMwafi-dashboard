@@ -88,7 +88,7 @@ export default function EditableImage({
       />
       <span
         className={cn(
-          "pointer-events-auto absolute z-30",
+          "pointer-events-auto absolute z-10",
           controlClassName ?? "-top-1.5 -inset-e-1.5",
         )}
       >

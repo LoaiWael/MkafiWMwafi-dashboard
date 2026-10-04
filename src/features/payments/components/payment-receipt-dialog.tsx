@@ -1,29 +1,22 @@
 import { useRef, useState } from "react";
-import html2canvas from "html2canvas";
+import html2canvas from "html2canvas-pro";
 import jsPDF from "jspdf";
 import {
-  Building2,
   CheckCircle2,
   Clock,
   Download,
-  ExternalLink,
   FileCheck2,
-  FileText,
   Loader2,
   MapPin,
   Printer,
   Receipt,
   SaudiRiyal,
-  ShieldCheck,
-  Store,
   User,
   XCircle,
 } from "lucide-react";
-import { Link } from "react-router";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CopyButton } from "@/components/ui/copy-button";
 import {
   Dialog,
   DialogContent,
@@ -152,91 +145,6 @@ function tafqeetArabic(amount: number): string {
   return result + " فقط لا غير";
 }
 
-/**
- * Authentic SVG QR Code representation for certified receipts
- */
-function ReceiptQrCode({ value }: { value: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center p-2 rounded-lg border border-border/80 bg-background shrink-0">
-      <svg
-        viewBox="0 0 100 100"
-        className="size-20 sm:size-24 fill-foreground"
-        aria-label={`رمز الاستجابة السريعة: ${value}`}
-      >
-        {/* Top-Left Position Detection Pattern */}
-        <rect x="5" y="5" width="28" height="28" rx="3" fill="currentColor" />
-        <rect x="9" y="9" width="20" height="20" rx="2" fill="var(--color-background, #fff)" />
-        <rect x="13" y="13" width="12" height="12" rx="1" fill="currentColor" />
-
-        {/* Top-Right Position Detection Pattern */}
-        <rect x="67" y="5" width="28" height="28" rx="3" fill="currentColor" />
-        <rect x="71" y="9" width="20" height="20" rx="2" fill="var(--color-background, #fff)" />
-        <rect x="75" y="13" width="12" height="12" rx="1" fill="currentColor" />
-
-        {/* Bottom-Left Position Detection Pattern */}
-        <rect x="5" y="67" width="28" height="28" rx="3" fill="currentColor" />
-        <rect x="9" y="71" width="20" height="20" rx="2" fill="var(--color-background, #fff)" />
-        <rect x="13" y="75" width="12" height="12" rx="1" fill="currentColor" />
-
-        {/* Alignment Pattern */}
-        <rect x="70" y="70" width="16" height="16" rx="2" fill="currentColor" />
-        <rect x="74" y="74" width="8" height="8" rx="1" fill="var(--color-background, #fff)" />
-        <rect x="76" y="76" width="4" height="4" fill="currentColor" />
-
-        {/* Simulated Data Grid */}
-        <rect x="38" y="8" width="4" height="4" fill="currentColor" />
-        <rect x="46" y="8" width="8" height="4" fill="currentColor" />
-        <rect x="58" y="8" width="4" height="4" fill="currentColor" />
-        <rect x="38" y="16" width="8" height="4" fill="currentColor" />
-        <rect x="50" y="16" width="4" height="4" fill="currentColor" />
-        <rect x="58" y="16" width="4" height="4" fill="currentColor" />
-        <rect x="38" y="24" width="4" height="4" fill="currentColor" />
-        <rect x="46" y="24" width="4" height="4" fill="currentColor" />
-        <rect x="54" y="24" width="8" height="4" fill="currentColor" />
-
-        <rect x="8" y="38" width="4" height="4" fill="currentColor" />
-        <rect x="16" y="38" width="8" height="4" fill="currentColor" />
-        <rect x="28" y="38" width="4" height="4" fill="currentColor" />
-        <rect x="38" y="38" width="8" height="8" fill="currentColor" />
-        <rect x="50" y="38" width="4" height="4" fill="currentColor" />
-        <rect x="58" y="38" width="8" height="4" fill="currentColor" />
-        <rect x="70" y="38" width="4" height="4" fill="currentColor" />
-        <rect x="78" y="38" width="8" height="4" fill="currentColor" />
-        <rect x="90" y="38" width="4" height="4" fill="currentColor" />
-
-        <rect x="8" y="46" width="8" height="4" fill="currentColor" />
-        <rect x="20" y="46" width="4" height="4" fill="currentColor" />
-        <rect x="28" y="46" width="4" height="4" fill="currentColor" />
-        <rect x="50" y="46" width="8" height="8" fill="currentColor" />
-        <rect x="62" y="46" width="4" height="4" fill="currentColor" />
-        <rect x="70" y="46" width="8" height="4" fill="currentColor" />
-        <rect x="82" y="46" width="4" height="4" fill="currentColor" />
-        <rect x="90" y="46" width="4" height="4" fill="currentColor" />
-
-        <rect x="8" y="54" width="4" height="4" fill="currentColor" />
-        <rect x="16" y="54" width="4" height="4" fill="currentColor" />
-        <rect x="24" y="54" width="8" height="4" fill="currentColor" />
-        <rect x="38" y="54" width="4" height="4" fill="currentColor" />
-        <rect x="62" y="54" width="8" height="4" fill="currentColor" />
-        <rect x="74" y="54" width="4" height="4" fill="currentColor" />
-        <rect x="82" y="54" width="8" height="4" fill="currentColor" />
-
-        <rect x="38" y="66" width="8" height="4" fill="currentColor" />
-        <rect x="50" y="66" width="4" height="4" fill="currentColor" />
-        <rect x="58" y="66" width="4" height="4" fill="currentColor" />
-        <rect x="38" y="74" width="4" height="4" fill="currentColor" />
-        <rect x="46" y="74" width="8" height="4" fill="currentColor" />
-        <rect x="58" y="74" width="8" height="4" fill="currentColor" />
-        <rect x="38" y="86" width="8" height="4" fill="currentColor" />
-        <rect x="50" y="86" width="8" height="4" fill="currentColor" />
-      </svg>
-      <span className="text-[9px] font-mono text-muted-foreground mt-1 text-center font-medium">
-        ZATCA • EJAR
-      </span>
-    </div>
-  );
-}
-
 export default function PaymentReceiptDialog({
   open,
   onOpenChange,
@@ -250,27 +158,108 @@ export default function PaymentReceiptDialog({
   const isCompleted = record.status === "completed";
   const isPending = record.status === "pending";
   const isFailed = record.status === "failed";
-  const isResidential = record.contractType === "residential";
   const tafqeetText = tafqeetArabic(record.totalAmount);
 
   const handlePrint = () => {
-    window.print();
+    if (!receiptRef.current) {
+      window.print();
+      return;
+    }
+
+    const receiptElement = receiptRef.current;
+
+    // Create an isolated hidden iframe for printing clean receipt
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.style.visibility = "hidden";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      document.body.removeChild(iframe);
+      window.print();
+      return;
+    }
+
+    // Collect all active styles and fonts from head
+    const headElements = Array.from(
+      document.head.querySelectorAll("link[rel='stylesheet'], style"),
+    )
+      .map((el) => el.outerHTML)
+      .join("\n");
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+        <head>
+          <meta charset="utf-8" />
+          <title>إيصال سداد - ${record.transactionNumber}</title>
+          ${headElements}
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 15mm 20mm;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+              background-color: #ffffff !important;
+              color: #0d2426 !important;
+              font-family: "IBM Plex Sans Arabic", sans-serif;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .print-container {
+              max-width: 580px;
+              margin: 0 auto;
+              padding: 16px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-container">
+            ${receiptElement.outerHTML}
+          </div>
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    iframe.contentWindow?.focus();
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.print();
+      } catch (err) {
+        console.error("Print failed:", err);
+      } finally {
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+        }, 1000);
+      }
+    }, 400);
   };
 
   const handleDownloadPdf = async () => {
     if (!receiptRef.current) return;
     setIsGeneratingPdf(true);
-    const toastId = toast.loading("جاري إعداد وتحميل إيصال السداد المعتمد (PDF)...");
+    const toastId = toast.loading("جاري إعداد وتحميل إيصال السداد (PDF)...");
 
     try {
       const element = receiptRef.current;
 
-      // Render high-resolution canvas from receipt voucher
       const canvas = await html2canvas(element, {
-        scale: 2.5,
+        scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: "#ffffff",
+        backgroundColor: null,
       });
 
       const imgData = canvas.toDataURL("image/png");
@@ -281,7 +270,7 @@ export default function PaymentReceiptDialog({
       });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfMargin = 10;
+      const pdfMargin = 15;
       const contentWidth = pdfWidth - pdfMargin * 2;
       const contentHeight = (canvas.height * contentWidth) / canvas.width;
 
@@ -297,7 +286,7 @@ export default function PaymentReceiptDialog({
       );
 
       pdf.save(`receipt-${record.transactionNumber}.pdf`);
-      toast.success("تم تحميل إيصال السداد الإلكتروني بنجاح", { id: toastId });
+      toast.success("تم تحميل إيصال السداد بنجاح", { id: toastId });
     } catch (error) {
       console.error("PDF generation failed:", error);
       toast.error("تعذر تحميل ملف الـ PDF. يرجى المحاولة مرة أخرى.", {
@@ -310,478 +299,256 @@ export default function PaymentReceiptDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl sm:max-w-3xl max-h-[92vh] overflow-y-auto p-3 sm:p-6 bg-background">
-        <DialogHeader className="text-start space-y-1.5 pb-2 border-b border-border">
+      <DialogContent className="max-w-md sm:max-w-lg max-h-[94vh] overflow-y-auto p-2.5 sm:p-5 bg-background">
+        <DialogHeader className="text-start space-y-1 pb-1.5 sm:pb-2 border-b border-border">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <Receipt className="size-5" />
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Receipt className="size-3.5 sm:size-4" />
               </div>
               <div>
-                <DialogTitle className="text-base sm:text-lg font-bold">
-                  إيصال سداد مالي معتمد
+                <DialogTitle className="text-sm sm:text-base font-bold">
+                  إيصال سداد مالي
                 </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground">
-                  سند قبض إلكتروني رسمي مطابق لمعايير شبكة إيجار والهيئة العامة للعقار
+                <DialogDescription className="text-[10px] sm:text-xs text-muted-foreground">
+                  سند قبض إلكتروني معتمد
                 </DialogDescription>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Badge
-                variant="outline"
-                className={cn(
-                  "px-3 py-1 text-xs font-bold gap-1.5 shrink-0 rounded-full",
-                  isCompleted &&
-                    "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-                  isPending &&
-                    "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400",
-                  isFailed &&
-                    "border-destructive/40 bg-destructive/10 text-destructive",
-                )}
-              >
-                {isCompleted && <CheckCircle2 className="size-3.5" />}
-                {isPending && <Clock className="size-3.5" />}
-                {isFailed && <XCircle className="size-3.5" />}
-                <span>{record.statusLabel}</span>
-              </Badge>
-            </div>
+            <Badge
+              variant="outline"
+              className={cn(
+                "px-2 py-0.5 text-[10px] sm:text-xs font-semibold gap-1 shrink-0 rounded-full",
+                isCompleted &&
+                  "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                isPending &&
+                  "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                isFailed &&
+                  "border-destructive/40 bg-destructive/10 text-destructive",
+              )}
+            >
+              {isCompleted && <CheckCircle2 className="size-3" />}
+              {isPending && <Clock className="size-3" />}
+              {isFailed && <XCircle className="size-3" />}
+              <span>{record.statusLabel}</span>
+            </Badge>
           </div>
         </DialogHeader>
 
-        {/* Printable & Exportable Authentic Receipt Voucher */}
+        {/* Compact Authentic Receipt Slip */}
         <div
           id="certified-payment-receipt"
           ref={receiptRef}
-          className="rounded-2xl border-2 border-border/80 bg-card p-4 sm:p-7 space-y-5 shadow-sm relative overflow-hidden"
+          className="rounded-xl border border-border bg-card p-2.5 sm:p-4 space-y-2.5 sm:space-y-3.5 shadow-xs text-xs"
         >
-          {/* Subtle Background Security Watermark */}
-          <div
-            className="absolute inset-0 pointer-events-none opacity-[0.02] dark:opacity-[0.04] bg-repeat bg-center"
-            style={{
-              backgroundImage: `radial-gradient(var(--color-primary, #00b2bd) 1px, transparent 1px)`,
-              backgroundSize: "20px 20px",
-            }}
-          />
-
-          {/* Receipt Top Header with Logo & Official Certifications */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-dashed border-border pb-5">
-            <div className="flex items-center gap-3.5">
+          {/* Top Brand Header */}
+          <div className="flex items-center justify-between gap-2 border-b border-dashed border-border pb-2 sm:pb-3">
+            <div className="flex items-center gap-2">
               <img
                 src="/logo.svg"
                 alt="شعار مكفي وموفي"
-                className="size-14 sm:size-16 object-contain rounded-xl p-1 border border-border/60 bg-background shadow-xs shrink-0"
+                className="size-8 sm:size-10 object-contain rounded-md sm:rounded-lg p-0.5 border border-border/60 bg-background shrink-0"
               />
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base sm:text-lg font-extrabold text-foreground">
-                    منصة مكفي وموفي للوساطة العقارية
-                  </h2>
-                </div>
-                <p className="text-xs font-bold text-primary">
-                  إيصال سداد إلكتروني معتمد • سداد رسوم توثيق العقد
-                </p>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  س.ت: <span className="font-mono">1010849201</span> • ترخيص الهيئة العامة للعقار (فال):{" "}
-                  <span className="font-mono">1200028491</span> • معتمد لدى شبكة إيجار
+              <div>
+                <h3 className="font-bold text-xs sm:text-sm text-foreground leading-tight">
+                  منصة مكفي وموفي للوساطة العقارية
+                </h3>
+                <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5">
+                  ترخيص فال: <span className="font-mono">1200028491</span> • معتمد لدى إيجار
                 </p>
               </div>
-            </div>
-
-            {/* QR Code & Official Seal Stamp */}
-            <div className="flex items-center gap-3 self-end sm:self-auto">
-              {/* Receipt Stamp Badge */}
-              <div
-                className={cn(
-                  "hidden sm:flex flex-col items-center justify-center p-2 rounded-xl border-2 border-dashed font-bold text-center rotate-[-3deg] transition-transform select-none",
-                  isCompleted &&
-                    "border-emerald-500/50 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400",
-                  isPending &&
-                    "border-amber-500/50 bg-amber-500/5 text-amber-700 dark:text-amber-400",
-                  isFailed &&
-                    "border-destructive/50 bg-destructive/5 text-destructive",
-                )}
-              >
-                <div className="flex items-center gap-1 text-[11px]">
-                  <ShieldCheck className="size-3.5" />
-                  <span>{isCompleted ? "مسدد بالكامل" : record.statusLabel}</span>
-                </div>
-                <span className="text-[9px] font-mono mt-0.5 opacity-80">
-                  EJAR CERTIFIED
-                </span>
-              </div>
-
-              <ReceiptQrCode value={`${record.transactionNumber}|${record.totalAmount}|${record.paidAt || record.createdAt}`} />
             </div>
           </div>
 
-          {/* Transaction Metadata Ribbon */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-xl bg-muted/50 p-3.5 border border-border/80">
+          {/* Key Transaction Info Grid */}
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-2.5 rounded-lg bg-muted/50 p-2 sm:p-2.5 border border-border/60">
             <div>
-              <span className="text-[11px] text-muted-foreground block font-medium">
-                رقم الإيصال / العملية
+              <span className="text-[9px] sm:text-[10px] text-muted-foreground block">
+                رقم العملية
               </span>
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className="font-mono font-bold text-xs sm:text-sm text-foreground">
-                  {record.transactionNumber}
-                </span>
-                <CopyButton
-                  value={record.transactionNumber}
-                  itemId={`dlg-trx-${record.id}`}
-                  label="نسخ رقم العملية"
-                />
-              </div>
+              <span className="font-mono font-bold text-[11px] sm:text-xs text-foreground block mt-0.5">
+                {record.transactionNumber}
+              </span>
             </div>
 
             <div>
-              <span className="text-[11px] text-muted-foreground block font-medium">
-                رقم الفاتورة الضريبية
+              <span className="text-[9px] sm:text-[10px] text-muted-foreground block">
+                تاريخ السداد
               </span>
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className="font-mono font-bold text-xs sm:text-sm text-foreground">
-                  {record.invoiceNumber}
-                </span>
-                <CopyButton
-                  value={record.invoiceNumber}
-                  itemId={`dlg-inv-${record.id}`}
-                  label="نسخ رقم الفاتورة"
-                />
-              </div>
-            </div>
-
-            <div>
-              <span className="text-[11px] text-muted-foreground block font-medium">
-                تاريخ ووقت السداد
-              </span>
-              <p className="font-medium text-xs sm:text-sm text-foreground mt-0.5">
+              <p className="font-medium text-[11px] sm:text-xs text-foreground mt-0.5">
                 {record.paidAt || record.createdAt}
               </p>
             </div>
 
             <div>
-              <span className="text-[11px] text-muted-foreground block font-medium">
-                قناة الدفع والمرجع
+              <span className="text-[9px] sm:text-[10px] text-muted-foreground block">
+                رقم الفاتورة
               </span>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="font-bold text-xs sm:text-sm text-foreground">
-                  {record.paymentMethodLabel}
+              <span className="font-mono font-bold text-[11px] sm:text-xs text-foreground block mt-0.5">
+                {record.invoiceNumber}
+              </span>
+            </div>
+
+            <div>
+              <span className="text-[9px] sm:text-[10px] text-muted-foreground block">
+                طريقة الدفع
+              </span>
+              <span className="font-semibold text-[11px] sm:text-xs text-foreground block mt-0.5">
+                {record.paymentMethodLabel}
+              </span>
+            </div>
+          </div>
+
+          {/* Important Parties & Contract Details */}
+          <div className="space-y-1.5 sm:space-y-2 rounded-lg border border-border/70 p-2 sm:p-2.5 bg-background text-[11px] sm:text-xs">
+            <div className="flex items-center justify-between pb-1 sm:pb-1.5 border-b border-border/50">
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <User className="size-3 sm:size-3.5 text-primary" />
+                <span>العميل:</span>
+              </div>
+              <div className="flex items-center gap-1 font-bold text-foreground">
+                <span>{record.payer.name}</span>
+                <span className="text-[9px] sm:text-[10px] text-muted-foreground font-normal">
+                  ({record.payer.roleLabel})
                 </span>
-                {record.gatewayRef && (
-                  <span className="text-[10px] font-mono text-muted-foreground truncate">
-                    ({record.gatewayRef})
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Two-Column Info Cards: Payer Details & Contract/Property Details */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            {/* Payer & Client Information Card */}
-            <div className="rounded-xl border border-border p-3.5 space-y-2.5 bg-background">
-              <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                <div className="flex items-center gap-1.5 font-bold text-foreground">
-                  <User className="size-4 text-primary" />
-                  <span>بيانات العميل والقائم بالسداد</span>
-                </div>
-                <Badge variant="secondary" className="text-[10px] font-semibold">
-                  {record.payer.roleLabel}
-                </Badge>
-              </div>
-
-              <div className="space-y-1.5 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">الاسم الكامل:</span>
-                  <Link
-                    to={`/users/${record.payer.id || record.payer.nationalId || "usr-default"}`}
-                    viewTransition
-                    className="font-bold text-foreground hover:text-primary hover:underline transition-colors flex items-center gap-1"
-                  >
-                    <span>{record.payer.name}</span>
-                    <ExternalLink className="size-3 text-muted-foreground" />
-                  </Link>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">رقم الهوية / السجل:</span>
-                  <span className="font-mono font-bold text-foreground">
-                    {record.payer.nationalId}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">رقم الجوال المسجل:</span>
-                  <span className="font-mono font-medium text-foreground" dir="ltr">
-                    {record.payer.phone}
-                  </span>
-                </div>
-
-                {record.payer.email && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">البريد الإلكتروني:</span>
-                    <span className="font-mono text-muted-foreground truncate max-w-[180px]">
-                      {record.payer.email}
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
 
-            {/* Contract & Property Information Card */}
-            <div className="rounded-xl border border-border p-3.5 space-y-2.5 bg-background">
-              <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                <div className="flex items-center gap-1.5 font-bold text-foreground">
-                  {isResidential ? (
-                    <FileText className="size-4 text-primary" />
-                  ) : (
-                    <Store className="size-4 text-secondary" />
-                  )}
-                  <span>بيانات العقد والوحدة العقارية</span>
-                </div>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "text-[10px] font-semibold",
-                    isResidential
-                      ? "border-primary-200 bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300"
-                      : "border-secondary-200 bg-secondary-50 text-secondary-800 dark:bg-secondary-950 dark:text-secondary-300",
-                  )}
-                >
-                  {record.contractTypeLabel}
-                </Badge>
-              </div>
-
-              <div className="space-y-1.5 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">رقم العقد بالمنصة:</span>
-                  <Link
-                    to={`/contracts/${record.contractId}`}
-                    viewTransition
-                    className="font-bold text-foreground hover:text-primary hover:underline transition-colors flex items-center gap-1"
-                  >
-                    <span>{record.contractNumber}</span>
-                    <ExternalLink className="size-3" />
-                  </Link>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">رقم عقد شبكة إيجار:</span>
-                  <span className="font-mono font-bold text-foreground">
-                    {record.ejarNumber}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">العقار والوحدة:</span>
-                  <span className="font-medium text-foreground">
-                    {record.property.name} (وحدة {record.property.unitNumber})
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">المدينة والحي:</span>
-                  <span className="flex items-center gap-1 text-foreground font-medium">
-                    <MapPin className="size-3 text-muted-foreground" />
-                    {record.property.city} - {record.property.district}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">رقم الصك العقاري:</span>
-                  <span className="font-mono text-muted-foreground">
-                    {record.property.deedNumber}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Official Itemized Financial Breakdown Table */}
-          <div className="rounded-xl border border-border overflow-hidden bg-background">
-            <div className="bg-muted/70 px-4 py-2.5 font-bold text-xs sm:text-sm text-foreground flex items-center justify-between border-b border-border">
-              <div className="flex items-center gap-2">
-                <Building2 className="size-4 text-primary" />
-                <span>جدول التفاصيل المالية وبيان الرسوم</span>
-              </div>
-              <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-medium">
-                <ShieldCheck className="size-3.5 text-primary" />
-                <span>ضريبة القيمة المضافة 15% (VAT)</span>
-              </div>
+            <div className="flex items-center justify-between pb-1 sm:pb-1.5 border-b border-border/50">
+              <span className="text-muted-foreground">رقم الهوية / السجل:</span>
+              <span className="font-mono font-medium text-foreground">
+                {record.payer.nationalId}
+              </span>
             </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-start text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-border/80 bg-muted/30 text-muted-foreground font-semibold">
-                    <th className="py-2.5 px-3.5 text-start w-10">#</th>
-                    <th className="py-2.5 px-3.5 text-start">بيان الخدمة / البند</th>
-                    <th className="py-2.5 px-3.5 text-end">المبلغ الأساسي</th>
-                    <th className="py-2.5 px-3.5 text-end">نسبة الضريبة</th>
-                    <th className="py-2.5 px-3.5 text-end">مبلغ الضريبة</th>
-                    <th className="py-2.5 px-3.5 text-end">الإجمالي (شامل الضريبة)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60 text-foreground font-medium">
-                  <tr>
-                    <td className="py-3 px-3.5 font-mono text-muted-foreground">1</td>
-                    <td className="py-3 px-3.5 font-semibold">
-                      <span>{record.paymentTypeLabel}</span>
-                      <span className="block text-[11px] text-muted-foreground font-normal mt-0.5">
-                        توثيق وإصدار عقد إيجار إلكتروني معتمد لدى شبكة إيجار
-                      </span>
-                    </td>
-                    <td className="py-3 px-3.5 text-end font-mono">
-                      {record.amount.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      <span className="text-[10px] text-muted-foreground">ر.س</span>
-                    </td>
-                    <td className="py-3 px-3.5 text-end font-mono">15%</td>
-                    <td className="py-3 px-3.5 text-end font-mono">
-                      {record.taxAmount.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      <span className="text-[10px] text-muted-foreground">ر.س</span>
-                    </td>
-                    <td className="py-3 px-3.5 text-end font-mono font-bold text-primary">
-                      {record.totalAmount.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      <span className="text-[10px] text-muted-foreground">ر.س</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div className="flex items-center justify-between pb-1 sm:pb-1.5 border-b border-border/50">
+              <span className="text-muted-foreground">رقم الجوال:</span>
+              <span className="font-mono font-medium text-foreground" dir="ltr">
+                {record.payer.phone}
+              </span>
             </div>
 
-            {/* Totals Summary Footer */}
-            <div className="bg-muted/40 p-4 border-t border-border space-y-2">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-border/60 pb-2.5">
-                <div className="space-y-0.5">
-                  <span className="text-[11px] text-muted-foreground block font-medium">
-                    المبلغ الإجمالي كتابة (تفقيط):
-                  </span>
-                  <p className="font-bold text-foreground text-xs sm:text-sm text-primary">
-                    {tafqeetText}
-                  </p>
-                </div>
+            <div className="flex items-center justify-between pb-1 sm:pb-1.5 border-b border-border/50">
+              <span className="text-muted-foreground">رقم العقد بالمنصة:</span>
+              <span className="font-mono font-bold text-foreground">
+                {record.contractNumber}
+              </span>
+            </div>
 
-                <div className="flex items-center gap-3 text-xs w-full sm:w-auto justify-between sm:justify-end">
-                  <div className="text-start sm:text-end">
-                    <span className="text-muted-foreground block text-[11px]">
-                      المجموع قبل الضريبة:
-                    </span>
-                    <span className="font-mono font-bold text-foreground">
-                      {record.amount.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      ر.س
-                    </span>
-                  </div>
-                  <div className="text-start sm:text-end">
-                    <span className="text-muted-foreground block text-[11px]">
-                      إجمالي الضريبة (15%):
-                    </span>
-                    <span className="font-mono font-bold text-foreground">
-                      {record.taxAmount.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      ر.س
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <div className="flex items-center justify-between pb-1 sm:pb-1.5 border-b border-border/50">
+              <span className="text-muted-foreground">رقم عقد شبكة إيجار:</span>
+              <span className="font-mono font-medium text-foreground">
+                {record.ejarNumber}
+              </span>
+            </div>
 
-              <div className="flex items-center justify-between pt-1">
-                <span className="font-extrabold text-foreground text-sm sm:text-base">
-                  صافي المبلغ الإجمالي المسدد
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">العقار والوحدة:</span>
+              <span className="font-medium text-foreground flex items-center gap-1">
+                <MapPin className="size-3 text-muted-foreground" />
+                <span>
+                  {record.property.name} ({record.property.city})
                 </span>
-                <div className="flex items-center gap-1 font-extrabold text-primary text-base sm:text-xl">
-                  <span className="font-mono">
-                    {record.totalAmount.toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                  <SaudiRiyal className="size-5" />
-                </div>
+              </span>
+            </div>
+          </div>
+
+          {/* Financial Breakdown Card */}
+          <div className="rounded-lg border border-border/80 overflow-hidden bg-background">
+            <div className="p-2 sm:p-2.5 space-y-1 sm:space-y-1.5 text-[11px] sm:text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">
+                  {record.paymentTypeLabel}
+                </span>
+                <span className="font-mono text-foreground">
+                  {record.amount.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  ر.س
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">
+                  ضريبة القيمة المضافة (15%)
+                </span>
+                <span className="font-mono text-foreground">
+                  {record.taxAmount.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  ر.س
+                </span>
+              </div>
+            </div>
+
+            {/* Total Highlight */}
+            <div className="bg-muted/60 p-2 sm:p-2.5 border-t border-border flex items-center justify-between">
+              <div>
+                <span className="text-[11px] sm:text-xs font-bold text-foreground block">
+                  المبلغ الإجمالي المسدد
+                </span>
+                <span className="text-[9px] sm:text-[10px] text-primary font-medium block">
+                  {tafqeetText}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 font-bold text-primary text-sm sm:text-lg">
+                <span className="font-mono">
+                  {record.totalAmount.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
+                <SaudiRiyal className="size-3.5 sm:size-4" />
               </div>
             </div>
           </div>
 
-          {/* Notes or Verification Disclaimer */}
-          <div className="rounded-xl bg-muted/40 p-3.5 text-xs text-muted-foreground space-y-1.5 border border-border/60">
-            <div className="flex items-start gap-2">
-              <FileCheck2 className="size-4 text-primary shrink-0 mt-0.5" />
-              <div className="space-y-1 leading-relaxed">
-                <p className="font-semibold text-foreground">
-                  إشعار نظامي ومعتمد:
-                </p>
-                <p>
-                  هذا الإشعار صادر إلكترونياً من منصة مكفي وموفي ويعتبر سند قبض مالي رسمي
-                  معتمد لتوثيق سداد الرسوم المطلوبة وفقاً للائحة التنفيذية لشبكة إيجار
-                  والهيئة العامة للعقار بالمملكة العربية السعودية، ولا يتطلب توقيعاً أو ختماً
-                  يدوياً.
-                </p>
-                {record.notes && (
-                  <p className="text-foreground/90 font-medium pt-0.5">
-                    ملاحظات: {record.notes}
-                  </p>
-                )}
-              </div>
+          {/* Certified Footer Note */}
+          <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground pt-1 border-t border-dashed border-border/80">
+            <div className="flex items-center gap-1">
+              <FileCheck2 className="size-3 text-primary shrink-0" />
+              <span className="truncate">إيصال معتمد إلكترونياً</span>
             </div>
-          </div>
-
-          {/* Receipt Bottom Security Hash & Date Strip */}
-          <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-muted-foreground pt-1 border-t border-dashed border-border/80">
-            <span className="font-mono">
-              HASH: SHA256:{record.transactionNumber.toLowerCase()}-verified-auth
-            </span>
-            <span>
-              منصة مكفي وموفي © {new Date().getFullYear()} • www.makfiwamwafi.sa
-            </span>
+            <span className="shrink-0">منصة مكفي وموفي © {new Date().getFullYear()}</span>
           </div>
         </div>
 
-        {/* Dialog Actions Footer */}
-        <DialogFooter className="flex flex-col-reverse sm:flex-row items-center justify-between gap-2 border-t border-border pt-4">
+        {/* Actions Footer */}
+        <DialogFooter className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2 border-t border-border pt-2.5 sm:pt-3">
           <Button
             variant="outline"
             size="sm"
             onClick={() => onOpenChange(false)}
-            className="w-full sm:w-auto cursor-pointer"
+            className="w-full sm:w-auto cursor-pointer shrink-0"
           >
             إغلاق
           </Button>
 
-          <div className="flex w-full sm:w-auto items-center gap-2">
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               onClick={handlePrint}
-              className="gap-1.5 w-full sm:w-auto cursor-pointer"
+              className="gap-1.5 cursor-pointer w-full sm:w-auto justify-center"
             >
               <Printer className="size-3.5" />
-              <span>طباعة الإيصال</span>
+              <span>طباعة</span>
             </Button>
             <Button
               size="sm"
               disabled={isGeneratingPdf}
               onClick={handleDownloadPdf}
-              className="gap-1.5 w-full sm:w-auto cursor-pointer font-bold shadow-xs"
+              className="gap-1.5 cursor-pointer font-bold shadow-xs w-full sm:w-auto justify-center"
             >
               {isGeneratingPdf ? (
                 <Loader2 className="size-3.5 animate-spin" />
               ) : (
                 <Download className="size-3.5" />
               )}
-              <span>تحميل الإيصال (PDF)</span>
+              <span>تحميل (PDF)</span>
             </Button>
           </div>
         </DialogFooter>
@@ -789,4 +556,6 @@ export default function PaymentReceiptDialog({
     </Dialog>
   );
 }
+
+
 

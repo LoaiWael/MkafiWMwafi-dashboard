@@ -56,7 +56,16 @@ Related skills (load when relevant):
    - Do **not** call `document.startViewTransition()` yourself. Do **not** use a raw `<a href>` for in-app routes.
    - Default is a page cross-fade. Add named `view-transition-name` / `useViewTransitionState` only when a shared-element morph is required.
 
+8. **Mobile Responsiveness & Compact Card/Modal Layouts**:
+   - Always optimize container and dialog paddings on mobile viewports:
+     - Use responsive padding scales: `p-2.5 sm:p-5` for modal dialogs and `p-2 sm:p-4` for inner cards or slips.
+     - Keep inner spacing compact: `space-y-2 sm:space-y-3.5` and grid gaps `gap-1.5 sm:gap-2.5`.
+     - Ensure typography scales smoothly: label text `text-[9px] sm:text-[10px]`, values `text-[11px] sm:text-xs`, and headings `text-sm sm:text-base`.
+     - Avoid horizontal overflow or clipped content on small devices (320px–375px screens) by avoiding rigid min-widths, keeping rows flex-wrapping when needed, and utilizing `truncate` or `leading-tight` on title lines.
+     - Keep printable receipts, vouchers, and detail cards centered and readable across both compact mobile sheets and printed A4 pages.
+
 ---
+
 
 ## Component Pattern / Recipe
 
@@ -230,3 +239,4 @@ Or use `NavLink`'s render state:
 - **Icon Tooltips**: `@/components/ui/tooltip`
 - **Missing / Custom Icons**: Verify `public/icons/` and prompt the user when absent
 - **Copy voice**: Formal + gender-neutral (`ar` / `en` — see i18n principle above)
+- **Responsive & Compact Mobile Design**: Responsive padding scales (`p-2.5 sm:p-5`), compact gaps, scalable typography, and zero horizontal clipping on small screens
