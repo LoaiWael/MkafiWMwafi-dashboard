@@ -10,13 +10,18 @@ export const DEMO_CREDENTIALS = {
 } as const;
 
 function readStoredAuth(): { user: AuthUser | null; token: string | null } {
-  if (typeof localStorage === "undefined") {
+  if (typeof window === "undefined") {
     return { user: null, token: null };
   }
 
   try {
-    const token = localStorage.getItem(STORAGE_KEYS.authToken);
-    const rawUser = localStorage.getItem(STORAGE_KEYS.authUser);
+    const token =
+      localStorage.getItem(STORAGE_KEYS.authToken) ??
+      sessionStorage.getItem(STORAGE_KEYS.authToken);
+    const rawUser =
+      localStorage.getItem(STORAGE_KEYS.authUser) ??
+      sessionStorage.getItem(STORAGE_KEYS.authUser);
+
     if (!token || !rawUser) {
       return { user: null, token: null };
     }
@@ -152,6 +157,9 @@ export async function loginWithOtp(credentials: OtpCredentials): Promise<AuthUse
   if (credentials.rememberMe && typeof localStorage !== "undefined") {
     localStorage.setItem(STORAGE_KEYS.authToken, token);
     localStorage.setItem(STORAGE_KEYS.authUser, JSON.stringify(user));
+  } else if (typeof sessionStorage !== "undefined") {
+    sessionStorage.setItem(STORAGE_KEYS.authToken, token);
+    sessionStorage.setItem(STORAGE_KEYS.authUser, JSON.stringify(user));
   }
 
   emit();
