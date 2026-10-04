@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   Building,
@@ -36,13 +36,6 @@ const UNIT_OPTIONS_TABS = [
 ] as const;
 type UnitOptionsTab = (typeof UNIT_OPTIONS_TABS)[number];
 
-const STORAGE_KEYS = {
-  unitTypes: "makfiwamufi.unit-options.unit-types",
-  propertyTypes: "makfiwamufi.unit-options.property-types",
-  floors: "makfiwamufi.unit-options.floors",
-  amenities: "makfiwamufi.unit-options.amenities",
-};
-
 export default function UnitOptionsSection() {
   const [activeTab, setActiveTab] = useUrlTab<UnitOptionsTab>({
     paramKey: "tab",
@@ -50,25 +43,10 @@ export default function UnitOptionsSection() {
     validValues: UNIT_OPTIONS_TABS,
   });
 
-  const [unitTypes, setUnitTypes] = useState<OptionItem[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.unitTypes);
-    return saved ? JSON.parse(saved) : INITIAL_UNIT_TYPES;
-  });
-
-  const [propertyTypes, setPropertyTypes] = useState<OptionItem[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.propertyTypes);
-    return saved ? JSON.parse(saved) : INITIAL_PROPERTY_TYPES;
-  });
-
-  const [floors, setFloors] = useState<OptionItem[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.floors);
-    return saved ? JSON.parse(saved) : INITIAL_FLOOR_OPTIONS;
-  });
-
-  const [amenities, setAmenities] = useState<AmenityCategory[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.amenities);
-    return saved ? JSON.parse(saved) : INITIAL_AMENITIES_CONFIG;
-  });
+  const [unitTypes, setUnitTypes] = useState<OptionItem[]>(INITIAL_UNIT_TYPES);
+  const [propertyTypes, setPropertyTypes] = useState<OptionItem[]>(INITIAL_PROPERTY_TYPES);
+  const [floors, setFloors] = useState<OptionItem[]>(INITIAL_FLOOR_OPTIONS);
+  const [amenities, setAmenities] = useState<AmenityCategory[]>(INITIAL_AMENITIES_CONFIG);
 
   // Editors for the option item tabs
   const unitTypesEditor = useOptionItemEditor({
@@ -86,25 +64,6 @@ export default function UnitOptionsSection() {
     onItemsChange: setFloors,
   });
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.unitTypes, JSON.stringify(unitTypes));
-  }, [unitTypes]);
-
-  useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEYS.propertyTypes,
-      JSON.stringify(propertyTypes),
-    );
-  }, [propertyTypes]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.floors, JSON.stringify(floors));
-  }, [floors]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.amenities, JSON.stringify(amenities));
-  }, [amenities]);
-
   function handleResetDefaults() {
     if (
       window.confirm(
@@ -115,10 +74,6 @@ export default function UnitOptionsSection() {
       setPropertyTypes(INITIAL_PROPERTY_TYPES);
       setFloors(INITIAL_FLOOR_OPTIONS);
       setAmenities(INITIAL_AMENITIES_CONFIG);
-      localStorage.removeItem(STORAGE_KEYS.unitTypes);
-      localStorage.removeItem(STORAGE_KEYS.propertyTypes);
-      localStorage.removeItem(STORAGE_KEYS.floors);
-      localStorage.removeItem(STORAGE_KEYS.amenities);
       toast.success("تمت استعادة خيارات الوحدات الافتراضية بنجاح");
     }
   }

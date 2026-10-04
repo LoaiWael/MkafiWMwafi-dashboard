@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import {
@@ -19,7 +19,6 @@ import { ROUTES } from "@/lib/constants";
 import {
   CONTRACT_PRICING_PLANS,
   PRICING_METADATA,
-  PRICING_STORAGE_KEYS,
   type PricingPlan,
 } from "@/features/pricing/constants";
 import DurationPlansCard from "@/features/pricing/components/duration-plans-card";
@@ -37,23 +36,10 @@ export default function PricingSection() {
     validValues: PRICING_TABS,
   });
 
-  // Load plans with localStorage persistence
-  const [plans, setPlans] = useState<PricingPlan[]>(() => {
-    const saved = localStorage.getItem(PRICING_STORAGE_KEYS.plans);
-    return saved ? JSON.parse(saved) : [...CONTRACT_PRICING_PLANS];
-  });
-
-  // Save to localStorage
-  useEffect(() => {
-    localStorage.setItem(PRICING_STORAGE_KEYS.plans, JSON.stringify(plans));
-  }, [plans]);
+  const [plans, setPlans] = useState<PricingPlan[]>([...CONTRACT_PRICING_PLANS]);
 
   const handleResetPlans = () => {
     setPlans([...CONTRACT_PRICING_PLANS]);
-    localStorage.setItem(
-      PRICING_STORAGE_KEYS.plans,
-      JSON.stringify(CONTRACT_PRICING_PLANS),
-    );
     toast.success("تمت استعادة باقات التوثيق الافتراضية بنجاح");
   };
 

@@ -1,4 +1,3 @@
-import { STORAGE_KEYS } from "@/lib/constants";
 import {
   ADMIN_ACTIVITY,
   DEFAULT_ADMIN_PROFILE,
@@ -17,36 +16,6 @@ interface AdminState {
   activity: ProfileActivity[];
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function readString(value: unknown, fallback: string) {
-  return typeof value === "string" ? value : fallback;
-}
-
-function readProfile(): AdminProfile {
-  if (typeof localStorage === "undefined") return DEFAULT_ADMIN_PROFILE;
-
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.adminProfile);
-    if (!raw) return DEFAULT_ADMIN_PROFILE;
-    const parsed: unknown = JSON.parse(raw);
-    if (!isRecord(parsed)) return DEFAULT_ADMIN_PROFILE;
-
-    return {
-      name: readString(parsed.name, DEFAULT_ADMIN_PROFILE.name),
-      role: DEFAULT_ADMIN_PROFILE.role,
-      avatarUrl: readString(parsed.avatarUrl, ""),
-      email: readString(parsed.email, DEFAULT_ADMIN_PROFILE.email),
-      phone: readString(parsed.phone, DEFAULT_ADMIN_PROFILE.phone),
-      joinedAt: DEFAULT_ADMIN_PROFILE.joinedAt,
-    };
-  } catch {
-    return DEFAULT_ADMIN_PROFILE;
-  }
-}
-
 function formatStamp(date: Date) {
   return new Intl.DateTimeFormat("ar-SA", {
     dateStyle: "medium",
@@ -55,7 +24,7 @@ function formatStamp(date: Date) {
 }
 
 let state: AdminState = {
-  profile: readProfile(),
+  profile: { ...DEFAULT_ADMIN_PROFILE },
   activity: [...ADMIN_ACTIVITY],
 };
 
@@ -97,6 +66,5 @@ export function updateAdminProfile(patch: AdminProfilePatch) {
     activity: [entry, ...state.activity].slice(0, 20),
   };
 
-  localStorage.setItem(STORAGE_KEYS.adminProfile, JSON.stringify(profile));
   emit();
 }

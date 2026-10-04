@@ -63,10 +63,6 @@ export const INITIAL_TAX_SETTINGS: TaxSetting[] = [
   },
 ];
 
-export const TAX_STORAGE_KEYS = {
-  taxes: "makfiwamufi.taxes.settings",
-} as const;
-
 export const TAXES_METADATA = {
   title: "الضرائب والرسوم",
   description:

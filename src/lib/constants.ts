@@ -1,13 +1,6 @@
 export const APP_SLUG = "makfiwamufi";
 
 export const STORAGE_KEYS = {
-  theme: `${APP_SLUG}.theme`,
-  sidebarCollapsed: `${APP_SLUG}.sidebar-collapsed`,
-  tablePageSize: `${APP_SLUG}.table.page-size`,
-  termsHtml: `${APP_SLUG}.terms-html`,
-  privacyHtml: `${APP_SLUG}.privacy-html`,
-  systemSettings: `${APP_SLUG}.system-settings`,
-  adminProfile: `${APP_SLUG}.admin-profile`,
   authToken: `${APP_SLUG}.auth-token`,
   authUser: `${APP_SLUG}.auth-user`,
 } as const;

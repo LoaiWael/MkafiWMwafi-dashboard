@@ -1,5 +1,3 @@
-import { APP_SLUG } from "@/lib/constants";
-
 export interface OptionItem {
   id: string;
   nameAr: string;
@@ -7,8 +5,6 @@ export interface OptionItem {
   description?: string;
   isActive: boolean;
 }
-
-export const PARTY_OPTIONS_STORAGE_KEY = `${APP_SLUG}.party-options.capacities`;
 
 export const PARTY_OPTIONS_METADATA = {
   title: "صفة المستأجر والمؤجر",

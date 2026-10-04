@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MapPin, Plus, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { FadeIn, MountFade, StaggerContainer, StaggerItem } from "@/components/animations";
@@ -23,7 +23,6 @@ import {
   REGION_ENTRY_KIND,
   cloneRegions,
   REGIONS_METADATA,
-  REGIONS_STORAGE_KEY,
   filterRegions,
   namesMatch,
   readStoredRegions,
@@ -38,10 +37,6 @@ export default function RegionsSection() {
   const [dialogSeed, setDialogSeed] = useState<RegionDialogSeed>({
     kind: REGION_ENTRY_KIND.region,
   });
-
-  useEffect(() => {
-    localStorage.setItem(REGIONS_STORAGE_KEY, JSON.stringify(regions));
-  }, [regions]);
 
   const isRegionFilterValid =
     regionFilter === ALL_REGIONS_FILTER ||
@@ -122,7 +117,6 @@ export default function RegionsSection() {
     setRegions(defaults);
     setSearch("");
     setRegionFilter(ALL_REGIONS_FILTER);
-    localStorage.setItem(REGIONS_STORAGE_KEY, JSON.stringify(defaults));
     toast.success("تمت استعادة المناطق والمدن الافتراضية بنجاح");
   }
 

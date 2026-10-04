@@ -1,46 +1,34 @@
 import { useState, useEffect } from "react";
 import type { NotificationItem } from "../types";
-import { INITIAL_NOTIFICATIONS, NOTIFICATIONS_STORAGE_KEY } from "../constants";
+import { INITIAL_NOTIFICATIONS } from "../constants";
 
 const NOTIFICATIONS_CHANGE_EVENT = "makfiwamufi:notifications-changed";
 
-function getStoredNotifications(): NotificationItem[] {
-  if (typeof window === "undefined") return INITIAL_NOTIFICATIONS;
-  try {
-    const raw = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch {
-    // fallback to initial
-  }
-  return INITIAL_NOTIFICATIONS;
+let inMemoryNotifications: NotificationItem[] = [...INITIAL_NOTIFICATIONS];
+
+function getNotifications(): NotificationItem[] {
+  return inMemoryNotifications;
 }
 
 export function useNotifications() {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(getStoredNotifications);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(getNotifications);
 
   useEffect(() => {
     function handleSync() {
-      setNotifications(getStoredNotifications());
+      setNotifications(getNotifications());
     }
 
     window.addEventListener(NOTIFICATIONS_CHANGE_EVENT, handleSync);
-    window.addEventListener("storage", handleSync);
     return () => {
       window.removeEventListener(NOTIFICATIONS_CHANGE_EVENT, handleSync);
-      window.removeEventListener("storage", handleSync);
     };
   }, []);
 
   function save(newItems: NotificationItem[]) {
+    inMemoryNotifications = newItems;
     setNotifications(newItems);
-    try {
-      localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(newItems));
+    if (typeof window !== "undefined") {
       window.dispatchEvent(new Event(NOTIFICATIONS_CHANGE_EVENT));
-    } catch {
-      // ignore
     }
   }
 
@@ -66,7 +54,7 @@ export function useNotifications() {
   }
 
   function restoreDefaults() {
-    save(INITIAL_NOTIFICATIONS);
+    save([...INITIAL_NOTIFICATIONS]);
   }
 
   return {

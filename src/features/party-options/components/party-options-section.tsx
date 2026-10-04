@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Plus, RotateCcw } from "lucide-react";
 import { FadeIn } from "@/components/animations";
@@ -11,22 +11,9 @@ import PartyOptionsTable from "@/features/party-options/components/party-options
 import {
   INITIAL_PARTY_CAPACITIES,
   PARTY_OPTIONS_METADATA,
-  PARTY_OPTIONS_STORAGE_KEY,
   type OptionItem,
 } from "@/features/party-options/constants";
 import { partyOptionSchema } from "../schemas/party-option-schema";
-
-function readStoredCapacities(): OptionItem[] {
-  const saved = localStorage.getItem(PARTY_OPTIONS_STORAGE_KEY);
-  if (!saved) return [...INITIAL_PARTY_CAPACITIES];
-
-  try {
-    const parsed = JSON.parse(saved) as OptionItem[];
-    return Array.isArray(parsed) ? parsed : [...INITIAL_PARTY_CAPACITIES];
-  } catch {
-    return [...INITIAL_PARTY_CAPACITIES];
-  }
-}
 
 const EMPTY_FORM: PartyOptionFormValues = {
   nameAr: "",
@@ -36,17 +23,12 @@ const EMPTY_FORM: PartyOptionFormValues = {
 };
 
 export default function PartyOptionsSection() {
-  const [capacities, setCapacities] = useState<OptionItem[]>(readStoredCapacities);
+  const [capacities, setCapacities] = useState<OptionItem[]>([
+    ...INITIAL_PARTY_CAPACITIES,
+  ]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<OptionItem | null>(null);
   const [formData, setFormData] = useState<PartyOptionFormValues>(EMPTY_FORM);
-
-  useEffect(() => {
-    localStorage.setItem(
-      PARTY_OPTIONS_STORAGE_KEY,
-      JSON.stringify(capacities),
-    );
-  }, [capacities]);
 
   function handleOpenAdd() {
     setEditingItem(null);
@@ -110,7 +92,6 @@ export default function PartyOptionsSection() {
       )
     ) {
       setCapacities([...INITIAL_PARTY_CAPACITIES]);
-      localStorage.removeItem(PARTY_OPTIONS_STORAGE_KEY);
       toast.success("تمت استعادة صفة أطراف العقد الافتراضية بنجاح");
     }
   }

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   CheckCircle2,
   Plus,
@@ -42,7 +42,6 @@ import {
 } from "@/components/ui/select";
 import {
   COUPONS_METADATA,
-  COUPONS_STORAGE_KEYS,
   INITIAL_COUPONS,
   type Coupon,
   type CouponStatus,
@@ -80,15 +79,7 @@ const discountTypeLabels: Record<string, ReactNode> = {
 export default function CouponsSection() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Coupons State with LocalStorage Persistence
-  const [coupons, setCoupons] = useState<Coupon[]>(() => {
-    const saved = localStorage.getItem(COUPONS_STORAGE_KEYS.coupons);
-    return saved ? JSON.parse(saved) : [...INITIAL_COUPONS];
-  });
-
-  useEffect(() => {
-    localStorage.setItem(COUPONS_STORAGE_KEYS.coupons, JSON.stringify(coupons));
-  }, [coupons]);
+  const [coupons, setCoupons] = useState<Coupon[]>([...INITIAL_COUPONS]);
 
   // Dialog States
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -263,10 +254,6 @@ export default function CouponsSection() {
 
   function handleResetDefaults() {
     setCoupons([...INITIAL_COUPONS]);
-    localStorage.setItem(
-      COUPONS_STORAGE_KEYS.coupons,
-      JSON.stringify(INITIAL_COUPONS),
-    );
     toast.success("تمت استعادة الكوبونات الافتراضية بنجاح");
   }
 

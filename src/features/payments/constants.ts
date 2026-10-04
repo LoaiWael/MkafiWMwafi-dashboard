@@ -510,11 +510,6 @@ export const MOCK_PAYMENT_REPORTS: PaymentReportRecord[] = [
   },
 ];
 
-export const PAYMENTS_STORAGE_KEYS = {
-  frequencies: "makfiwamufi.payments.frequencies",
-  reports: "makfiwamufi.payments.reports",
-} as const;
-
 export const PAYMENTS_METADATA = {
   title: "المدفوعات والبيانات المالية",
   description:

@@ -5,29 +5,14 @@ import { FadeIn } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
 import RichTextEditor from "@/components/rich-text-editor";
 import { Button } from "@/components/ui/button";
-import { STORAGE_KEYS } from "@/lib/constants";
-
-function readTermsHtml() {
-  try {
-    return localStorage.getItem(STORAGE_KEYS.termsHtml) ?? "";
-  } catch {
-    return "";
-  }
-}
-
 export default function TermsSection() {
-  const [content, setContent] = useState(readTermsHtml);
+  const [content, setContent] = useState("");
   const [savedContent, setSavedContent] = useState(content);
   const [saved, setSaved] = useState(false);
   const isUnchanged = content === savedContent;
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    try {
-      localStorage.setItem(STORAGE_KEYS.termsHtml, content);
-    } catch {
-      return;
-    }
     setSavedContent(content);
     setSaved(true);
   }

@@ -1,5 +1,3 @@
-import { APP_SLUG } from "@/lib/constants";
-
 export interface RegionCity {
   id: string;
   nameAr: string;
@@ -20,8 +18,6 @@ export type RegionEntryKind =
   (typeof REGION_ENTRY_KIND)[keyof typeof REGION_ENTRY_KIND];
 
 export const ALL_REGIONS_FILTER = "all";
-
-export const REGIONS_STORAGE_KEY = `${APP_SLUG}.regions`;
 
 export const REGIONS_METADATA = {
   title: "المناطق والمدن",
@@ -108,22 +104,7 @@ export function normalizeArabicText(text: string): string {
     .replace(/ى/g, "ي");
 }
 
-function isRegionCity(value: unknown): value is RegionCity {
-  if (typeof value !== "object" || value === null) return false;
-  const city = value as { id?: unknown; nameAr?: unknown };
-  return typeof city.id === "string" && typeof city.nameAr === "string";
-}
 
-function isAdministrativeRegion(value: unknown): value is AdministrativeRegion {
-  if (typeof value !== "object" || value === null) return false;
-  const region = value as { id?: unknown; nameAr?: unknown; cities?: unknown };
-  return (
-    typeof region.id === "string" &&
-    typeof region.nameAr === "string" &&
-    Array.isArray(region.cities) &&
-    region.cities.every(isRegionCity)
-  );
-}
 
 export function cloneRegions(regions: readonly AdministrativeRegion[]) {
   return regions.map((region) => ({
@@ -133,21 +114,7 @@ export function cloneRegions(regions: readonly AdministrativeRegion[]) {
 }
 
 export function readStoredRegions(): AdministrativeRegion[] {
-  try {
-    const saved = localStorage.getItem(REGIONS_STORAGE_KEY);
-    if (!saved) return cloneRegions(INITIAL_REGIONS);
-    const parsed: unknown = JSON.parse(saved);
-    if (
-      !Array.isArray(parsed) ||
-      parsed.length === 0 ||
-      !parsed.every(isAdministrativeRegion)
-    ) {
-      return cloneRegions(INITIAL_REGIONS);
-    }
-    return parsed;
-  } catch {
-    return cloneRegions(INITIAL_REGIONS);
-  }
+  return cloneRegions(INITIAL_REGIONS);
 }
 
 function includesQuery(value: string, query: string) {

@@ -26,10 +26,6 @@ export interface Coupon {
   totalDiscountedAmount: number;
 }
 
-export const COUPONS_STORAGE_KEYS = {
-  coupons: "makfiwamufi.coupons.list",
-} as const;
-
 export const COUPONS_METADATA = {
   title: "كوبونات الخصم",
   description:

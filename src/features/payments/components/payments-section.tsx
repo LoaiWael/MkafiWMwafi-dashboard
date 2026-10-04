@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { Plus, ReceiptText, RotateCcw, Wallet } from "lucide-react";
@@ -12,7 +12,6 @@ import {
   INITIAL_PAYMENT_FREQUENCIES,
   MOCK_PAYMENT_REPORTS,
   PAYMENTS_METADATA,
-  PAYMENTS_STORAGE_KEYS,
   type PaymentFrequencyOption,
   type PaymentReportRecord,
 } from "@/features/payments/constants";
@@ -39,35 +38,13 @@ export default function PaymentsSection() {
   const [editingFrequency, setEditingFrequency] =
     useState<PaymentFrequencyOption | null>(null);
 
-  // Load frequencies from localStorage or defaults
-  const [frequencies, setFrequencies] = useState<PaymentFrequencyOption[]>(
-    () => {
-      const saved = localStorage.getItem(PAYMENTS_STORAGE_KEYS.frequencies);
-      return saved ? JSON.parse(saved) : [...INITIAL_PAYMENT_FREQUENCIES];
-    },
-  );
+  const [frequencies, setFrequencies] = useState<PaymentFrequencyOption[]>([
+    ...INITIAL_PAYMENT_FREQUENCIES,
+  ]);
 
-  // Load payment reports from localStorage or defaults
-  const [reports, setReports] = useState<PaymentReportRecord[]>(() => {
-    const saved = localStorage.getItem(PAYMENTS_STORAGE_KEYS.reports);
-    return saved ? JSON.parse(saved) : [...MOCK_PAYMENT_REPORTS];
-  });
-
-  // Save frequencies to localStorage
-  useEffect(() => {
-    localStorage.setItem(
-      PAYMENTS_STORAGE_KEYS.frequencies,
-      JSON.stringify(frequencies),
-    );
-  }, [frequencies]);
-
-  // Save reports to localStorage
-  useEffect(() => {
-    localStorage.setItem(
-      PAYMENTS_STORAGE_KEYS.reports,
-      JSON.stringify(reports),
-    );
-  }, [reports]);
+  const [reports, setReports] = useState<PaymentReportRecord[]>([
+    ...MOCK_PAYMENT_REPORTS,
+  ]);
 
   const handleOpenAddFrequency = () => {
     setEditingFrequency(null);
@@ -106,8 +83,6 @@ export default function PaymentsSection() {
     ) {
       setFrequencies([...INITIAL_PAYMENT_FREQUENCIES]);
       setReports([...MOCK_PAYMENT_REPORTS]);
-      localStorage.removeItem(PAYMENTS_STORAGE_KEYS.frequencies);
-      localStorage.removeItem(PAYMENTS_STORAGE_KEYS.reports);
       toast.success(
         "تمت استعادة خيارات وسجلات المدفوعات الافتراضية بنجاح",
       );

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Percent, Plus, Receipt, RotateCcw } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -9,7 +9,6 @@ import { FilterTabs, type FilterTabItem } from "@/components/ui/filter-tabs";
 import { useUrlTab } from "@/hooks/use-url-tab";
 import {
   INITIAL_TAX_SETTINGS,
-  TAX_STORAGE_KEYS,
   TAXES_METADATA,
   type TaxSetting,
 } from "@/features/taxes/constants";
@@ -31,16 +30,7 @@ export default function TaxesSection() {
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [editingTax, setEditingTax] = useState<TaxSetting | null>(null);
 
-  // Load taxes with localStorage persistence
-  const [taxes, setTaxes] = useState<TaxSetting[]>(() => {
-    const saved = localStorage.getItem(TAX_STORAGE_KEYS.taxes);
-    return saved ? JSON.parse(saved) : [...INITIAL_TAX_SETTINGS];
-  });
-
-  // Save to localStorage
-  useEffect(() => {
-    localStorage.setItem(TAX_STORAGE_KEYS.taxes, JSON.stringify(taxes));
-  }, [taxes]);
+  const [taxes, setTaxes] = useState<TaxSetting[]>([...INITIAL_TAX_SETTINGS]);
 
   const handleOpenAddTax = () => {
     setEditingTax(null);
@@ -95,7 +85,6 @@ export default function TaxesSection() {
       )
     ) {
       setTaxes([...INITIAL_TAX_SETTINGS]);
-      localStorage.removeItem(TAX_STORAGE_KEYS.taxes);
       toast.success("تمت استعادة الإعدادات والنسب الضريبية الافتراضية بنجاح");
     }
   };

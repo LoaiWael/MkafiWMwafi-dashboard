@@ -96,10 +96,6 @@ export const CONTRACT_PRICING_PLANS: readonly PricingPlan[] = [
   },
 ] as const;
 
-export const PRICING_STORAGE_KEYS = {
-  plans: "makfiwamufi.pricing.plans",
-} as const;
-
 export const PRICING_METADATA = {
   title: "تسعير الخدمات",
   description: "رسوم توثيق وتسجيل عقود الإيجار المعتمدة رسمياً عبر شبكة إيجار",

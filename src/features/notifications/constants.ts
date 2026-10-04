@@ -1,8 +1,6 @@
 import type { NotificationItem } from "./types";
 import { ROUTES } from "@/lib/constants";
 
-export const NOTIFICATIONS_STORAGE_KEY = "makfiwamufi.notifications.v3";
-
 export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
   {
     id: "notif-emp-1",
