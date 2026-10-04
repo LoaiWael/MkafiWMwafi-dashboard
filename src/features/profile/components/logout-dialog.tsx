@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,6 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { logoutAdmin } from "@/features/auth/auth-store";
+import { ROUTES } from "@/lib/constants";
 
 interface LogoutDialogProps {
   open: boolean;
@@ -15,9 +18,13 @@ interface LogoutDialogProps {
 }
 
 export default function LogoutDialog({ open, onOpenChange }: LogoutDialogProps) {
+  const navigate = useNavigate();
+
   function confirmLogout() {
     onOpenChange(false);
+    logoutAdmin();
     toast.success("تم تسجيل الخروج من لوحة التحكم");
+    navigate(ROUTES.login, { viewTransition: true });
   }
 
   return (

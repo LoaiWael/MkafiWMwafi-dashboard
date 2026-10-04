@@ -8,6 +8,8 @@ export const STORAGE_KEYS = {
   privacyHtml: `${APP_SLUG}.privacy-html`,
   systemSettings: `${APP_SLUG}.system-settings`,
   adminProfile: `${APP_SLUG}.admin-profile`,
+  authToken: `${APP_SLUG}.auth-token`,
+  authUser: `${APP_SLUG}.auth-user`,
 } as const;
 
 export const SITE = {
@@ -27,6 +29,7 @@ export const DEFAULT_PAGE_SIZE = 10;
 
 export const ROUTES = {
   home: "/",
+  login: "/login",
   contracts: "/contracts",
   properties: "/properties",
   users: "/users",
