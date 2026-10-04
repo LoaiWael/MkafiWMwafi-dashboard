@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Building2, MapPin, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import WarningDialog from "@/components/warning-dialog";
 import {
   formatCityCount,
   type AdministrativeRegion,
@@ -30,34 +32,44 @@ export default function RegionCard({
   onRemoveCity,
   onRemoveRegion,
 }: RegionCardProps) {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const cityCount = region.cities.length;
 
   return (
-    <Card className="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs transition-all duration-200 hover:border-primary/40 hover:shadow-md hover:shadow-primary/5">
-      <div>
-        <CardHeader className="border-b border-border/60 pb-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary-200/60 bg-primary-50 text-primary transition-transform duration-200 group-hover:scale-105 dark:border-primary-800/40 dark:bg-primary-950/40 dark:text-primary-300">
-                <MapPin className="size-4.5" />
-              </div>
-              <div className="min-w-0 flex-1 space-y-1">
-                <CardTitle className="truncate text-base font-bold text-foreground">
-                  {region.nameAr}
-                </CardTitle>
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
-                  <span className="size-1.5 rounded-full bg-primary/70" />
-                  <span>{formatCityCount(cityCount)}</span>
+    <>
+      <WarningDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="حذف المنطقة الإدارية"
+        description={`هل أنت متأكد من رغبتك في حذف منطقة "${region.nameAr}"؟ سيؤدي هذا إلى حذف جميع المدن التابعة لها ولا يمكن التراجع عن هذا الإجراء.`}
+        confirmLabel="حذف المنطقة"
+        onConfirm={() => onRemoveRegion(region.id)}
+      />
+      <Card className="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs transition-all duration-200 hover:border-primary/40 hover:shadow-md hover:shadow-primary/5">
+        <div>
+          <CardHeader className="border-b border-border/60 pb-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary-200/60 bg-primary-50 text-primary transition-transform duration-200 group-hover:scale-105 dark:border-primary-800/40 dark:bg-primary-950/40 dark:text-primary-300">
+                  <MapPin className="size-4.5" />
+                </div>
+                <div className="min-w-0 flex-1 space-y-1">
+                  <CardTitle className="truncate text-base font-bold text-foreground">
+                    {region.nameAr}
+                  </CardTitle>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                    <span className="size-1.5 rounded-full bg-primary/70" />
+                    <span>{formatCityCount(cityCount)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <TooltipProvider delay={100}>
-              <Tooltip>
-                <TooltipTrigger
-                  type="button"
-                  aria-label={`حذف ${region.nameAr}`}
-                  onClick={() => onRemoveRegion(region.id)}
+              <TooltipProvider delay={100}>
+                <Tooltip>
+                  <TooltipTrigger
+                    type="button"
+                    aria-label={`حذف ${region.nameAr}`}
+                    onClick={() => setIsDeleteDialogOpen(true)}
                   className="flex size-8.5 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-all hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
                 >
                   <Trash2 className="size-4" />
@@ -129,5 +141,6 @@ export default function RegionCard({
         </Button>
       </div>
     </Card>
+    </>
   );
 }

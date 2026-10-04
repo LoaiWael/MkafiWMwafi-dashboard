@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { DollarSign, Percent, RefreshCw, Tag } from "lucide-react";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,10 +25,12 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   type Coupon,
-  type CouponDiscountType,
-  type CouponStatus,
   type TargetService,
 } from "@/features/coupons/constants";
+import {
+  couponSchema,
+  type CouponFormData,
+} from "@/features/coupons/schemas/coupon-schema";
 
 function generateRandomCouponCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -93,134 +96,76 @@ function CouponDialogForm({
   ) => void;
 }) {
   const isEditing = Boolean(coupon);
+  const defaultDates = getDefaultDates();
 
-  const [code, setCode] = useState(() =>
-    coupon ? coupon.code : generateRandomCouponCode(),
-  );
-  const [name, setName] = useState(() => (coupon ? coupon.name : ""));
-  const [description, setDescription] = useState(() =>
-    coupon ? coupon.description : "",
-  );
-  const [discountType, setDiscountType] = useState<CouponDiscountType>(() =>
-    coupon ? coupon.discountType : "percentage",
-  );
-  const [discountValue, setDiscountValue] = useState<number>(() =>
-    coupon ? coupon.discountValue : 20,
-  );
-  const [maxDiscountAmount, setMaxDiscountAmount] = useState<
-    number | undefined
-  >(() => (coupon ? coupon.maxDiscountAmount : 100));
-  const [minOrderAmount, setMinOrderAmount] = useState<number>(() =>
-    coupon ? coupon.minOrderAmount : 200,
-  );
-  const [targetServices, setTargetServices] = useState<TargetService[]>(() =>
-    coupon ? coupon.targetServices : ["residential", "commercial"],
-  );
-  const [hasUsageLimit, setHasUsageLimit] = useState<boolean>(() =>
-    coupon ? coupon.usageLimitTotal !== undefined : true,
-  );
-  const [usageLimitTotal, setUsageLimitTotal] = useState<number | undefined>(
-    () => (coupon ? coupon.usageLimitTotal : 500),
-  );
-  const [usageLimitPerUser, setUsageLimitPerUser] = useState<number>(() =>
-    coupon ? coupon.usageLimitPerUser : 1,
-  );
-  const [status, setStatus] = useState<CouponStatus>(() =>
-    coupon ? coupon.status : "active",
-  );
-  const [startDate, setStartDate] = useState(() =>
-    coupon ? coupon.startDate : getDefaultDates().todayStr,
-  );
-  const [endDate, setEndDate] = useState(() =>
-    coupon ? coupon.endDate : getDefaultDates().nextMonthStr,
-  );
-  const [isPublic, setIsPublic] = useState(() =>
-    coupon ? coupon.isPublic : true,
-  );
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<CouponFormData>({
+    resolver: zodResolver(couponSchema),
+    defaultValues: {
+      code: coupon ? coupon.code : generateRandomCouponCode(),
+      name: coupon ? coupon.name : "",
+      description: coupon ? coupon.description : "",
+      discountType: coupon ? coupon.discountType : "percentage",
+      discountValue: coupon ? String(coupon.discountValue) : "20",
+      maxDiscountAmount: coupon?.maxDiscountAmount
+        ? String(coupon.maxDiscountAmount)
+        : "100",
+      minOrderAmount: coupon ? String(coupon.minOrderAmount) : "200",
+      targetServices: coupon
+        ? coupon.targetServices
+        : ["residential", "commercial"],
+      targetUserType: coupon ? coupon.targetUserType : "all",
+      hasUsageLimit: coupon ? coupon.usageLimitTotal !== undefined : true,
+      usageLimitTotal: coupon?.usageLimitTotal
+        ? String(coupon.usageLimitTotal)
+        : "500",
+      usageLimitPerUser: coupon ? String(coupon.usageLimitPerUser) : "1",
+      status: coupon ? coupon.status : "active",
+      startDate: coupon ? coupon.startDate : defaultDates.todayStr,
+      endDate: coupon ? coupon.endDate : defaultDates.nextMonthStr,
+      isPublic: coupon ? coupon.isPublic : true,
+    },
+  });
+
+  const discountType = watch("discountType");
+  const hasUsageLimit = watch("hasUsageLimit");
 
   function handleGenerateCode() {
     const generated = generateRandomCouponCode();
-    setCode(generated);
+    setValue("code", generated, { shouldValidate: true });
     toast.info(`تم توليد رمز الكوبون تلقائياً: ${generated}`);
   }
 
-  function toggleService(service: TargetService) {
-    if (targetServices.includes(service)) {
-      if (targetServices.length > 1) {
-        setTargetServices(targetServices.filter((s) => s !== service));
-      }
-    } else {
-      setTargetServices([...targetServices, service]);
-    }
-  }
-
-  function validate() {
-    const newErrors: Record<string, string> = {};
-
-    if (!code.trim()) {
-      newErrors.code = "رمز الكوبون مطلوب";
-    } else if (code.trim().length < 3) {
-      newErrors.code = "رمز الكوبون يجب أن يكون 3 أحرف على الأقل";
-    }
-
-    if (!name.trim()) {
-      newErrors.name = "اسم الكوبون مطلوب";
-    }
-
-    if (discountValue <= 0) {
-      newErrors.discountValue = "قيمة الخصم يجب أن تكون أكبر من الصفر";
-    } else if (discountType === "percentage" && discountValue > 100) {
-      newErrors.discountValue = "نسبة الخصم لا يمكن أن تتجاوز 100%";
-    }
-
-    if (minOrderAmount < 0) {
-      newErrors.minOrderAmount = "الحد الأدنى لا يمكن أن يكون سالباً";
-    }
-
-    if (!startDate) {
-      newErrors.startDate = "تاريخ البدء مطلوب";
-    }
-
-    if (!endDate) {
-      newErrors.endDate = "تاريخ الانتهاء مطلوب";
-    } else if (startDate && new Date(endDate) < new Date(startDate)) {
-      newErrors.endDate = "تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء";
-    }
-
-    setErrors(newErrors);
-    const isValid = Object.keys(newErrors).length === 0;
-    if (!isValid) {
-      toast.error("يرجى مراجعة الحقول الإلزامية وتصحيح الأخطاء");
-    }
-    return isValid;
-  }
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!validate()) return;
-
+  function onSubmit(data: CouponFormData) {
     onSave({
       id: coupon?.id,
-      code: code.trim().toUpperCase(),
-      name: name.trim(),
-      description: description.trim(),
-      discountType,
-      discountValue: Number(discountValue),
+      code: data.code.trim().toUpperCase(),
+      name: data.name.trim(),
+      description: data.description?.trim() || "",
+      discountType: data.discountType,
+      discountValue: Number(data.discountValue),
       maxDiscountAmount:
-        discountType === "percentage" && maxDiscountAmount
-          ? Number(maxDiscountAmount)
+        data.discountType === "percentage" && data.maxDiscountAmount
+          ? Number(data.maxDiscountAmount)
           : undefined,
-      minOrderAmount: Number(minOrderAmount),
-      targetServices,
-      targetUserType: coupon?.targetUserType || "all",
+      minOrderAmount: Number(data.minOrderAmount) || 0,
+      targetServices: data.targetServices,
+      targetUserType: data.targetUserType,
       usageLimitTotal:
-        hasUsageLimit && usageLimitTotal ? Number(usageLimitTotal) : undefined,
-      usageLimitPerUser: Number(usageLimitPerUser) || 1,
-      status,
-      startDate,
-      endDate,
-      isPublic,
+        data.hasUsageLimit && data.usageLimitTotal
+          ? Number(data.usageLimitTotal)
+          : undefined,
+      usageLimitPerUser: Number(data.usageLimitPerUser) || 1,
+      status: data.status,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      isPublic: data.isPublic,
     });
 
     onClose();
@@ -228,7 +173,7 @@ function CouponDialogForm({
 
   return (
     <DialogContent className="max-h-[92vh] w-full max-w-[calc(100%-1rem)] sm:max-w-3xl overflow-y-auto no-scrollbar sm:max-h-[85vh] p-3.5 sm:p-6">
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6" noValidate>
         <DialogHeader className="gap-1 pe-6 text-start">
           <DialogTitle className="flex items-center gap-2 text-base sm:text-xl font-bold">
             <div className="flex size-7 sm:size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -245,7 +190,7 @@ function CouponDialogForm({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3.5 sm:space-y-5">
+        <div className="space-y-3.5 sm:space-y-5 text-start">
           {/* Coupon Code & Generate Button */}
           <div className="grid grid-cols-1 gap-3.5 sm:gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:space-y-2">
@@ -269,16 +214,23 @@ function CouponDialogForm({
               <div className="relative">
                 <Input
                   id="coupon-code"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.toUpperCase())}
                   placeholder="مثال: RAMADAN2026"
+                  disabled={isSubmitting}
+                  aria-invalid={Boolean(errors.code)}
                   className="font-mono text-base font-bold tracking-wider uppercase text-primary bg-muted/30 focus:bg-background transition-colors"
                   dir="ltr"
+                  {...register("code", {
+                    onChange: (e) => {
+                      e.target.value = e.target.value.toUpperCase();
+                    },
+                  })}
                 />
               </div>
-              {errors.code ? (
-                <p className="text-xs text-destructive">{errors.code}</p>
-              ) : null}
+              {errors.code && (
+                <p className="text-xs text-destructive">
+                  {errors.code.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5 sm:space-y-2">
@@ -290,14 +242,17 @@ function CouponDialogForm({
               </Label>
               <Input
                 id="coupon-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
                 placeholder="مثال: خصم شهر رمضان المبارك"
+                disabled={isSubmitting}
+                aria-invalid={Boolean(errors.name)}
                 className="bg-muted/30 focus:bg-background transition-colors"
+                {...register("name")}
               />
-              {errors.name ? (
-                <p className="text-xs text-destructive">{errors.name}</p>
-              ) : null}
+              {errors.name && (
+                <p className="text-xs text-destructive">
+                  {errors.name.message}
+                </p>
+              )}
             </div>
           </div>
 
@@ -312,10 +267,10 @@ function CouponDialogForm({
             <Textarea
               id="coupon-desc"
               rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
               placeholder="اكتب نبذة توضيحية عن العرض والجمهور المستهدف..."
-              className="resize-none bg-muted/30 focus:bg-background transition-colors"
+              disabled={isSubmitting}
+              className="resize-none bg-muted/30 focus:bg-background transition-colors text-xs sm:text-sm"
+              {...register("description")}
             />
           </div>
 
@@ -325,49 +280,56 @@ function CouponDialogForm({
               <Label className="text-xs sm:text-sm font-semibold">
                 نوع الخصم وقيمته
               </Label>
-              <RadioGroup
-                value={discountType}
-                onValueChange={(val) =>
-                  setDiscountType(val as CouponDiscountType)
-                }
-                className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3"
-              >
-                <label
-                  htmlFor="type-percentage"
-                  className={`flex cursor-pointer items-center justify-between rounded-lg border p-2.5 sm:p-3 transition-all ${
-                    discountType === "percentage"
-                      ? "border-primary bg-primary-50 text-primary-900 font-semibold shadow-2xs"
-                      : "border-border bg-card hover:bg-muted/60"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="percentage" id="type-percentage" />
-                    <div className="flex items-center gap-1.5">
-                      <Percent className="size-4 text-primary" />
-                      <span className="text-xs sm:text-sm">نسبة مئوية (%)</span>
-                    </div>
-                  </div>
-                </label>
+              <Controller
+                control={control}
+                name="discountType"
+                render={({ field }) => (
+                  <RadioGroup
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={isSubmitting}
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3"
+                  >
+                    <label
+                      htmlFor="type-percentage"
+                      className={`flex cursor-pointer items-center justify-between rounded-lg border p-2.5 sm:p-3 transition-all ${
+                        field.value === "percentage"
+                          ? "border-primary bg-primary-50 text-primary-900 font-semibold shadow-2xs"
+                          : "border-border bg-card hover:bg-muted/60"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="percentage" id="type-percentage" />
+                        <div className="flex items-center gap-1.5">
+                          <Percent className="size-4 text-primary" />
+                          <span className="text-xs sm:text-sm">
+                            نسبة مئوية (%)
+                          </span>
+                        </div>
+                      </div>
+                    </label>
 
-                <label
-                  htmlFor="type-fixed"
-                  className={`flex cursor-pointer items-center justify-between rounded-lg border p-2.5 sm:p-3 transition-all ${
-                    discountType === "fixed"
-                      ? "border-primary bg-primary-50 text-primary-900 font-semibold shadow-2xs"
-                      : "border-border bg-card hover:bg-muted/60"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="fixed" id="type-fixed" />
-                    <div className="flex items-center gap-1.5">
-                      <DollarSign className="size-4 text-primary" />
-                      <span className="text-xs sm:text-sm">
-                        مبلغ ثابت (ريال)
-                      </span>
-                    </div>
-                  </div>
-                </label>
-              </RadioGroup>
+                    <label
+                      htmlFor="type-fixed"
+                      className={`flex cursor-pointer items-center justify-between rounded-lg border p-2.5 sm:p-3 transition-all ${
+                        field.value === "fixed"
+                          ? "border-primary bg-primary-50 text-primary-900 font-semibold shadow-2xs"
+                          : "border-border bg-card hover:bg-muted/60"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="fixed" id="type-fixed" />
+                        <div className="flex items-center gap-1.5">
+                          <DollarSign className="size-4 text-primary" />
+                          <span className="text-xs sm:text-sm">
+                            مبلغ ثابت (ريال)
+                          </span>
+                        </div>
+                      </div>
+                    </label>
+                  </RadioGroup>
+                )}
+              />
             </div>
 
             <div className="grid grid-cols-1 gap-3.5 sm:gap-4 sm:grid-cols-2">
@@ -386,19 +348,21 @@ function CouponDialogForm({
                     type="number"
                     min={1}
                     max={discountType === "percentage" ? 100 : undefined}
-                    value={discountValue}
-                    onChange={(e) => setDiscountValue(Number(e.target.value))}
+                    placeholder={discountType === "percentage" ? "20" : "50"}
+                    disabled={isSubmitting}
+                    aria-invalid={Boolean(errors.discountValue)}
                     className="font-bold pe-12 bg-card"
+                    {...register("discountValue")}
                   />
                   <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
                     {discountType === "percentage" ? "%" : "ر.س"}
                   </span>
                 </div>
-                {errors.discountValue ? (
+                {errors.discountValue && (
                   <p className="text-xs text-destructive">
-                    {errors.discountValue}
+                    {errors.discountValue.message}
                   </p>
-                ) : null}
+                )}
               </div>
 
               {discountType === "percentage" ? (
@@ -414,14 +378,10 @@ function CouponDialogForm({
                       id="max-discount"
                       type="number"
                       min={1}
-                      value={maxDiscountAmount || ""}
-                      onChange={(e) =>
-                        setMaxDiscountAmount(
-                          e.target.value ? Number(e.target.value) : undefined,
-                        )
-                      }
                       placeholder="غير محدد"
+                      disabled={isSubmitting}
                       className="pe-12 bg-card"
+                      {...register("maxDiscountAmount")}
                     />
                     <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
                       ر.س
@@ -441,16 +401,21 @@ function CouponDialogForm({
                       id="min-order"
                       type="number"
                       min={0}
-                      value={minOrderAmount}
-                      onChange={(e) =>
-                        setMinOrderAmount(Number(e.target.value))
-                      }
+                      placeholder="200"
+                      disabled={isSubmitting}
+                      aria-invalid={Boolean(errors.minOrderAmount)}
                       className="pe-12 bg-card"
+                      {...register("minOrderAmount")}
                     />
                     <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
                       ر.س
                     </span>
                   </div>
+                  {errors.minOrderAmount && (
+                    <p className="text-xs text-destructive">
+                      {errors.minOrderAmount.message}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -459,32 +424,58 @@ function CouponDialogForm({
           {/* Applicable Services */}
           <div className="space-y-1.5 sm:space-y-2">
             <Label className="text-xs sm:text-sm font-semibold">
-              العقود المشمولة بالخصم
+              العقود المشمولة بالخصم <span className="text-destructive">*</span>
             </Label>
-            <div className="grid grid-cols-2 gap-2 pt-0.5">
-              <button
-                type="button"
-                onClick={() => toggleService("residential")}
-                className={`rounded-lg border px-3 py-2 text-center text-xs font-medium cursor-pointer transition-all ${
-                  targetServices.includes("residential")
-                    ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
-                    : "border-border bg-card text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-                }`}
-              >
-                العقود السكنية
-              </button>
-              <button
-                type="button"
-                onClick={() => toggleService("commercial")}
-                className={`rounded-lg border px-3 py-2 text-center text-xs font-medium cursor-pointer transition-all ${
-                  targetServices.includes("commercial")
-                    ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
-                    : "border-border bg-card text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-                }`}
-              >
-                العقود التجارية
-              </button>
-            </div>
+            <Controller
+              control={control}
+              name="targetServices"
+              render={({ field }) => {
+                const services = field.value || [];
+                function toggleService(service: TargetService) {
+                  if (services.includes(service)) {
+                    if (services.length > 1) {
+                      field.onChange(services.filter((s) => s !== service));
+                    }
+                  } else {
+                    field.onChange([...services, service]);
+                  }
+                }
+
+                return (
+                  <div className="grid grid-cols-2 gap-2 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => toggleService("residential")}
+                      disabled={isSubmitting}
+                      className={`rounded-lg border px-3 py-2 text-center text-xs font-medium cursor-pointer transition-all ${
+                        services.includes("residential")
+                          ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
+                          : "border-border bg-card text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                      }`}
+                    >
+                      العقود السكنية
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleService("commercial")}
+                      disabled={isSubmitting}
+                      className={`rounded-lg border px-3 py-2 text-center text-xs font-medium cursor-pointer transition-all ${
+                        services.includes("commercial")
+                          ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
+                          : "border-border bg-card text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                      }`}
+                    >
+                      العقود التجارية
+                    </button>
+                  </div>
+                );
+              }}
+            />
+            {errors.targetServices && (
+              <p className="text-xs text-destructive">
+                {errors.targetServices.message}
+              </p>
+            )}
           </div>
 
           {/* Usage Limits */}
@@ -501,11 +492,18 @@ function CouponDialogForm({
                   إيقاف الكوبون تلقائياً عند استهلاك كامل السعة المخصصة
                 </p>
               </div>
-              <Switch
-                id="limit-switch"
-                checked={hasUsageLimit}
-                onCheckedChange={setHasUsageLimit}
-                className="shrink-0"
+              <Controller
+                control={control}
+                name="hasUsageLimit"
+                render={({ field }) => (
+                  <Switch
+                    id="limit-switch"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={isSubmitting}
+                    className="shrink-0"
+                  />
+                )}
               />
             </div>
 
@@ -522,10 +520,16 @@ function CouponDialogForm({
                     id="limit-total"
                     type="number"
                     min={1}
-                    value={usageLimitTotal || ""}
-                    onChange={(e) => setUsageLimitTotal(Number(e.target.value))}
                     placeholder="مثال: 500"
+                    disabled={isSubmitting}
+                    aria-invalid={Boolean(errors.usageLimitTotal)}
+                    {...register("usageLimitTotal")}
                   />
+                  {errors.usageLimitTotal && (
+                    <p className="text-xs text-destructive">
+                      {errors.usageLimitTotal.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label
@@ -538,12 +542,16 @@ function CouponDialogForm({
                     id="limit-user"
                     type="number"
                     min={1}
-                    value={usageLimitPerUser}
-                    onChange={(e) =>
-                      setUsageLimitPerUser(Number(e.target.value))
-                    }
                     placeholder="مثال: 1"
+                    disabled={isSubmitting}
+                    aria-invalid={Boolean(errors.usageLimitPerUser)}
+                    {...register("usageLimitPerUser")}
                   />
+                  {errors.usageLimitPerUser && (
+                    <p className="text-xs text-destructive">
+                      {errors.usageLimitPerUser.message}
+                    </p>
+                  )}
                 </div>
               </div>
             ) : null}
@@ -561,12 +569,15 @@ function CouponDialogForm({
               <Input
                 id="start-date"
                 type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                disabled={isSubmitting}
+                aria-invalid={Boolean(errors.startDate)}
+                {...register("startDate")}
               />
-              {errors.startDate ? (
-                <p className="text-xs text-destructive">{errors.startDate}</p>
-              ) : null}
+              {errors.startDate && (
+                <p className="text-xs text-destructive">
+                  {errors.startDate.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5 sm:space-y-2">
@@ -580,12 +591,15 @@ function CouponDialogForm({
               <Input
                 id="end-date"
                 type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                disabled={isSubmitting}
+                aria-invalid={Boolean(errors.endDate)}
+                {...register("endDate")}
               />
-              {errors.endDate ? (
-                <p className="text-xs text-destructive">{errors.endDate}</p>
-              ) : null}
+              {errors.endDate && (
+                <p className="text-xs text-destructive">
+                  {errors.endDate.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5 sm:space-y-2 sm:col-span-1">
@@ -595,25 +609,30 @@ function CouponDialogForm({
               >
                 حالة الكوبون
               </Label>
-              <Select
-                value={status}
-                onValueChange={(val) => {
-                  if (val) setStatus(val as CouponStatus);
-                }}
-              >
-                <SelectTrigger
-                  id="coupon-status"
-                  className="w-full bg-card h-9"
-                >
-                  <SelectValue placeholder="اختر حالة الكوبون" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">نشط ومفعل</SelectItem>
-                  <SelectItem value="scheduled">مجدول مستقبلاً</SelectItem>
-                  <SelectItem value="inactive">معطل مؤقتاً</SelectItem>
-                  <SelectItem value="expired">منتهي الصلاحية</SelectItem>
-                </SelectContent>
-              </Select>
+              <Controller
+                control={control}
+                name="status"
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger
+                      id="coupon-status"
+                      className="w-full bg-card h-9"
+                    >
+                      <SelectValue placeholder="اختر حالة الكوبون" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">نشط ومفعل</SelectItem>
+                      <SelectItem value="scheduled">مجدول مستقبلاً</SelectItem>
+                      <SelectItem value="inactive">معطل مؤقتاً</SelectItem>
+                      <SelectItem value="expired">منتهي الصلاحية</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
           </div>
 
@@ -631,11 +650,18 @@ function CouponDialogForm({
                 يكون رمزاً حصرياً
               </p>
             </div>
-            <Switch
-              id="public-switch"
-              checked={isPublic}
-              onCheckedChange={setIsPublic}
-              className="shrink-0"
+            <Controller
+              control={control}
+              name="isPublic"
+              render={({ field }) => (
+                <Switch
+                  id="public-switch"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  disabled={isSubmitting}
+                  className="shrink-0"
+                />
+              )}
             />
           </div>
         </div>
@@ -645,12 +671,14 @@ function CouponDialogForm({
             type="button"
             variant="outline"
             onClick={onClose}
+            disabled={isSubmitting}
             className="w-full sm:w-auto cursor-pointer"
           >
             إلغاء
           </Button>
           <Button
             type="submit"
+            disabled={isSubmitting}
             className="w-full sm:w-auto gap-1.5 font-bold cursor-pointer"
           >
             <span>{isEditing ? "حفظ التعديلات" : "إنشاء وتفعيل الكوبون"}</span>

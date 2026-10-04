@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,10 +15,15 @@ import {
   updateEmployee,
   type EmployeeInput,
 } from "@/features/employees/employees-store";
-import { EMPLOYEE_ROLES, MIN_EMPLOYEE_PASSWORD_LENGTH, type EmployeeRecord } from "../constants";
-import EmployeeFormFields, {
-  type EmployeeFieldErrors,
-} from "./employee-form-fields";
+import {
+  EMPLOYEE_ROLES,
+  type EmployeeRecord,
+} from "../constants";
+import {
+  employeeSchema,
+  type EmployeeFormData,
+} from "../schemas/employee-schema";
+import EmployeeFormFields from "./employee-form-fields";
 
 interface EmployeeDialogProps {
   open: boolean;
@@ -51,53 +57,40 @@ function EmployeeForm({
   onClose: () => void;
 }) {
   const isEditing = Boolean(employee);
-  const [name, setName] = useState(employee?.name ?? "");
-  const [role, setRole] = useState(employee?.role ?? EMPLOYEE_ROLES[0]);
-  const [email, setEmail] = useState(employee?.email ?? "");
-  const [phone, setPhone] = useState(employee?.phone ?? "");
-  const [password, setPassword] = useState(employee?.password ?? "");
-  const [active, setActive] = useState(employee?.active ?? true);
-  const [errors, setErrors] = useState<EmployeeFieldErrors>({});
 
   const roleOptions =
     employee && !(EMPLOYEE_ROLES as readonly string[]).includes(employee.role)
       ? [employee.role, ...EMPLOYEE_ROLES]
       : [...EMPLOYEE_ROLES];
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const nextErrors: EmployeeFieldErrors = {};
-    const trimmedName = name.trim();
-    const trimmedEmail = email.trim();
-    const trimmedPhone = phone.replace(/\s/g, "");
-    const trimmedPassword = password.trim();
+  const defaultValues: EmployeeFormData = {
+    name: employee?.name ?? "",
+    role: employee?.role ?? EMPLOYEE_ROLES[0],
+    email: employee?.email ?? "",
+    phone: employee?.phone ?? "",
+    password: employee?.password ?? "",
+    active: employee?.active ?? true,
+  };
 
-    if (trimmedName.length < 2) {
-      nextErrors.name = "الاسم يجب أن يكون حرفين على الأقل.";
-    }
-    if (!role.trim()) {
-      nextErrors.role = "اختر الدور الوظيفي.";
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      nextErrors.email = "صيغة البريد الإلكتروني غير صحيحة.";
-    }
-    if (!/^05\d{8}$/.test(trimmedPhone)) {
-      nextErrors.phone = "رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام.";
-    }
-    if (trimmedPassword.length < MIN_EMPLOYEE_PASSWORD_LENGTH) {
-      nextErrors.password = "كلمة المرور يجب أن تكون 8 أحرف على الأقل.";
-    }
+  const {
+    register,
+    handleSubmit,
+    control,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<EmployeeFormData>({
+    resolver: zodResolver(employeeSchema),
+    defaultValues,
+  });
 
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
-
+  function onSubmit(data: EmployeeFormData) {
     const input: EmployeeInput = {
-      name: trimmedName,
-      role,
-      email: trimmedEmail,
-      phone: trimmedPhone,
-      password: trimmedPassword,
-      active,
+      name: data.name.trim(),
+      role: data.role,
+      email: data.email.trim(),
+      phone: data.phone.replace(/\s/g, ""),
+      password: data.password.trim(),
+      active: data.active,
     };
 
     const message = employee
@@ -105,7 +98,7 @@ function EmployeeForm({
       : createEmployee(input);
 
     if (message) {
-      setErrors({ form: message });
+      setError("root", { message });
       return;
     }
 
@@ -126,35 +119,31 @@ function EmployeeForm({
         </DialogDescription>
       </DialogHeader>
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
         <EmployeeFormFields
-          name={name}
-          role={role}
-          email={email}
-          phone={phone}
-          password={password}
-          active={active}
-          roleOptions={roleOptions}
+          register={register}
+          control={control}
           errors={errors}
-          onNameChange={setName}
-          onRoleChange={setRole}
-          onEmailChange={setEmail}
-          onPhoneChange={setPhone}
-          onPasswordChange={setPassword}
-          onActiveChange={setActive}
+          roleOptions={roleOptions}
+          disabled={isSubmitting}
         />
 
-        {errors.form ? (
+        {errors.root?.message ? (
           <p role="alert" className="text-xs text-destructive">
-            {errors.form}
+            {errors.root.message}
           </p>
         ) : null}
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isSubmitting}
+            onClick={onClose}
+          >
             إلغاء
           </Button>
-          <Button type="submit">
+          <Button type="submit" disabled={isSubmitting}>
             {isEditing ? "حفظ التعديلات" : "إضافة الموظف"}
           </Button>
         </DialogFooter>

@@ -1,3 +1,4 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertCircle,
   Eye,
@@ -7,6 +8,7 @@ import {
   Phone,
   Sparkles,
 } from "lucide-react";
+import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -18,6 +20,10 @@ import { Spinner } from "@/components/ui/spinner";
 import { DEMO_CREDENTIALS } from "@/features/auth/auth-store";
 import ForgotPasswordDialog from "@/features/auth/components/forgot-password-dialog";
 import { useAuth } from "@/features/auth/hooks/use-auth";
+import {
+  loginSchema,
+  type LoginFormData,
+} from "@/features/auth/schemas/login-schema";
 import { ROUTES, SITE } from "@/lib/constants";
 import { useState } from "react";
 
@@ -25,31 +31,52 @@ export default function LoginForm() {
   const navigate = useNavigate();
   const { loginWithPassword, isLoading } = useAuth();
 
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
-  const isPhoneIdentifier = /^(\+966|05|\d)/.test(identifier.trim());
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      identifier: "",
+      password: "",
+      rememberMe: true,
+    },
+  });
+
+  const identifierValue = watch("identifier");
+  const isPhoneIdentifier = /^(\+966|05|\d)/.test(
+    (identifierValue || "").trim()
+  );
+
+  const isPending = isLoading || isSubmitting;
 
   function fillDemoPassword() {
-    setIdentifier(DEMO_CREDENTIALS.identifier);
-    setPassword(DEMO_CREDENTIALS.password);
+    setValue("identifier", DEMO_CREDENTIALS.identifier, {
+      shouldValidate: true,
+    });
+    setValue("password", DEMO_CREDENTIALS.password, {
+      shouldValidate: true,
+    });
     setErrorMessage(null);
     toast.info("تم ملء بيانات الدخول التجريبية للمسؤول.");
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function onSubmit(data: LoginFormData) {
     setErrorMessage(null);
 
     try {
       const user = await loginWithPassword({
-        identifier,
-        password,
-        rememberMe,
+        identifier: data.identifier,
+        password: data.password,
+        rememberMe: data.rememberMe,
       });
       toast.success(`مرحباً بك مجدداً، ${user.name}`);
       navigate(ROUTES.home, { viewTransition: true });
@@ -97,7 +124,7 @@ export default function LoginForm() {
       )}
 
       {/* Password Login Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <div className="space-y-2 text-start">
           <Label
             htmlFor="identifier"
@@ -117,14 +144,18 @@ export default function LoginForm() {
               id="identifier"
               type="text"
               placeholder="awad@makfiwamufi.sa أو 0504111307"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              disabled={isLoading}
+              disabled={isPending}
               autoComplete="username"
+              aria-invalid={Boolean(errors.identifier)}
               className="h-11 ps-10 pe-4 text-start"
-              required
+              {...register("identifier")}
             />
           </div>
+          {errors.identifier && (
+            <p className="text-[11px] font-medium text-destructive">
+              {errors.identifier.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-2 text-start">
@@ -151,12 +182,11 @@ export default function LoginForm() {
               id="password"
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
+              disabled={isPending}
               autoComplete="current-password"
+              aria-invalid={Boolean(errors.password)}
               className="h-11 ps-10 pe-10 text-start"
-              required
+              {...register("password")}
             />
             <button
               type="button"
@@ -173,14 +203,27 @@ export default function LoginForm() {
               )}
             </button>
           </div>
+          {errors.password && (
+            <p className="text-[11px] font-medium text-destructive">
+              {errors.password.message}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center justify-between pt-1">
           <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-foreground select-none">
-            <Checkbox
-              checked={rememberMe}
-              onCheckedChange={(checked) => setRememberMe(Boolean(checked))}
-              disabled={isLoading}
+            <Controller
+              control={control}
+              name="rememberMe"
+              render={({ field }) => (
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={(checked) =>
+                    field.onChange(Boolean(checked))
+                  }
+                  disabled={isPending}
+                />
+              )}
             />
             <span>تذكر بيانات الدخول</span>
           </label>
@@ -198,10 +241,10 @@ export default function LoginForm() {
         <Button
           type="submit"
           variant="primary"
-          disabled={isLoading}
+          disabled={isPending}
           className="h-11 w-full text-sm font-bold shadow-md"
         >
-          {isLoading ? (
+          {isPending ? (
             <div className="flex items-center gap-2">
               <Spinner className="size-4" />
               <span>جاري تسجيل الدخول...</span>

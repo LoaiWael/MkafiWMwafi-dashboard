@@ -11,6 +11,7 @@ import {
   Users,
   X,
   XCircle,
+  Trash2,
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { motion } from "motion/react";
@@ -27,11 +28,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { profileInitials } from "@/features/profile/components/profile-banner";
 import ProfileBreadcrumb from "@/features/profile/components/profile-breadcrumb";
 import ProfileMissing from "@/features/profile/components/profile-missing";
+import WarningDialog from "@/components/warning-dialog";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { PERMISSION_MODULE_GROUPS, SYSTEM_PERMISSIONS } from "../constants";
 import { useRole } from "../hooks/use-roles";
-import { createRole, getRoleEmployees, updateRole } from "../roles-store";
+import { createRole, getRoleEmployees, updateRole, deleteRole } from "../roles-store";
+import { roleSchema } from "../schemas/role-schema";
 import type { RoleInput } from "../types";
 
 interface RoleEditorViewProps {
@@ -77,6 +80,7 @@ export default function RoleEditorView({ roleId }: RoleEditorViewProps) {
       isEditing={isEditing}
       onToggleEdit={handleToggleEdit}
       onSuccessCreate={() => navigate(ROUTES.roles, { viewTransition: true })}
+      onSuccessDelete={() => navigate(ROUTES.roles, { viewTransition: true })}
     />
   );
 }
@@ -87,6 +91,7 @@ interface RoleEditorContentProps {
   isEditing: boolean;
   onToggleEdit: (editing: boolean) => void;
   onSuccessCreate: () => void;
+  onSuccessDelete: () => void;
 }
 
 function RoleEditorContent({
@@ -95,6 +100,7 @@ function RoleEditorContent({
   isEditing,
   onToggleEdit,
   onSuccessCreate,
+  onSuccessDelete,
 }: RoleEditorContentProps) {
   const { isMobile, state } = useSidebar();
   const sidebarGap = isMobile
@@ -114,10 +120,22 @@ function RoleEditorContent({
     form?: string;
   }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const totalAvailable = SYSTEM_PERMISSIONS.length;
   const isAllSelected = selectedKeys.length === totalAvailable;
   const employees = role ? getRoleEmployees(role.name) : [];
+
+  function handleDeleteConfirm() {
+    if (!role) return;
+    const res = deleteRole(role.id);
+    if (res.error) {
+      toast.error(res.error);
+    } else {
+      toast.success(`تم حذف دور "${role.name}" بنجاح.`);
+      onSuccessDelete();
+    }
+  }
 
   function handleTogglePermission(key: string) {
     setSelectedKeys((prev) =>
@@ -160,26 +178,28 @@ function RoleEditorContent({
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const nextErrors: { name?: string; permissions?: string; form?: string } =
-      {};
-    const trimmedName = name.trim();
-    const trimmedDesc = description.trim();
 
-    if (trimmedName.length < 2) {
-      nextErrors.name = "اسم الدور يجب أن يتكون من حرفين على الأقل.";
+    const result = roleSchema.safeParse({
+      name,
+      description,
+      permissionKeys: selectedKeys,
+    });
+
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+      setErrors({
+        name: fieldErrors.name?.[0],
+        permissions: fieldErrors.permissionKeys?.[0],
+      });
+      return;
     }
-    if (selectedKeys.length === 0) {
-      nextErrors.permissions = "يجب تحديد صلاحية واحدة على الأقل لهذا الدور.";
-    }
 
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
-
+    setErrors({});
     setIsSubmitting(true);
     const input: RoleInput = {
-      name: trimmedName,
-      description: trimmedDesc,
-      permissionKeys: selectedKeys,
+      name: result.data.name,
+      description: result.data.description ?? "",
+      permissionKeys: result.data.permissionKeys,
     };
 
     const res = role ? updateRole(role.id, input) : createRole(input);
@@ -192,8 +212,8 @@ function RoleEditorContent({
 
     toast.success(
       role
-        ? `تم تحديث دور "${trimmedName}" بنجاح`
-        : `تمت إضافة دور "${trimmedName}" بنجاح`,
+        ? `تم تحديث دور "${input.name}" بنجاح`
+        : `تمت إضافة دور "${input.name}" بنجاح`,
     );
 
     if (isCreating) {
@@ -275,15 +295,28 @@ function RoleEditorContent({
                   إلغاء التعديل
                 </Button>
               ) : (
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => onToggleEdit(true)}
-                  className="h-8 sm:h-8 w-full sm:w-auto justify-center gap-1.5 rounded-xl text-xs font-semibold cursor-pointer"
-                >
-                  <Pencil className="size-3.5" />
-                  تعديل الدور والصلاحيات
-                </Button>
+                <>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => onToggleEdit(true)}
+                    className="h-8 sm:h-8 w-full sm:w-auto justify-center gap-1.5 rounded-xl text-xs font-semibold cursor-pointer"
+                  >
+                    <Pencil className="size-3.5" />
+                    تعديل الدور والصلاحيات
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setDeleteDialogOpen(true)}
+                    className="h-8 sm:h-8 w-full sm:w-auto justify-center gap-1.5 rounded-xl text-xs font-semibold cursor-pointer"
+                    disabled={role?.isSystem}
+                  >
+                    <Trash2 className="size-3.5" />
+                    حذف الدور
+                  </Button>
+                </>
               )}
             </div>
           )}
@@ -734,6 +767,15 @@ function RoleEditorContent({
           </FadeIn>
         </div>
       )}
+
+      <WarningDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="تأكيد الحذف"
+        description={`هل أنت متأكد من رغبتك في حذف دور "${role?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`}
+        confirmLabel="حذف الدور"
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }

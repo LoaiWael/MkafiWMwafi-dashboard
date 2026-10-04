@@ -7,7 +7,6 @@ import {
   FileText,
   MapPin,
   MoreVertical,
-  Printer,
   RefreshCw,
   SaudiRiyal,
   Store,
@@ -35,7 +34,6 @@ interface ContractsTableProps {
   onViewDetails: (contract: Contract) => void;
   onUpdateStatus: (contract: Contract) => void;
   onUpdatePayment: (contract: Contract) => void;
-  onPrintCertificate: (contract: Contract) => void;
   title?: string;
   subtitle?: string;
   emptyTitle?: string;
@@ -48,7 +46,6 @@ export default function ContractsTable({
   onViewDetails,
   onUpdateStatus,
   onUpdatePayment,
-  onPrintCertificate,
   title = "سجل عقود الإيجار والتوثيق",
   subtitle = "إدارة عقود الإيجار السكنية والتجارية المدفوعة وغير المدفوعة مع إمكانية تحديث الحالة.",
   emptyTitle,
@@ -314,14 +311,6 @@ export default function ContractsTable({
               <DropdownMenuSeparator />
 
               <DropdownMenuGroup className="space-y-0.5">
-                <DropdownMenuItem
-                  onClick={() => onPrintCertificate(item)}
-                  className="gap-2 cursor-pointer font-medium transition-colors hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground"
-                >
-                  <Printer className="size-4 text-foreground shrink-0" />
-                  <span>طباعة وثيقة العقد الإلكترونية</span>
-                </DropdownMenuItem>
-
                 <DropdownMenuItem
                   onClick={() => {
                     window.open(item.ejar.verificationQrUrl, "_blank");

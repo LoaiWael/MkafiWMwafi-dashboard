@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Eye,
   MoreVertical,
@@ -31,6 +32,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import WarningDialog from "@/components/warning-dialog";
 import { profileInitials } from "@/features/profile/components/profile-banner";
 import { PERMISSION_MODULE_GROUPS, SYSTEM_PERMISSIONS } from "../constants";
 import { getRoleEmployees } from "../roles-store";
@@ -49,6 +51,15 @@ export default function RolesTable({
   onEditRole,
   onDeleteRole,
 }: RolesTableProps) {
+  const [deleteRole, setDeleteRole] = useState<RoleRecord | null>(null);
+
+  const confirmDelete = () => {
+    if (deleteRole) {
+      onDeleteRole(deleteRole);
+      setDeleteRole(null);
+    }
+  };
+
   const columns: DataTableColumn<RoleRecord>[] = [
     {
       id: "name",
@@ -254,7 +265,7 @@ export default function RolesTable({
 
                   <DropdownMenuItem
                     disabled={item.isSystem}
-                    onClick={() => onDeleteRole(item)}
+                    onClick={() => setDeleteRole(item)}
                     className="gap-2 cursor-pointer font-medium text-destructive transition-colors hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Trash2 className="size-4 text-destructive shrink-0" />
@@ -288,10 +299,11 @@ export default function RolesTable({
   ];
 
   return (
-    <DataTable
-      data={[...roles]}
-      columns={columns}
-      searchPlaceholder="البحث باسم الدور أو الصلاحية أو الوصف..."
+    <>
+      <DataTable
+        data={[...roles]}
+        columns={columns}
+        searchPlaceholder="البحث باسم الدور أو الصلاحية أو الوصف..."
       searchFilter={(item, query) => {
         const haystack = [
           item.name,
@@ -309,5 +321,16 @@ export default function RolesTable({
       emptyIcon={ShieldAlert}
       pageSize={10}
     />
+      <WarningDialog
+        open={!!deleteRole}
+        onOpenChange={(open) => {
+          if (!open) setDeleteRole(null);
+        }}
+        title="تأكيد الحذف"
+        description={`هل أنت متأكد من رغبتك في حذف دور "${deleteRole?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`}
+        confirmLabel="حذف الدور"
+        onConfirm={confirmDelete}
+      />
+    </>
   );
 }

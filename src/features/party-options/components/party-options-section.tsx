@@ -14,6 +14,7 @@ import {
   PARTY_OPTIONS_STORAGE_KEY,
   type OptionItem,
 } from "@/features/party-options/constants";
+import { partyOptionSchema } from "../schemas/party-option-schema";
 
 function readStoredCapacities(): OptionItem[] {
   const saved = localStorage.getItem(PARTY_OPTIONS_STORAGE_KEY);
@@ -65,18 +66,23 @@ export default function PartyOptionsSection() {
   }
 
   function handleSaveOption() {
-    if (!formData.nameAr.trim()) {
-      toast.error("يرجى إدخال مسمى الخيار");
+    const result = partyOptionSchema.safeParse(formData);
+    if (!result.success) {
+      toast.error(
+        result.error.issues[0]?.message || "يرجى التحقق من صحة البيانات المدخلة",
+      );
       return;
     }
+
+    const validData = result.data;
 
     if (editingItem) {
       const updated: OptionItem = {
         ...editingItem,
-        nameAr: formData.nameAr.trim(),
-        category: formData.category,
-        description: formData.description.trim(),
-        isActive: formData.isActive,
+        nameAr: validData.nameAr,
+        category: validData.category,
+        description: validData.description,
+        isActive: validData.isActive,
       };
       setCapacities((prev) =>
         prev.map((item) => (item.id === editingItem.id ? updated : item)),
@@ -85,10 +91,10 @@ export default function PartyOptionsSection() {
     } else {
       const newItem: OptionItem = {
         id: `custom_${Date.now()}`,
-        nameAr: formData.nameAr.trim(),
-        category: formData.category,
-        description: formData.description.trim(),
-        isActive: formData.isActive,
+        nameAr: validData.nameAr,
+        category: validData.category,
+        description: validData.description,
+        isActive: validData.isActive,
       };
       setCapacities((prev) => [...prev, newItem]);
       toast.success("تمت إضافة الخيار الجديد بنجاح");

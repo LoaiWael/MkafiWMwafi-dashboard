@@ -18,17 +18,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import type { OptionItem } from "@/features/party-options/constants";
 import {
-  PARTY_OPTION_CATEGORIES,
-  type OptionItem,
-} from "@/features/party-options/constants";
+  partyOptionCategories,
+  type PartyOptionFormData,
+} from "../schemas/party-option-schema";
 
-export interface PartyOptionFormValues {
-  nameAr: string;
-  category: string;
-  description: string;
-  isActive: boolean;
-}
+export type PartyOptionFormValues = PartyOptionFormData;
 
 interface PartyOptionDialogProps {
   open: boolean;
@@ -49,7 +45,7 @@ export default function PartyOptionDialog({
 }: PartyOptionDialogProps) {
   const categoryOptions = [
     ...new Set(
-      [...PARTY_OPTION_CATEGORIES, formData.category].filter(Boolean),
+      [...partyOptionCategories, formData.category].filter(Boolean),
     ),
   ];
 

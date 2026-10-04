@@ -23,6 +23,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { AmenityCategory } from "@/features/unit-options/constants";
+import { amenityOptionSchema } from "../schemas/unit-options-schema";
 
 interface AmenitiesTabProps {
   amenities: AmenityCategory[];
@@ -58,11 +59,18 @@ export default function AmenitiesTab({
   const [newAmenityValue, setNewAmenityValue] = useState<Record<string, string>>({});
 
   function addOption(categoryField: string) {
-    const value = (newAmenityValue[categoryField] || "").trim();
-    if (!value) {
-      toast.error("يرجى إدخال اسم الخيار أولاً");
+    const result = amenityOptionSchema.safeParse({
+      value: newAmenityValue[categoryField] || "",
+    });
+
+    if (!result.success) {
+      toast.error(
+        result.error.issues[0]?.message || "يرجى إدخال اسم الخيار أولاً",
+      );
       return;
     }
+
+    const value = result.data.value;
 
     const category = amenities.find((item) => item.field === categoryField);
     if (category?.options.includes(value)) {

@@ -1,19 +1,17 @@
-import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Link, useNavigate } from "react-router";
+import { toast } from "sonner";
 import { FadeIn } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
 import { ROUTES } from "@/lib/constants";
 import { useRoles } from "../hooks/use-roles";
 import type { RoleRecord } from "../types";
-import RoleDeleteDialog from "./role-delete-dialog";
+import { deleteRole } from "../roles-store";
 import RolesTable from "./roles-table";
 
 export default function RolesSection() {
   const roles = useRoles();
   const navigate = useNavigate();
-
-  const [deletingRole, setDeletingRole] = useState<RoleRecord | null>(null);
 
   function handleOpenEdit(role: RoleRecord) {
     navigate(`${ROUTES.roleDetails(role.id)}?edit=true`, { viewTransition: true });
@@ -23,8 +21,13 @@ export default function RolesSection() {
     navigate(ROUTES.roleDetails(role.id), { viewTransition: true });
   }
 
-  function handleOpenDelete(role: RoleRecord) {
-    setDeletingRole(role);
+  function handleDelete(role: RoleRecord) {
+    const res = deleteRole(role.id);
+    if (res.error) {
+      toast.error(res.error);
+    } else {
+      toast.success(`تم حذف دور "${role.name}" بنجاح.`);
+    }
   }
 
   return (
@@ -50,18 +53,9 @@ export default function RolesSection() {
           roles={roles}
           onViewPermissions={handleOpenView}
           onEditRole={handleOpenEdit}
-          onDeleteRole={handleOpenDelete}
+          onDeleteRole={handleDelete}
         />
       </FadeIn>
-
-      {/* Delete Confirmation Alert */}
-      <RoleDeleteDialog
-        open={Boolean(deletingRole)}
-        role={deletingRole}
-        onOpenChange={(open) => {
-          if (!open) setDeletingRole(null);
-        }}
-      />
     </div>
   );
 }

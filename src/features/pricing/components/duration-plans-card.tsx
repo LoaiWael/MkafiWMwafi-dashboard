@@ -23,24 +23,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import {
   Table,
   TableBody,
   TableCell,
@@ -55,6 +37,9 @@ import {
 } from "@/components/ui/tooltip";
 import type { PricingPlan } from "@/features/pricing/constants";
 import { PopularBadge } from "@/features/pricing/components/popular-badge";
+import PlanDialog from "@/features/pricing/components/plan-dialog";
+import type { PricingPlanFormData } from "@/features/pricing/schemas/pricing-schema";
+import WarningDialog from "@/components/warning-dialog";
 
 interface DurationPlansCardProps {
   plans: PricingPlan[];
@@ -69,66 +54,40 @@ export default function DurationPlansCard({
 }: DurationPlansCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<PricingPlan | null>(null);
-
-  const [formData, setFormData] = useState<Partial<PricingPlan>>({
-    duration: "",
-    durationUnit: "years",
-    durationValue: 1,
-    amount: 249,
-    isPopular: false,
-    notes: "",
-  });
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const popularCount = plans.filter((p) => p.isPopular).length;
 
   function handleOpenAdd() {
     setEditingPlan(null);
-    setFormData({
-      duration: "",
-      durationUnit: "years",
-      durationValue: 1,
-      amount: 249,
-      isPopular: false,
-      notes: "",
-    });
     setIsDialogOpen(true);
   }
 
   function handleOpenEdit(plan: PricingPlan) {
     setEditingPlan(plan);
-    setFormData({
-      duration: plan.duration,
-      durationUnit: plan.durationUnit,
-      durationValue: plan.durationValue,
-      amount: plan.amount,
-      isPopular: plan.isPopular || false,
-      notes: plan.notes || "",
-    });
     setIsDialogOpen(true);
   }
 
-  function handleDelete(id: string) {
-    onPlansChange(plans.filter((p) => p.id !== id));
-    toast.success("تم حذف مدة التوثيق بنجاح");
-  }
-
-  function handleSave() {
-    if (!formData.duration?.trim() || !formData.amount) {
-      toast.error("يرجى إدخال اسم المدة ورسوم التوثيق");
-      return;
+  const confirmDelete = () => {
+    if (deleteId) {
+      onPlansChange(plans.filter((p) => p.id !== deleteId));
+      toast.success("تم حذف مدة التوثيق بنجاح");
+      setDeleteId(null);
     }
+  };
 
+  function handleSave(data: PricingPlanFormData) {
     if (editingPlan) {
       const updated = plans.map((p) =>
         p.id === editingPlan.id
           ? ({
               ...p,
-              duration: formData.duration?.trim() || p.duration,
-              durationUnit: formData.durationUnit || p.durationUnit,
-              durationValue: Number(formData.durationValue) || p.durationValue,
-              amount: Number(formData.amount) || p.amount,
-              isPopular: !!formData.isPopular,
-              notes: formData.notes?.trim() || undefined,
+              duration: data.duration.trim(),
+              durationUnit: data.durationUnit,
+              durationValue: Number(data.durationValue),
+              amount: Number(data.amount),
+              isPopular: Boolean(data.isPopular),
+              notes: data.notes?.trim() || undefined,
             } as PricingPlan)
           : p,
       );
@@ -137,12 +96,12 @@ export default function DurationPlansCard({
     } else {
       const newPlan: PricingPlan = {
         id: `plan_${Date.now()}`,
-        duration: formData.duration.trim(),
-        durationUnit: formData.durationUnit || "years",
-        durationValue: Number(formData.durationValue) || 1,
-        amount: Number(formData.amount) || 0,
-        isPopular: !!formData.isPopular,
-        notes: formData.notes?.trim() || undefined,
+        duration: data.duration.trim(),
+        durationUnit: data.durationUnit,
+        durationValue: Number(data.durationValue),
+        amount: Number(data.amount),
+        isPopular: Boolean(data.isPopular),
+        notes: data.notes?.trim() || undefined,
       };
       onPlansChange([...plans, newPlan]);
       toast.success("تمت إضافة مدة توثيق جديدة بنجاح");
@@ -150,6 +109,7 @@ export default function DurationPlansCard({
 
     setIsDialogOpen(false);
   }
+
 
   function getPlanIcon(plan: PricingPlan) {
     if (plan.durationUnit === "months") return Clock;
@@ -365,7 +325,7 @@ export default function DurationPlansCard({
                                   variant="ghost"
                                   size="icon"
                                   className="size-8 text-destructive/70 hover:bg-destructive/10 hover:text-destructive"
-                                  onClick={() => handleDelete(plan.id)}
+                                  onClick={() => setDeleteId(plan.id)}
                                   aria-label={`حذف باقة ${plan.duration}`}
                                 >
                                   <Trash2 className="size-3.5" />
@@ -386,156 +346,23 @@ export default function DurationPlansCard({
       </CardContent>
 
       {/* Edit / Add Plan Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <div className="flex items-center gap-2.5">
-              <div className="flex size-9 items-center justify-center rounded-xl bg-primary-50 text-primary dark:bg-primary-950/40">
-                {editingPlan ? (
-                  <Edit2 className="size-4.5" />
-                ) : (
-                  <Plus className="size-4.5" />
-                )}
-              </div>
-              <div>
-                <DialogTitle className="text-lg font-bold">
-                  {editingPlan ? "تعديل مدة التوثيق والسعر" : "إضافة مدة جديدة"}
-                </DialogTitle>
-                <DialogDescription className="text-xs">
-                  تحديد مدة العقد ورسوم التوثيق المعتمدة في النظام
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
+      <PlanDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        editingPlan={editingPlan}
+        onSave={handleSave}
+      />
 
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="plan-duration">اسم المدة (كما يظهر للمستخدم)</Label>
-              <Input
-                id="plan-duration"
-                value={formData.duration}
-                onChange={(e) =>
-                  setFormData({ ...formData, duration: e.target.value })
-                }
-                placeholder="مثال: سنتين أو 3 سنوات أو 6 شهور"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="unit-type">الوحدة الزمنية</Label>
-                <Select
-                  value={formData.durationUnit}
-                  onValueChange={(val) => {
-                    if (val) {
-                      setFormData((prev) => ({
-                        ...prev,
-                        durationUnit: val as "months" | "years",
-                      }));
-                    }
-                  }}
-                >
-                  <SelectTrigger id="unit-type" className="w-full">
-                    <SelectValue>
-                      {formData.durationUnit === "months" ? "شهور" : "سنوات"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="years">سنوات</SelectItem>
-                    <SelectItem value="months">شهور</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="unit-val">القيمة الرقمية</Label>
-                <Input
-                  id="unit-val"
-                  type="number"
-                  min="1"
-                  value={formData.durationValue}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      durationValue: parseInt(e.target.value) || 1,
-                    })
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="plan-amount" className="flex items-center gap-1.5">
-                <span>المبلغ الأساسي</span>
-                <span className="flex items-center text-xs text-muted-foreground font-normal">
-                  (<SaudiRiyal className="size-3 inline text-primary" />)
-                </span>
-              </Label>
-              <div className="relative">
-                <Input
-                  id="plan-amount"
-                  type="number"
-                  min="0"
-                  value={formData.amount}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      amount: parseFloat(e.target.value) || 0,
-                    })
-                  }
-                  className="pe-9"
-                />
-                <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-muted-foreground">
-                  <SaudiRiyal className="size-4 text-primary" />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="plan-notes">ملاحظات / وصف إضافي (اختياري)</Label>
-              <Input
-                id="plan-notes"
-                value={formData.notes || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, notes: e.target.value })
-                }
-                placeholder="مثال: الباقة الأكثر توفيراً للعقود طويلة الأجل"
-              />
-            </div>
-
-            <div className="flex items-center justify-between rounded-xl border border-border/70 bg-muted/30 p-3">
-              <div className="space-y-0.5">
-                <Label htmlFor="is-pop" className="cursor-pointer font-bold text-sm">
-                  تمييز كباقة الأكثر طلباً
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  إظهار شارة مميزة وإبراز الباقة في واجهة التسعير
-                </p>
-              </div>
-              <Switch
-                id="is-pop"
-                checked={formData.isPopular}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, isPopular: checked })
-                }
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2.5 sm:gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsDialogOpen(false)}
-            >
-              إلغاء
-            </Button>
-            <Button type="button" onClick={handleSave}>
-              {editingPlan ? "حفظ التعديلات" : "إضافة الباقة"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <WarningDialog
+        open={!!deleteId}
+        onOpenChange={(open) => {
+          if (!open) setDeleteId(null);
+        }}
+        title="تأكيد الحذف"
+        description="هل أنت متأكد من رغبتك في حذف باقة التوثيق هذه؟ لا يمكن التراجع عن هذا الإجراء."
+        confirmLabel="حذف"
+        onConfirm={confirmDelete}
+      />
     </Card>
   );
 }

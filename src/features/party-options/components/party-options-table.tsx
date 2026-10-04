@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { toast } from "sonner";
 import { Edit2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import WarningDialog from "@/components/warning-dialog";
 import type { OptionItem } from "@/features/party-options/constants";
 
 interface PartyOptionsTableProps {
@@ -29,6 +31,9 @@ export default function PartyOptionsTable({
   onItemsChange,
   onEdit,
 }: PartyOptionsTableProps) {
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
+  const deleteItem = items.find((item) => item.id === deleteItemId);
+
   const categoryValues = [
     ...new Set(items.map((item) => item.category).filter(Boolean)),
   ] as string[];
@@ -147,7 +152,7 @@ export default function PartyOptionsTable({
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    onClick={() => deleteOption(item.id)}
+                    onClick={() => setDeleteItemId(item.id)}
                     aria-label={`حذف ${item.nameAr}`}
                     className="text-destructive hover:bg-destructive/10 cursor-pointer"
                   />
@@ -195,16 +200,33 @@ export default function PartyOptionsTable({
   ];
 
   return (
-    <DataTable
-      data={items}
-      columns={columns}
-      searchPlaceholder="بحث في صفات الأطراف..."
-      searchKeys={["nameAr", "category", "description"]}
-      filters={filters}
-      pageSize={10}
-      pageSizeOptions={[5, 10, 20]}
-      emptyTitle="لا توجد صفات مطابقة"
-      emptyDescription="لم يتم العثور على صفات تطابق البحث أو التصفية."
-    />
+    <>
+      <WarningDialog
+        open={!!deleteItemId}
+        onOpenChange={(open) => {
+          if (!open) setDeleteItemId(null);
+        }}
+        title="حذف صفة الطرف"
+        description={`هل أنت متأكد من رغبتك في حذف صفة "${deleteItem?.nameAr}"؟`}
+        confirmLabel="حذف"
+        onConfirm={() => {
+          if (deleteItemId) {
+            deleteOption(deleteItemId);
+            setDeleteItemId(null);
+          }
+        }}
+      />
+      <DataTable
+        data={items}
+        columns={columns}
+        searchPlaceholder="بحث في صفات الأطراف..."
+        searchKeys={["nameAr", "category", "description"]}
+        filters={filters}
+        pageSize={10}
+        pageSizeOptions={[5, 10, 20]}
+        emptyTitle="لا توجد صفات مطابقة"
+        emptyDescription="لم يتم العثور على صفات تطابق البحث أو التصفية."
+      />
+    </>
   );
 }

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Building2, MapPinned } from "lucide-react";
+import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,6 +26,10 @@ import {
   type AdministrativeRegion,
   type RegionEntryKind,
 } from "@/features/regions/constants";
+import {
+  regionDialogSchema,
+  type RegionDialogFormData,
+} from "../schemas/region-schema";
 
 export interface RegionDialogSeed {
   kind: RegionEntryKind;
@@ -78,54 +83,51 @@ function RegionDialogForm({
   onCreateCity: (regionId: string, nameAr: string) => string | null;
 }) {
   const canAddCity = regions.length > 0;
-  const [kind, setKind] = useState<RegionEntryKind>(() =>
+  const initialKind: RegionEntryKind =
     seed.kind === REGION_ENTRY_KIND.city && canAddCity
       ? REGION_ENTRY_KIND.city
-      : REGION_ENTRY_KIND.region,
-  );
-  const [nameAr, setNameAr] = useState("");
-  const [regionId, setRegionId] = useState(
-    () => seed.regionId ?? regions[0]?.id ?? "",
-  );
-  const [error, setError] = useState("");
+      : REGION_ENTRY_KIND.region;
 
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    setError,
+    clearErrors,
+    formState: { errors, isSubmitting },
+  } = useForm<RegionDialogFormData>({
+    resolver: zodResolver(regionDialogSchema),
+    defaultValues: {
+      kind: initialKind,
+      regionId: seed.regionId ?? regions[0]?.id ?? "",
+      nameAr: "",
+    },
+  });
+
+  const kind = watch("kind");
+  const regionId = watch("regionId");
   const selectedRegion = regions.find((region) => region.id === regionId);
 
-  function handleKindChange(value: string) {
-    if (value !== REGION_ENTRY_KIND.region && value !== REGION_ENTRY_KIND.city) {
-      return;
-    }
-    if (value === REGION_ENTRY_KIND.city && !canAddCity) return;
-    setKind(value);
-    setError("");
-  }
-
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const name = nameAr.trim();
-    if (name.length < 2) {
-      setError("أدخل اسماً من حرفين على الأقل");
-      return;
-    }
-
-    if (kind === REGION_ENTRY_KIND.region) {
-      const message = onCreateRegion(name);
+  function onSubmit(data: RegionDialogFormData) {
+    if (data.kind === REGION_ENTRY_KIND.region) {
+      const message = onCreateRegion(data.nameAr);
       if (message) {
-        setError(message);
+        setError("root", { message });
         return;
       }
       onClose();
       return;
     }
 
-    if (!regionId) {
-      setError("اختر المنطقة التي تتبعها المدينة");
+    if (!data.regionId) {
+      setError("regionId", { message: "اختر المنطقة التي تتبعها المدينة" });
       return;
     }
 
-    const message = onCreateCity(regionId, name);
+    const message = onCreateCity(data.regionId, data.nameAr);
     if (message) {
-      setError(message);
+      setError("root", { message });
       return;
     }
     onClose();
@@ -140,74 +142,100 @@ function RegionDialogForm({
         </DialogDescription>
       </DialogHeader>
 
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <RadioGroup
-          value={kind}
-          onValueChange={handleKindChange}
-          className="grid grid-cols-1 gap-2 sm:grid-cols-2"
-          aria-label="نوع الإضافة"
-        >
-          <label
-            htmlFor="region-kind-region"
-            className={cn(
-              "flex cursor-pointer items-center gap-2 rounded-lg border p-3 transition-colors",
-              kind === REGION_ENTRY_KIND.region
-                ? "border-primary bg-primary-50 font-semibold text-primary-900"
-                : "border-border bg-card hover:bg-muted/60",
-            )}
-          >
-            <RadioGroupItem
-              value={REGION_ENTRY_KIND.region}
-              id="region-kind-region"
-            />
-            <MapPinned className="size-4 text-primary" />
-            <span className="text-sm">منطقة جديدة</span>
-          </label>
+      <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <Controller
+          control={control}
+          name="kind"
+          render={({ field }) => (
+            <RadioGroup
+              value={field.value}
+              onValueChange={(val) => {
+                if (val === REGION_ENTRY_KIND.city && !canAddCity) return;
+                field.onChange(val);
+                clearErrors();
+              }}
+              className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+              aria-label="نوع الإضافة"
+            >
+              <label
+                htmlFor="region-kind-region"
+                className={cn(
+                  "flex cursor-pointer items-center gap-2 rounded-lg border p-3 transition-colors",
+                  field.value === REGION_ENTRY_KIND.region
+                    ? "border-primary bg-primary-50 font-semibold text-primary-900"
+                    : "border-border bg-card hover:bg-muted/60",
+                )}
+              >
+                <RadioGroupItem
+                  value={REGION_ENTRY_KIND.region}
+                  id="region-kind-region"
+                />
+                <MapPinned className="size-4 text-primary" />
+                <span className="text-sm">منطقة جديدة</span>
+              </label>
 
-          <label
-            htmlFor="region-kind-city"
-            className={cn(
-              "flex items-center gap-2 rounded-lg border p-3 transition-colors",
-              canAddCity ? "cursor-pointer" : "cursor-not-allowed opacity-50",
-              kind === REGION_ENTRY_KIND.city
-                ? "border-primary bg-primary-50 font-semibold text-primary-900"
-                : "border-border bg-card",
-              canAddCity &&
-                kind !== REGION_ENTRY_KIND.city &&
-                "hover:bg-muted/60",
-            )}
-          >
-            <RadioGroupItem
-              value={REGION_ENTRY_KIND.city}
-              id="region-kind-city"
-              disabled={!canAddCity}
-            />
-            <Building2 className="size-4 text-primary" />
-            <span className="text-sm">مدينة ضمن منطقة</span>
-          </label>
-        </RadioGroup>
+              <label
+                htmlFor="region-kind-city"
+                className={cn(
+                  "flex items-center gap-2 rounded-lg border p-3 transition-colors",
+                  canAddCity ? "cursor-pointer" : "cursor-not-allowed opacity-50",
+                  field.value === REGION_ENTRY_KIND.city
+                    ? "border-primary bg-primary-50 font-semibold text-primary-900"
+                    : "border-border bg-card",
+                  canAddCity &&
+                    field.value !== REGION_ENTRY_KIND.city &&
+                    "hover:bg-muted/60",
+                )}
+              >
+                <RadioGroupItem
+                  value={REGION_ENTRY_KIND.city}
+                  id="region-kind-city"
+                  disabled={!canAddCity}
+                />
+                <Building2 className="size-4 text-primary" />
+                <span className="text-sm">مدينة ضمن منطقة</span>
+              </label>
+            </RadioGroup>
+          )}
+        />
 
         {kind === REGION_ENTRY_KIND.city ? (
           <div className="space-y-1.5">
             <Label htmlFor="region-parent">المنطقة</Label>
-            <Select value={regionId} onValueChange={(value) => setRegionId(value ?? "")}>
-              <SelectTrigger
-                id="region-parent"
-                aria-label="المنطقة"
-                className="h-10 w-full cursor-pointer"
-              >
-                <SelectValue>
-                  {selectedRegion?.nameAr ?? "اختر المنطقة"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent align="start">
-                {regions.map((region) => (
-                  <SelectItem key={region.id} value={region.id}>
-                    {region.nameAr}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Controller
+              control={control}
+              name="regionId"
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger
+                    id="region-parent"
+                    aria-label="المنطقة"
+                    aria-invalid={Boolean(errors.regionId)}
+                    className="h-10 w-full cursor-pointer"
+                  >
+                    <SelectValue>
+                      {selectedRegion?.nameAr ?? "اختر المنطقة"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent align="start">
+                    {regions.map((region) => (
+                      <SelectItem key={region.id} value={region.id}>
+                        {region.nameAr}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.regionId && (
+              <p role="alert" className="text-xs text-destructive">
+                {errors.regionId.message}
+              </p>
+            )}
           </div>
         ) : null}
 
@@ -217,37 +245,45 @@ function RegionDialogForm({
           </Label>
           <Input
             id="region-entry-name"
-            value={nameAr}
-            onChange={(event) => {
-              setNameAr(event.target.value);
-              setError("");
-            }}
+            {...register("nameAr")}
             dir="auto"
+            disabled={isSubmitting}
             placeholder={
               kind === REGION_ENTRY_KIND.region
                 ? "مثال: منطقة القصيم"
                 : "مثال: بريدة"
             }
-            aria-invalid={Boolean(error)}
+            aria-invalid={Boolean(errors.nameAr)}
             className="h-10"
           />
-          {error ? (
+          {errors.nameAr && (
             <p role="alert" className="text-xs text-destructive">
-              {error}
+              {errors.nameAr.message}
             </p>
-          ) : null}
+          )}
         </div>
+
+        {errors.root?.message && (
+          <p role="alert" className="text-xs text-destructive">
+            {errors.root.message}
+          </p>
+        )}
 
         <DialogFooter>
           <Button
             type="button"
             variant="outline"
+            disabled={isSubmitting}
             className="cursor-pointer"
             onClick={onClose}
           >
             إلغاء
           </Button>
-          <Button type="submit" className="cursor-pointer">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="cursor-pointer"
+          >
             {kind === REGION_ENTRY_KIND.region ? "إضافة المنطقة" : "إضافة المدينة"}
           </Button>
         </DialogFooter>

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { toast } from "sonner";
 import { Edit2, Trash2, Wallet } from "lucide-react";
 import { FadeIn } from "@/components/animations";
@@ -15,6 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import WarningDialog from "@/components/warning-dialog";
 import type { PaymentFrequencyOption } from "@/features/payments/constants";
 
 interface PaymentFrequenciesTableProps {
@@ -32,9 +34,14 @@ export default function PaymentFrequenciesTable({
   onFrequenciesChange,
   onEdit,
 }: PaymentFrequenciesTableProps) {
-  const handleDelete = (id: string) => {
-    onFrequenciesChange((prev) => prev.filter((f) => f.id !== id));
-    toast.success("تم حذف دورية الدفع بنجاح");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const confirmDelete = () => {
+    if (deleteId) {
+      onFrequenciesChange((prev) => prev.filter((f) => f.id !== deleteId));
+      toast.success("تم حذف دورية الدفع بنجاح");
+      setDeleteId(null);
+    }
   };
 
   const handleToggleActive = (id: string) => {
@@ -162,7 +169,7 @@ export default function PaymentFrequenciesTable({
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    onClick={() => handleDelete(item.id)}
+                    onClick={() => setDeleteId(item.id)}
                     className="cursor-pointer text-destructive hover:bg-destructive/10"
                     aria-label={`حذف ${item.nameAr}`}
                   />
@@ -196,18 +203,30 @@ export default function PaymentFrequenciesTable({
   ];
 
   return (
-    <FadeIn duration={0.3} delay={0.05}>
-      <DataTable
-        data={frequencies}
-        columns={columns}
-        title="خيارات طريقة الدفعات (تكرار سداد الإيجار)"
-        subtitle="الخيارات المتاحة لحقل (طريقة الدفعات) في استمارة بيانات العقد الإلكتروني بالموقع."
-        searchPlaceholder="بحث باسم الخيار، التكرار، أو الوصف..."
-        searchKeys={["nameAr", "periodAr", "description"]}
-        filters={filterConfigs}
-        pageSize={10}
-        pageSizeOptions={[5, 10, 20]}
+    <>
+      <FadeIn duration={0.3} delay={0.05}>
+        <DataTable
+          data={frequencies}
+          columns={columns}
+          title="خيارات طريقة الدفعات (تكرار سداد الإيجار)"
+          subtitle="الخيارات المتاحة لحقل (طريقة الدفعات) في استمارة بيانات العقد الإلكتروني بالموقع."
+          searchPlaceholder="بحث باسم الخيار، التكرار، أو الوصف..."
+          searchKeys={["nameAr", "periodAr", "description"]}
+          filters={filterConfigs}
+          pageSize={10}
+          pageSizeOptions={[5, 10, 20]}
+        />
+      </FadeIn>
+      <WarningDialog
+        open={!!deleteId}
+        onOpenChange={(open) => {
+          if (!open) setDeleteId(null);
+        }}
+        title="تأكيد الحذف"
+        description="هل أنت متأكد من رغبتك في حذف دورية الدفع هذه؟ لا يمكن التراجع عن هذا الإجراء."
+        confirmLabel="حذف"
+        onConfirm={confirmDelete}
       />
-    </FadeIn>
+    </>
   );
 }

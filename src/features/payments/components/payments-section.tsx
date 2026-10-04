@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { Plus, ReceiptText, RotateCcw, Wallet } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -23,12 +24,15 @@ const PAYMENTS_TABS = ["reports", "frequencies"] as const;
 type PaymentsTab = (typeof PAYMENTS_TABS)[number];
 
 export default function PaymentsSection() {
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useUrlTab<PaymentsTab>({
     paramKey: "tab",
     defaultValue: "reports",
     clearDefaultFromUrl: true,
     validValues: PAYMENTS_TABS,
   });
+
+  const shouldHideRestoreBtn = activeTab === "reports" && searchParams.size === 0;
 
   // Dialog state for adding/editing payment frequencies
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
@@ -133,15 +137,17 @@ export default function PaymentsSection() {
           description={PAYMENTS_METADATA.description}
           actions={
             <div className="flex w-full sm:w-auto items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleResetDefaults}
-                className="gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-              >
-                <RotateCcw className="size-3.5" />
-                <span>استعادة الافتراضي</span>
-              </Button>
+              {!shouldHideRestoreBtn && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetDefaults}
+                  className="gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  <RotateCcw className="size-3.5" />
+                  <span>استعادة الافتراضي</span>
+                </Button>
+              )}
               {activeTab === "frequencies" && (
                 <Button
                   onClick={handleOpenAddFrequency}

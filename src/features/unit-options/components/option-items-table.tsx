@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Edit2, Trash2 } from "lucide-react";
 import { FadeIn } from "@/components/animations";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import WarningDialog from "@/components/warning-dialog";
 import type { OptionItem } from "@/features/unit-options/constants";
 
 interface OptionItemsTableProps {
@@ -47,6 +49,9 @@ export default function OptionItemsTable({
   onDelete,
   onToggleActive,
 }: OptionItemsTableProps) {
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
+  const deleteItem = items.find((item) => item.id === deleteItemId);
+
   const categoryValues = [
     ...new Set(items.map((item) => item.category).filter(Boolean)),
   ] as string[];
@@ -161,7 +166,7 @@ export default function OptionItemsTable({
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    onClick={() => onDelete(item.id)}
+                    onClick={() => setDeleteItemId(item.id)}
                     className="size-7 sm:size-8 text-destructive hover:bg-destructive/10 cursor-pointer"
                     aria-label={`حذف ${item.nameAr}`}
                   />
@@ -213,23 +218,40 @@ export default function OptionItemsTable({
   ];
 
   return (
-    <FadeIn duration={0.3} delay={0.05}>
-      <DataTable
-        data={items}
-        columns={columns}
-        title={title}
-        subtitle={subtitle}
-        searchPlaceholder="بحث في الخيارات..."
-        searchKeys={
-          showCategory ? ["nameAr", "category", "description"] : ["nameAr", "description"]
-        }
-        searchParamKey={`q-${tableId}`}
-        filters={filters}
-        pageSize={10}
-        pageSizeOptions={[5, 10, 20]}
-        emptyTitle="لا توجد نتائج مطابقة"
-        emptyDescription="لم يتم العثور على خيارات تطابق البحث أو التصفية."
+    <>
+      <WarningDialog
+        open={!!deleteItemId}
+        onOpenChange={(open) => {
+          if (!open) setDeleteItemId(null);
+        }}
+        title="حذف الخيار"
+        description={`هل أنت متأكد من رغبتك في حذف خيار "${deleteItem?.nameAr}"؟`}
+        confirmLabel="حذف"
+        onConfirm={() => {
+          if (deleteItemId) {
+            onDelete(deleteItemId);
+            setDeleteItemId(null);
+          }
+        }}
       />
-    </FadeIn>
+      <FadeIn duration={0.3} delay={0.05}>
+        <DataTable
+          data={items}
+          columns={columns}
+          title={title}
+          subtitle={subtitle}
+          searchPlaceholder="بحث في الخيارات..."
+          searchKeys={
+            showCategory ? ["nameAr", "category", "description"] : ["nameAr", "description"]
+          }
+          searchParamKey={`q-${tableId}`}
+          filters={filters}
+          pageSize={10}
+          pageSizeOptions={[5, 10, 20]}
+          emptyTitle="لا توجد نتائج مطابقة"
+          emptyDescription="لم يتم العثور على خيارات تطابق البحث أو التصفية."
+        />
+      </FadeIn>
+    </>
   );
 }

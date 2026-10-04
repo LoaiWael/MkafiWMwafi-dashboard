@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router";
-import ContractCertificateModal from "@/features/contracts/components/contract-certificate-modal";
 import ContractsTable from "@/features/contracts/components/contracts-table";
 import UpdateContractStatusDialog from "@/features/contracts/components/update-contract-status-dialog";
 import UpdatePaymentStatusDialog from "@/features/contracts/components/update-payment-status-dialog";
@@ -13,8 +12,6 @@ export default function UserContractsPanel({
   setStatusContract,
   paymentContract,
   setPaymentContract,
-  certificateContract,
-  setCertificateContract,
   updateStatus,
   updatePayment,
 }: UserContractsPanelProps) {
@@ -34,7 +31,6 @@ export default function UserContractsPanel({
         }
         onUpdateStatus={setStatusContract}
         onUpdatePayment={setPaymentContract}
-        onPrintCertificate={setCertificateContract}
       />
       <UpdateContractStatusDialog
         contract={statusContract}
@@ -47,11 +43,6 @@ export default function UserContractsPanel({
         isOpen={Boolean(paymentContract)}
         onClose={() => setPaymentContract(null)}
         onUpdatePayment={updatePayment}
-      />
-      <ContractCertificateModal
-        contract={certificateContract}
-        isOpen={Boolean(certificateContract)}
-        onClose={() => setCertificateContract(null)}
       />
     </>
   );

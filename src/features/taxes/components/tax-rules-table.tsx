@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   Building2,
@@ -37,6 +38,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import WarningDialog from "@/components/warning-dialog";
 import type { TaxSetting } from "@/features/taxes/constants";
 
 interface TaxRulesTableProps {
@@ -64,6 +66,8 @@ export default function TaxRulesTable({
   onTaxesChange,
   onEdit,
 }: TaxRulesTableProps) {
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
   const activeCount = taxes.filter((t) => t.isActive).length;
   const exemptCount = taxes.filter((t) => t.isExempt).length;
 
@@ -80,15 +84,19 @@ export default function TaxRulesTable({
     }
   };
 
-  const handleDelete = (id: string) => {
-    const target = taxes.find((t) => t.id === id);
-    if (target?.isMandatory) {
-      toast.error("لا يمكن حذف بند ضريبي إلزامي أساسي في النظام");
-      return;
+  const confirmDelete = () => {
+    if (deleteId) {
+      const target = taxes.find((t) => t.id === deleteId);
+      if (target?.isMandatory) {
+        toast.error("لا يمكن حذف بند ضريبي إلزامي أساسي في النظام");
+        setDeleteId(null);
+        return;
+      }
+      const updated = taxes.filter((t) => t.id !== deleteId);
+      onTaxesChange(updated);
+      toast.success("تم حذف البند الضريبي بنجاح");
+      setDeleteId(null);
     }
-    const updated = taxes.filter((t) => t.id !== id);
-    onTaxesChange(updated);
-    toast.success("تم حذف البند الضريبي بنجاح");
   };
 
   return (
@@ -364,7 +372,7 @@ export default function TaxRulesTable({
                                       variant="ghost"
                                       size="icon"
                                       className="size-8.5 rounded-lg text-destructive/70 hover:bg-destructive/10 hover:text-destructive cursor-pointer"
-                                      onClick={() => handleDelete(tax.id)}
+                                      onClick={() => setDeleteId(tax.id)}
                                     >
                                       <Trash2 className="size-4" />
                                       <span className="sr-only">حذف</span>
@@ -385,6 +393,17 @@ export default function TaxRulesTable({
           </CardContent>
         </Card>
       </FadeIn>
+
+      <WarningDialog
+        open={!!deleteId}
+        onOpenChange={(open) => {
+          if (!open) setDeleteId(null);
+        }}
+        title="تأكيد الحذف"
+        description="هل أنت متأكد من رغبتك في حذف هذا البند الضريبي؟ لا يمكن التراجع عن هذا الإجراء."
+        confirmLabel="حذف"
+        onConfirm={confirmDelete}
+      />
     </TooltipProvider>
   );
 }

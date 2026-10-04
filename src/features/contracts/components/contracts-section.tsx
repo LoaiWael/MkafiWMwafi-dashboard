@@ -23,7 +23,6 @@ import type {
   PaymentMethod,
   PaymentStatus,
 } from "../types";
-import ContractCertificateModal from "./contract-certificate-modal";
 import ContractsStatCards from "./contracts-stat-cards";
 import ContractsTable from "./contracts-table";
 import UpdateContractStatusDialog from "./update-contract-status-dialog";
@@ -39,8 +38,6 @@ export default function ContractsSection() {
   const [selectedContractForStatus, setSelectedContractForStatus] =
     useState<Contract | null>(null);
   const [selectedContractForPayment, setSelectedContractForPayment] =
-    useState<Contract | null>(null);
-  const [selectedContractForCertificate, setSelectedContractForCertificate] =
     useState<Contract | null>(null);
 
   // URL State
@@ -395,9 +392,6 @@ export default function ContractsSection() {
           }
           onUpdateStatus={(contract) => setSelectedContractForStatus(contract)}
           onUpdatePayment={(contract) => setSelectedContractForPayment(contract)}
-          onPrintCertificate={(contract) =>
-            setSelectedContractForCertificate(contract)
-          }
         />
       </FadeIn>
 
@@ -415,13 +409,6 @@ export default function ContractsSection() {
         isOpen={Boolean(selectedContractForPayment)}
         onClose={() => setSelectedContractForPayment(null)}
         onUpdatePayment={handleUpdatePayment}
-      />
-
-      {/* 3. Certificate Print / Preview Modal */}
-      <ContractCertificateModal
-        contract={selectedContractForCertificate}
-        isOpen={Boolean(selectedContractForCertificate)}
-        onClose={() => setSelectedContractForCertificate(null)}
       />
     </div>
   );

@@ -17,7 +17,6 @@ import {
   Mail,
   MapPin,
   Phone,
-  Printer,
   QrCode,
   RefreshCw,
   SaudiRiyal,
@@ -65,7 +64,6 @@ import type {
   PaymentMethod,
   PaymentStatus,
 } from "../types";
-import ContractCertificateModal from "./contract-certificate-modal";
 import UpdateContractStatusDialog from "./update-contract-status-dialog";
 import UpdatePaymentStatusDialog from "./update-payment-status-dialog";
 
@@ -105,7 +103,6 @@ export default function ContractDetailsView({
   // Dialog & Modal states
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [isCertificateModalOpen, setIsCertificateModalOpen] = useState(false);
   const [isSyncingWithEjar, setIsSyncingWithEjar] = useState(false);
 
   const isResidential = contract.type === "residential";
@@ -483,16 +480,6 @@ export default function ContractDetailsView({
             >
               <CreditCard className="size-3.5 text-emerald-600 shrink-0" />
               <span className="truncate">تحديث السداد</span>
-            </Button>
-
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => setIsCertificateModalOpen(true)}
-              className="gap-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-[11px] sm:text-xs font-semibold cursor-pointer shadow-xs w-full sm:w-auto justify-center h-8.5 sm:h-9 px-2.5 sm:px-3 active:scale-98"
-            >
-              <Printer className="size-3.5 shrink-0" />
-              <span className="truncate">طباعة الوثيقة</span>
             </Button>
           </div>
         </div>
@@ -2181,12 +2168,6 @@ export default function ContractDetailsView({
         isOpen={isPaymentDialogOpen}
         onClose={() => setIsPaymentDialogOpen(false)}
         onUpdatePayment={handleUpdatePayment}
-      />
-
-      <ContractCertificateModal
-        contract={isCertificateModalOpen ? contract : null}
-        isOpen={isCertificateModalOpen}
-        onClose={() => setIsCertificateModalOpen(false)}
       />
     </div>
   );

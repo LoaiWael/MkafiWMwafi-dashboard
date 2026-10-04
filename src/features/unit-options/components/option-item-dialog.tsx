@@ -20,13 +20,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import type { OptionItem } from "@/features/unit-options/constants";
 import type { OptionItemFormValues } from "@/features/unit-options/hooks/use-option-item-editor";
-
-const OPTION_CATEGORIES = [
-  "سكني",
-  "تجاري",
-  "صناعي/لوجستي",
-  "مختلط",
-] as const;
+import { optionCategories } from "../schemas/unit-options-schema";
 
 interface OptionItemDialogProps {
   open: boolean;
@@ -97,7 +91,7 @@ export default function OptionItemDialog({
                   <SelectValue placeholder="اختر التصنيف" />
                 </SelectTrigger>
                 <SelectContent align="start">
-                  {OPTION_CATEGORIES.map((category) => (
+                  {optionCategories.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>

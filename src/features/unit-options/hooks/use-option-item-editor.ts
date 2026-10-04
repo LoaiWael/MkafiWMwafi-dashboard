@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import type { OptionItem } from "@/features/unit-options/constants";
+import {
+  optionItemSchema,
+  type OptionItemFormData,
+} from "../schemas/unit-options-schema";
 
-export interface OptionItemFormValues {
-  nameAr: string;
-  category: string;
-  description: string;
-  isActive: boolean;
-}
+export type OptionItemFormValues = OptionItemFormData;
 
 interface UseOptionItemEditorOptions {
   defaultCategory: string;
@@ -52,18 +51,23 @@ export function useOptionItemEditor({
   }
 
   function save() {
-    if (!formData.nameAr.trim()) {
-      toast.error("يرجى إدخال مسمى الخيار");
+    const result = optionItemSchema.safeParse(formData);
+    if (!result.success) {
+      toast.error(
+        result.error.issues[0]?.message || "يرجى التحقق من صحة البيانات المدخلة",
+      );
       return;
     }
+
+    const validData = result.data;
 
     if (editingItem) {
       const updated: OptionItem = {
         ...editingItem,
-        nameAr: formData.nameAr.trim(),
-        category: formData.category,
-        description: formData.description.trim(),
-        isActive: formData.isActive,
+        nameAr: validData.nameAr,
+        category: validData.category,
+        description: validData.description,
+        isActive: validData.isActive,
       };
       onItemsChange((prev) =>
         prev.map((item) => (item.id === editingItem.id ? updated : item)),
@@ -72,10 +76,10 @@ export function useOptionItemEditor({
     } else {
       const newItem: OptionItem = {
         id: `custom_${Date.now()}`,
-        nameAr: formData.nameAr.trim(),
-        category: formData.category,
-        description: formData.description.trim(),
-        isActive: formData.isActive,
+        nameAr: validData.nameAr,
+        category: validData.category,
+        description: validData.description,
+        isActive: validData.isActive,
       };
       onItemsChange((prev) => [...prev, newItem]);
       toast.success("تمت إضافة الخيار الجديد بنجاح");

@@ -1,5 +1,11 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import {
+  type Control,
+  Controller,
+  type FieldErrors,
+  type UseFormRegister,
+} from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -15,48 +21,22 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-export interface EmployeeFieldErrors {
-  name?: string;
-  role?: string;
-  email?: string;
-  phone?: string;
-  password?: string;
-  form?: string;
-}
+import type { EmployeeFormData } from "../schemas/employee-schema";
 
 interface EmployeeFormFieldsProps {
-  name: string;
-  role: string;
-  email: string;
-  phone: string;
-  password: string;
-  active: boolean;
+  register: UseFormRegister<EmployeeFormData>;
+  control: Control<EmployeeFormData>;
+  errors: FieldErrors<EmployeeFormData>;
   roleOptions: readonly string[];
-  errors: EmployeeFieldErrors;
-  onNameChange: (value: string) => void;
-  onRoleChange: (value: string) => void;
-  onEmailChange: (value: string) => void;
-  onPhoneChange: (value: string) => void;
-  onPasswordChange: (value: string) => void;
-  onActiveChange: (value: boolean) => void;
+  disabled?: boolean;
 }
 
 export default function EmployeeFormFields({
-  name,
-  role,
-  email,
-  phone,
-  password,
-  active,
-  roleOptions,
+  register,
+  control,
   errors,
-  onNameChange,
-  onRoleChange,
-  onEmailChange,
-  onPhoneChange,
-  onPasswordChange,
-  onActiveChange,
+  roleOptions,
+  disabled = false,
 }: EmployeeFormFieldsProps) {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const passwordToggleLabel = passwordVisible
@@ -66,88 +46,110 @@ export default function EmployeeFormFields({
   return (
     <>
       <div className="space-y-2">
-        <Label htmlFor="employee-name">الاسم</Label>
+        <Label htmlFor="employee-name">
+          الاسم <span className="text-destructive">*</span>
+        </Label>
         <Input
           id="employee-name"
           dir="auto"
-          value={name}
-          onChange={(event) => onNameChange(event.target.value)}
+          disabled={disabled}
           className="h-10"
           aria-invalid={Boolean(errors.name)}
+          {...register("name")}
         />
         {errors.name ? (
-          <p className="text-xs text-destructive">{errors.name}</p>
+          <p className="text-xs text-destructive">{errors.name.message}</p>
         ) : null}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="employee-role">الدور الوظيفي</Label>
-        <Select value={role} onValueChange={(value) => onRoleChange(value ?? "")}>
-          <SelectTrigger
-            id="employee-role"
-            aria-label="الدور الوظيفي"
-            className="h-10 w-full cursor-pointer"
-            aria-invalid={Boolean(errors.role)}
-          >
-            <SelectValue>{role || "اختر الدور"}</SelectValue>
-          </SelectTrigger>
-          <SelectContent align="start">
-            {roleOptions.map((option) => (
-              <SelectItem key={option} value={option}>
-                {option}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Label htmlFor="employee-role">
+          الدور الوظيفي <span className="text-destructive">*</span>
+        </Label>
+        <Controller
+          control={control}
+          name="role"
+          render={({ field }) => (
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              disabled={disabled}
+            >
+              <SelectTrigger
+                id="employee-role"
+                aria-label="الدور الوظيفي"
+                className="h-10 w-full cursor-pointer"
+                aria-invalid={Boolean(errors.role)}
+              >
+                <SelectValue placeholder="اختر الدور">
+                  {field.value || "اختر الدور"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent align="start">
+                {roleOptions.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
         {errors.role ? (
-          <p className="text-xs text-destructive">{errors.role}</p>
+          <p className="text-xs text-destructive">{errors.role.message}</p>
         ) : null}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="employee-email">البريد الإلكتروني</Label>
+          <Label htmlFor="employee-email">
+            البريد الإلكتروني <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="employee-email"
             type="email"
             dir="ltr"
-            value={email}
-            onChange={(event) => onEmailChange(event.target.value)}
+            disabled={disabled}
             className="h-10"
             aria-invalid={Boolean(errors.email)}
+            {...register("email")}
           />
           {errors.email ? (
-            <p className="text-xs text-destructive">{errors.email}</p>
+            <p className="text-xs text-destructive">{errors.email.message}</p>
           ) : null}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="employee-phone">رقم الجوال</Label>
+          <Label htmlFor="employee-phone">
+            رقم الجوال <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="employee-phone"
             type="tel"
             dir="ltr"
-            value={phone}
-            onChange={(event) => onPhoneChange(event.target.value)}
+            disabled={disabled}
             className="h-10"
             aria-invalid={Boolean(errors.phone)}
+            {...register("phone")}
           />
           {errors.phone ? (
-            <p className="text-xs text-destructive">{errors.phone}</p>
+            <p className="text-xs text-destructive">{errors.phone.message}</p>
           ) : null}
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="employee-password">كلمة المرور</Label>
+        <Label htmlFor="employee-password">
+          كلمة المرور <span className="text-destructive">*</span>
+        </Label>
         <div dir="ltr" className="relative">
           <Input
             id="employee-password"
             type={passwordVisible ? "text" : "password"}
             autoComplete="new-password"
-            value={password}
-            onChange={(event) => onPasswordChange(event.target.value)}
+            disabled={disabled}
             className="h-10 pe-12"
             aria-invalid={Boolean(errors.password)}
+            {...register("password")}
           />
           <Tooltip>
             <TooltipTrigger
@@ -168,7 +170,7 @@ export default function EmployeeFormFields({
           </Tooltip>
         </div>
         {errors.password ? (
-          <p className="text-xs text-destructive">{errors.password}</p>
+          <p className="text-xs text-destructive">{errors.password.message}</p>
         ) : null}
       </div>
 
@@ -176,10 +178,17 @@ export default function EmployeeFormFields({
         <Label htmlFor="employee-active" className="cursor-pointer">
           الحساب نشط
         </Label>
-        <Switch
-          id="employee-active"
-          checked={active}
-          onCheckedChange={(value) => onActiveChange(Boolean(value))}
+        <Controller
+          control={control}
+          name="active"
+          render={({ field }) => (
+            <Switch
+              id="employee-active"
+              checked={field.value}
+              onCheckedChange={field.onChange}
+              disabled={disabled}
+            />
+          )}
         />
       </div>
     </>

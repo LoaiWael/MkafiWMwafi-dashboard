@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Eye,
   MoreVertical,
@@ -11,6 +12,7 @@ import { Link } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { CopyButton } from "@/components/ui/copy-button";
+import WarningDialog from "@/components/warning-dialog";
 import {
   DataTable,
   type DataTableColumn,
@@ -44,6 +46,15 @@ export default function EmployeesTable({
   onToggleStatus,
   onEdit,
 }: EmployeesTableProps) {
+  const [deactivateEmployee, setDeactivateEmployee] = useState<EmployeeRecord | null>(null);
+
+  const confirmDeactivate = () => {
+    if (deactivateEmployee) {
+      onToggleStatus?.(deactivateEmployee);
+      setDeactivateEmployee(null);
+    }
+  };
+
   const roles = [...new Set(employees.map((employee) => employee.role))];
 
   const columns: DataTableColumn<EmployeeRecord>[] = [
@@ -228,7 +239,13 @@ export default function EmployeesTable({
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
-                  onClick={() => onToggleStatus?.(item)}
+                  onClick={() => {
+                    if (item.active) {
+                      setDeactivateEmployee(item);
+                    } else {
+                      onToggleStatus?.(item);
+                    }
+                  }}
                   className={cn(
                     "gap-2 cursor-pointer font-medium transition-colors",
                     item.active
@@ -279,30 +296,42 @@ export default function EmployeesTable({
   ];
 
   return (
-    <DataTable
-      data={[...employees]}
-      columns={columns}
-      title="سجل الموظفين"
-      subtitle="الصورة والدور وبيانات التواصل وتاريخ الانضمام والصلاحيات، بنفس حقول الملف الشخصي."
-      searchPlaceholder="بحث بالاسم أو الدور أو البريد أو الجوال..."
-      searchFilter={(item, query) => {
-        const haystack = [
-          item.name,
-          item.role,
-          item.email,
-          item.phone,
-          item.id,
-          ...item.permissions.map((permission) => permission.label),
-        ]
-          .join(" ")
-          .toLowerCase();
-        return haystack.includes(query);
-      }}
-      filters={filters}
-      emptyTitle="لا يوجد موظفون"
-      emptyDescription="لا توجد نتائج تطابق البحث أو عوامل التصفية الحالية."
-      emptyIcon={Users}
-      pageSize={10}
-    />
+    <>
+      <DataTable
+        data={[...employees]}
+        columns={columns}
+        title="سجل الموظفين"
+        subtitle="الصورة والدور وبيانات التواصل وتاريخ الانضمام والصلاحيات، بنفس حقول الملف الشخصي."
+        searchPlaceholder="بحث بالاسم أو الدور أو البريد أو الجوال..."
+        searchFilter={(item, query) => {
+          const haystack = [
+            item.name,
+            item.role,
+            item.email,
+            item.phone,
+            item.id,
+            ...item.permissions.map((permission) => permission.label),
+          ]
+            .join(" ")
+            .toLowerCase();
+          return haystack.includes(query);
+        }}
+        filters={filters}
+        emptyTitle="لا يوجد موظفون"
+        emptyDescription="لا توجد نتائج تطابق البحث أو عوامل التصفية الحالية."
+        emptyIcon={Users}
+        pageSize={10}
+      />
+      <WarningDialog
+        open={!!deactivateEmployee}
+        onOpenChange={(open) => {
+          if (!open) setDeactivateEmployee(null);
+        }}
+        title="إيقاف الحساب"
+        description={`إيقاف حساب ${deactivateEmployee?.name} يمنع الدخول إلى لوحة التحكم إلى حين إعادة التفعيل.`}
+        confirmLabel="إيقاف الحساب"
+        onConfirm={confirmDeactivate}
+      />
+    </>
   );
 }
