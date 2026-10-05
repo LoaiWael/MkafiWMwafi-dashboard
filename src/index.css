@@ -585,6 +585,48 @@
   animation: caret-blink 1.25s ease-out infinite;
 }
 
+@keyframes flash-highlight-primary {
+  0% {
+    box-shadow: 0 0 0 0 transparent;
+    border-color: var(--border);
+  }
+  30% {
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--primary) 35%, transparent),
+      0 0 24px 0 color-mix(in srgb, var(--primary) 20%, transparent);
+    border-color: var(--primary);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+    border-color: var(--border);
+  }
+}
+
+@keyframes flash-highlight-secondary {
+  0% {
+    box-shadow: 0 0 0 0 transparent;
+    border-color: var(--border);
+  }
+  30% {
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--secondary) 35%, transparent),
+      0 0 24px 0 color-mix(in srgb, var(--secondary) 20%, transparent);
+    border-color: var(--secondary);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+    border-color: var(--border);
+  }
+}
+
+@utility animate-flash-primary {
+  animation: flash-highlight-primary 3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@utility animate-flash-secondary {
+  animation: flash-highlight-secondary 3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 [data-sonner-toaster] {
   font-family: var(--font-plex-arabic), var(--font-sans), sans-serif !important;
 }

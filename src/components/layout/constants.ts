@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
+  BookOpen,
   Building2,
   FileText,
   Layers,
@@ -14,7 +15,6 @@ import {
   ShieldCheck,
   Tag,
   TicketPercent,
-  User,
   UserCog,
   Users,
   Wallet,
@@ -69,12 +69,8 @@ export const SIDEBAR_NAV_GROUPS: readonly SidebarNavGroup[] = [
       { href: ROUTES.roles, label: "الأدوار والصلاحيات", icon: ShieldCheck },
       { href: ROUTES.regions, label: "المناطق والمدن", icon: MapPin },
       { href: ROUTES.unitOptions, label: "خيارات الوحدات", icon: Layers },
-      {
-        href: ROUTES.partyOptions,
-        label: "صفة المستأجر والمؤجر",
-        icon: User,
-      },
       { href: ROUTES.content, label: "محتوى الموقع", icon: Pencil },
+      { href: ROUTES.blogs, label: "المدونة والمقالات", icon: BookOpen },
       { href: ROUTES.terms, label: "الشروط والأحكام", icon: Scale },
       { href: ROUTES.privacy, label: "سياسة الخصوصية", icon: Shield },
       { href: ROUTES.settings, label: "إعدادات النظام", icon: Settings2 },
@@ -94,6 +90,8 @@ export function getPageTitle(pathname: string) {
   if (pathname === ROUTES.profile) return "الملف الشخصي";
   if (pathname.startsWith(`${ROUTES.users}/`)) return "ملف العميل";
   if (pathname.startsWith(`${ROUTES.employees}/`)) return "ملف الموظف";
+  if (pathname === ROUTES.blogCreate) return "إضافة مقال جديد";
+  if (pathname.startsWith(`${ROUTES.blogs}/`)) return "تحرير المقال";
 
   for (const group of SIDEBAR_NAV_GROUPS) {
     for (const item of group.items) {

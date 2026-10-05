@@ -22,8 +22,10 @@ import RolesPage from "@/routes/dashboard/roles-page";
 import RoleEditorPage from "@/routes/dashboard/role-editor-page";
 import RegionsPage from "@/routes/dashboard/regions-page";
 import UnitOptionsPage from "@/routes/dashboard/unit-options-page";
-import PartyOptionsPage from "@/routes/dashboard/party-options-page";
 import ContentPage from "@/routes/dashboard/content-page";
+import BlogsPage from "@/routes/dashboard/blogs-page";
+import BlogEditorPage from "@/routes/dashboard/blog-editor-page";
+import BlogDetailsPage from "@/routes/dashboard/blog-details-page";
 import SettingsPage from "@/routes/dashboard/settings-page";
 import TermsPage from "@/routes/dashboard/terms-page";
 import PrivacyPage from "@/routes/dashboard/privacy-page";
@@ -61,8 +63,11 @@ export const router = createBrowserRouter([
       { path: "roles/:id", Component: RoleEditorPage },
       { path: "regions", Component: RegionsPage },
       { path: "unit-options", Component: UnitOptionsPage },
-      { path: "party-options", Component: PartyOptionsPage },
       { path: "content", Component: ContentPage },
+      { path: "blogs", Component: BlogsPage },
+      { path: "blogs/new", Component: BlogEditorPage },
+      { path: "blogs/:id", Component: BlogDetailsPage },
+      { path: "blogs/:id/edit", Component: BlogEditorPage },
       { path: "terms", Component: TermsPage },
       { path: "privacy", Component: PrivacyPage },
       { path: "settings", Component: SettingsPage },
