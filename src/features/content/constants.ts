@@ -3,6 +3,7 @@ import type { PageSeo } from "@/features/content/types";
 export const CONTENT_PAGES = {
   home: "home",
   about: "about",
+  blogs: "blogs",
 } as const;
 
 export type ContentPageId = (typeof CONTENT_PAGES)[keyof typeof CONTENT_PAGES];
@@ -10,6 +11,7 @@ export type ContentPageId = (typeof CONTENT_PAGES)[keyof typeof CONTENT_PAGES];
 export const CONTENT_PAGE_IDS = [
   CONTENT_PAGES.home,
   CONTENT_PAGES.about,
+  CONTENT_PAGES.blogs,
 ] as const;
 
 export const SEO_PUBLIC_ORIGIN = "https://makfiwamufi.sa";
@@ -29,6 +31,7 @@ export const TWITTER_CARD = {
 export const SITE_PREVIEW_NAV = [
   { id: CONTENT_PAGES.home, label: "الرئيسية" },
   { id: CONTENT_PAGES.about, label: "من نحن" },
+  { id: CONTENT_PAGES.blogs, label: "المدونة" },
 ] as const;
 
 export const HERO_VIDEO_SRC = "/home/hero.mp4";
@@ -146,6 +149,20 @@ export const ABOUT_HERO_COPY = {
   heading: "نجعل توثيق عقد الإيجار أسهل مما تتوقع",
   description:
     "منصة إلكترونية تساعدك على إنشاء عقود الإيجار السكنية والتجارية وتوثيقها بكل سهولة خلال دقائق، ومن دون زيارة مكتب.",
+} as const;
+
+export const BLOGS_HERO_IMAGE = {
+  src: "/about/hero.png",
+  width: 2064,
+  height: 512,
+} as const;
+
+export const BLOGS_HERO_COPY = {
+  label: "المدونة",
+  eyebrow: "المدونة والمعرفة العقارية",
+  heading: "دليلك ومقالات متخصصة في عقود الإيجار والأنظمة",
+  description:
+    "مقالات دورية، تحليلات نظامية، وأدلة عملية لمساعدتك في فهم وتوثيق عقود الإيجار السكنية والتجارية بكل سهولة وأمان.",
 } as const;
 
 export const ABOUT_STORY_IMAGE = {
@@ -446,6 +463,9 @@ const HOME_DESCRIPTION =
 const ABOUT_DESCRIPTION =
   "تعرّف على مكفي وموفي، منصتك لتوثيق وإدارة عقود الإيجار السكنية والتجارية إلكترونياً بكل سهولة وأمان خلال دقائق.";
 
+const BLOGS_DESCRIPTION =
+  "مقالات وأدلة شاملة حول توثيق عقود الإيجار السكنية والتجارية، والأنظمة العقارية في المملكة.";
+
 export const PAGE_SEO = {
   [CONTENT_PAGES.home]: {
     title: "عقد إيجار إلكتروني موثق",
@@ -473,6 +493,23 @@ export const PAGE_SEO = {
     followLinks: true,
     ogTitle: "من نحن",
     ogDescription: ABOUT_DESCRIPTION,
+    ogImage: "",
+    ogImageAlt: "مكفي وموفي",
+    twitterCard: TWITTER_CARD.summaryLargeImage,
+    mirrorOpenGraph: true,
+    twitterTitle: "",
+    twitterDescription: "",
+    twitterImage: "",
+  },
+  [CONTENT_PAGES.blogs]: {
+    title: "المدونة",
+    description: BLOGS_DESCRIPTION,
+    keywords: "المدونة، مقالات عقارية، توثيق عقود، إيجار، مكفي وموفي",
+    canonicalPath: "/blogs",
+    indexable: true,
+    followLinks: true,
+    ogTitle: "المدونة",
+    ogDescription: BLOGS_DESCRIPTION,
     ogImage: "",
     ogImageAlt: "مكفي وموفي",
     twitterCard: TWITTER_CARD.summaryLargeImage,

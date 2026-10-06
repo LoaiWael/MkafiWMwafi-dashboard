@@ -1,6 +1,7 @@
 import { FadeIn } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
 import AboutPage from "@/features/content/components/about-page";
+import BlogsPage from "@/features/content/components/blogs-page";
 import { ContentDraftProvider } from "@/features/content/components/content-draft-provider";
 import ContentSaveBar from "@/features/content/components/content-save-bar";
 import HomePage from "@/features/content/components/home-page";
@@ -26,7 +27,7 @@ export default function ContentSection() {
         <FadeIn duration={0.3}>
           <PageHeader
             title="محتوى الموقع"
-            description="تخصيص وإدارة بيانات ومحتوى الصفحة الرئيسية وصفحة من نحن."
+            description="تخصيص وإدارة بيانات ومحتوى الصفحة الرئيسية وصفحة من نحن وصفحة المدونة."
           />
         </FadeIn>
 
@@ -38,6 +39,9 @@ export default function ContentSection() {
             </div>
             <div className={activePage === CONTENT_PAGES.about ? undefined : "hidden"}>
               <AboutPage onOpenHome={() => setActivePage(CONTENT_PAGES.home)} />
+            </div>
+            <div className={activePage === CONTENT_PAGES.blogs ? undefined : "hidden"}>
+              <BlogsPage onOpenHome={() => setActivePage(CONTENT_PAGES.home)} />
             </div>
           </div>
         </FadeIn>
