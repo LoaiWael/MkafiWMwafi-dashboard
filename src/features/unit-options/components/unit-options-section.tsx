@@ -6,23 +6,19 @@ import {
   ListOrdered,
   Plus,
   RotateCcw,
-  SlidersHorizontal,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { FadeIn } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { FilterTabs, type FilterTabItem } from "@/components/ui/filter-tabs";
-import AmenitiesTab from "@/features/unit-options/components/amenities-tab";
 import FloorsTab from "@/features/unit-options/components/floors-tab";
 import PropertyTypesTab from "@/features/unit-options/components/property-types-tab";
 import UnitTypesTab from "@/features/unit-options/components/unit-types-tab";
 import {
-  INITIAL_AMENITIES_CONFIG,
   INITIAL_FLOOR_OPTIONS,
   INITIAL_PROPERTY_TYPES,
   INITIAL_UNIT_TYPES,
-  type AmenityCategory,
   type OptionItem,
 } from "@/features/unit-options/constants";
 import { useOptionItemEditor } from "@/features/unit-options/hooks/use-option-item-editor";
@@ -32,7 +28,6 @@ const UNIT_OPTIONS_TABS = [
   "unit-types",
   "property-types",
   "floors",
-  "amenities",
 ] as const;
 type UnitOptionsTab = (typeof UNIT_OPTIONS_TABS)[number];
 
@@ -46,7 +41,6 @@ export default function UnitOptionsSection() {
   const [unitTypes, setUnitTypes] = useState<OptionItem[]>(INITIAL_UNIT_TYPES);
   const [propertyTypes, setPropertyTypes] = useState<OptionItem[]>(INITIAL_PROPERTY_TYPES);
   const [floors, setFloors] = useState<OptionItem[]>(INITIAL_FLOOR_OPTIONS);
-  const [amenities, setAmenities] = useState<AmenityCategory[]>(INITIAL_AMENITIES_CONFIG);
 
   // Editors for the option item tabs
   const unitTypesEditor = useOptionItemEditor({
@@ -73,7 +67,6 @@ export default function UnitOptionsSection() {
       setUnitTypes(INITIAL_UNIT_TYPES);
       setPropertyTypes(INITIAL_PROPERTY_TYPES);
       setFloors(INITIAL_FLOOR_OPTIONS);
-      setAmenities(INITIAL_AMENITIES_CONFIG);
       toast.success("تمت استعادة خيارات الوحدات الافتراضية بنجاح");
     }
   }
@@ -96,12 +89,6 @@ export default function UnitOptionsSection() {
       label: "الأدوار والطوابق",
       icon: ListOrdered,
       count: floors.length,
-    },
-    {
-      id: "amenities",
-      label: "المرافق والتجهيزات",
-      icon: SlidersHorizontal,
-      count: amenities.length,
     },
   ];
 
@@ -163,7 +150,7 @@ export default function UnitOptionsSection() {
           value={activeTab}
           onValueChange={setActiveTab}
           layout="auto"
-          gridColsClass="sm:grid-cols-2 md:grid-cols-4"
+          gridColsClass="sm:grid-cols-3"
           className="w-full md:w-fit max-w-full"
           ariaLabel="تبويبات خيارات الوحدات"
           idPrefix="unit-options-tab"
@@ -192,12 +179,6 @@ export default function UnitOptionsSection() {
           ) : null}
           {activeTab === "floors" ? (
             <FloorsTab items={floors} editor={floorsEditor} />
-          ) : null}
-          {activeTab === "amenities" ? (
-            <AmenitiesTab
-              amenities={amenities}
-              onAmenitiesChange={setAmenities}
-            />
           ) : null}
         </motion.div>
       </AnimatePresence>

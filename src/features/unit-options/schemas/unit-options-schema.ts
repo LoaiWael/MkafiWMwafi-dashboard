@@ -18,12 +18,3 @@ export const optionItemSchema = z.object({
 });
 
 export type OptionItemFormData = z.infer<typeof optionItemSchema>;
-
-export const amenityOptionSchema = z.object({
-  value: z
-    .string()
-    .trim()
-    .min(1, "يرجى إدخال قيمة الخيار"),
-});
-
-export type AmenityOptionFormData = z.infer<typeof amenityOptionSchema>;

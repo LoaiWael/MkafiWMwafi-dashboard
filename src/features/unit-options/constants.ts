@@ -6,14 +6,6 @@ export interface OptionItem {
   isActive: boolean;
 }
 
-export interface AmenityCategory {
-  id: string;
-  title: string;
-  field: string;
-  isRequired: boolean;
-  options: string[];
-}
-
 export const INITIAL_UNIT_TYPES: OptionItem[] = [
   { id: "apartment", nameAr: "شقة", category: "سكني", description: "وحدة سكنية مستقلة داخل عمارة أو مجمع", isActive: true },
   { id: "villa", nameAr: "فيلا", category: "سكني", description: "مبنى سكني مستقل بالكامل", isActive: true },
@@ -53,47 +45,3 @@ export const INITIAL_FLOOR_OPTIONS: OptionItem[] = [
   { id: "roof", nameAr: "السطح / الروف", description: "الطابق الأخير بالسطح", isActive: true },
 ];
 
-export const INITIAL_AMENITIES_CONFIG: AmenityCategory[] = [
-  {
-    id: "rooms",
-    title: "عدد الغرف",
-    field: "roomsCount",
-    isRequired: true,
-    options: ["لا يوجد", "1", "2", "3", "4", "5", "6 فأكثر"],
-  },
-  {
-    id: "livingRooms",
-    title: "عدد الصالات",
-    field: "livingRoomsCount",
-    isRequired: true,
-    options: ["لا يوجد", "1", "2", "3", "4 فأكثر"],
-  },
-  {
-    id: "kitchens",
-    title: "عدد المطابخ",
-    field: "kitchensCount",
-    isRequired: true,
-    options: ["لا يوجد", "1", "2", "3 فأكثر"],
-  },
-  {
-    id: "bathrooms",
-    title: "عدد دورات المياه",
-    field: "bathroomsCount",
-    isRequired: true,
-    options: ["1", "2", "3", "4", "5", "6 فأكثر"],
-  },
-  {
-    id: "windowAc",
-    title: "مكيف شباك",
-    field: "windowAcCount",
-    isRequired: true,
-    options: ["لا يوجد", "1", "2", "3", "4", "5", "6 فأكثر"],
-  },
-  {
-    id: "splitAc",
-    title: "مكيف سبليت",
-    field: "splitAcCount",
-    isRequired: true,
-    options: ["لا يوجد", "1", "2", "3", "4", "5", "6 فأكثر"],
-  },
-];
