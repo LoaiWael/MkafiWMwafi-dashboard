@@ -7,5 +7,5 @@ export default function ContractDetailsPage() {
 
   useDocumentTitle(id ? `تفاصيل العقد ${id}` : "تفاصيل العقد");
 
-  return <ContractDetailsView contractId={id || "cnt-001"} />;
+  return <ContractDetailsView contractId={id || ""} />;
 }

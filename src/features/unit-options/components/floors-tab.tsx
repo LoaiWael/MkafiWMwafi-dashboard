@@ -1,37 +1,36 @@
-import OptionItemDialog from "@/features/unit-options/components/option-item-dialog";
-import OptionItemsTable from "@/features/unit-options/components/option-items-table";
-import type { OptionItem } from "@/features/unit-options/constants";
-import type { useOptionItemEditor } from "@/features/unit-options/hooks/use-option-item-editor";
+import { ListOrdered } from "lucide-react";
+import UnitOptionDialog from "./unit-option-dialog";
+import UnitOptionsTable from "./unit-options-table";
+import type { useFloors } from "../hooks/use-floors";
 
 interface FloorsTabProps {
-  items: OptionItem[];
-  editor: ReturnType<typeof useOptionItemEditor>;
+  controller: ReturnType<typeof useFloors>;
 }
 
-export default function FloorsTab({ items, editor }: FloorsTabProps) {
+export default function FloorsTab({ controller }: FloorsTabProps) {
   return (
     <>
-      <OptionItemsTable
-        items={items}
+      <UnitOptionsTable
+        items={controller.items}
         tableId="floors"
         title="خيارات الأدوار والطوابق"
-        subtitle="الخيارات المتاحة لاختيار (رقم الطابق) في تفاصيل الوحدات"
-        nameHeader="اسم الطابق / الدور"
-        descriptionHeader="التوضيح"
-        showCategory={false}
-        onEdit={editor.openEdit}
-        onDelete={editor.remove}
-        onToggleActive={editor.toggle}
+        subtitle="إدارة الأدوار والطوابق المتاحة لاختيار مكان الوحدة (مثل: الأرضي، الأول، الثاني، القبو، السطح)"
+        nameHeader="اسم الدور / الطابق"
+        entityLabel="الدور / الطابق"
+        icon={ListOrdered}
+        isLoading={controller.isLoading}
+        onAdd={controller.openAdd}
+        onEdit={controller.openEdit}
+        onDelete={controller.deleteItem}
+        onToggleActive={controller.toggleActive}
       />
-      <OptionItemDialog
-        open={editor.isDialogOpen}
-        onOpenChange={editor.setIsDialogOpen}
-        editingItem={editor.editingItem}
-        addTitle="إضافة دور / طابق جديد"
-        showCategory={false}
-        formData={editor.formData}
-        onFormDataChange={editor.setFormData}
-        onSave={editor.save}
+      <UnitOptionDialog
+        open={controller.isDialogOpen}
+        onOpenChange={controller.setIsDialogOpen}
+        editingItem={controller.editingItem}
+        entityLabel="الدور / الطابق"
+        isSaving={controller.isSaving}
+        onSave={controller.saveItem}
       />
     </>
   );

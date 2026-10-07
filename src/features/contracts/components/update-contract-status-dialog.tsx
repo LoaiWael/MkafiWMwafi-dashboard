@@ -1,9 +1,5 @@
 import { useState } from "react";
-import {
-  CheckCircle2,
-  FileCheck2,
-  Sparkles,
-} from "lucide-react";
+import { CheckCircle2, FileCheck2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -60,7 +56,10 @@ export default function UpdateContractStatusDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        className="max-h-[92vh] no-scrollbar overflow-y-auto sm:max-w-lg"
+        dir="rtl"
+      >
         <DialogHeader>
           <div className="flex items-center gap-2">
             <div className="flex size-9 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400">
@@ -83,7 +82,7 @@ export default function UpdateContractStatusDialog({
             <Label className="text-xs font-semibold text-foreground">
               اختر الحالة الجديدة للعقد
             </Label>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 max-h-56 overflow-y-auto p-0.5">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 p-0.5">
               {CONTRACT_STATUS_OPTIONS.map((status) => {
                 const isSelected = selectedStatus === status.value;
                 return (

@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   Building2,
   CreditCard,
@@ -31,7 +31,11 @@ import type { Contract } from "../types";
 
 interface ContractsTableProps {
   contracts: Contract[];
-  onViewDetails: (contract: Contract) => void;
+  totalCount?: number;
+  pageSize?: number;
+  manualPagination?: boolean;
+  isLoading?: boolean;
+  onViewDetails?: (contract: Contract) => void;
   onUpdateStatus: (contract: Contract) => void;
   onUpdatePayment: (contract: Contract) => void;
   title?: string;
@@ -43,6 +47,10 @@ interface ContractsTableProps {
 
 export default function ContractsTable({
   contracts,
+  totalCount,
+  pageSize = 15,
+  manualPagination = false,
+  isLoading = false,
   onViewDetails,
   onUpdateStatus,
   onUpdatePayment,
@@ -52,6 +60,7 @@ export default function ContractsTable({
   emptyDescription,
   syncWithUrl,
 }: ContractsTableProps) {
+  const navigate = useNavigate();
   const columns: DataTableColumn<Contract>[] = [
     {
       id: "contractNumber",
@@ -96,17 +105,19 @@ export default function ContractsTable({
                   label="نسخ رقم العقد"
                 />
               </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span>إيجار:</span>
-                <span className="font-mono font-medium text-foreground/80">
-                  {item.ejar.ejarContractNumber}
-                </span>
-                <CopyButton
-                  value={item.ejar.ejarContractNumber}
-                  itemId={`table-ejr-${item.id}`}
-                  label="نسخ رمز إيجار"
-                />
-              </div>
+              {item.ejar.ejarContractNumber ? (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span>إيجار:</span>
+                  <span className="font-mono font-medium text-foreground/80">
+                    {item.ejar.ejarContractNumber}
+                  </span>
+                  <CopyButton
+                    value={item.ejar.ejarContractNumber}
+                    itemId={`table-ejr-${item.id}`}
+                    label="نسخ رمز إيجار"
+                  />
+                </div>
+              ) : null}
             </div>
           </div>
         );
@@ -270,25 +281,19 @@ export default function ContractsTable({
             <DropdownMenuContent align="end" className="w-52 p-1 text-xs">
               <DropdownMenuGroup className="space-y-0.5">
                 <DropdownMenuItem
-                  onClick={() => onViewDetails(item)}
+                  onClick={() => {
+                    if (onViewDetails) {
+                      onViewDetails(item);
+                    } else {
+                      navigate(`/contracts/${item.id}`, {
+                        viewTransition: true,
+                      });
+                    }
+                  }}
                   className="gap-2 cursor-pointer font-medium transition-colors hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary"
                 >
                   <Eye className="size-4 text-primary shrink-0" />
                   <span>معاينة تفاصيل العقد</span>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem
-                  render={
-                    <Link
-                      to={`/contracts/${item.id}`}
-                      viewTransition
-                      className="flex items-center gap-2 cursor-pointer"
-                    />
-                  }
-                  className="gap-2 cursor-pointer font-medium transition-colors hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary"
-                >
-                  <FileText className="size-4 text-primary shrink-0" />
-                  <span>فتح صفحة العقد المستقلة</span>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
@@ -328,6 +333,14 @@ export default function ContractsTable({
     },
   ];
 
+  const uniqueCities = Array.from(
+    new Set(
+      contracts
+        .map((c) => c.property.city)
+        .filter((c) => Boolean(c && c !== "—")),
+    ),
+  );
+
   const filterConfigs: DataTableFilterConfig<Contract>[] = [
     {
       id: "type",
@@ -362,19 +375,20 @@ export default function ContractsTable({
         { value: "cancelled", label: "ملغي" },
       ],
     },
-    {
-      id: "city",
-      title: "المدينة",
-      options: [
-        { value: "الرياض", label: "الرياض" },
-        { value: "جدة", label: "جدة" },
-        { value: "الدمام", label: "الدمام" },
-        { value: "الخبر", label: "الخبر" },
-        { value: "مكة المكرمة", label: "مكة المكرمة" },
-      ],
-      filterFn: (item, val) =>
-        !val || val === "all" || item.property.city === val,
-    },
+    ...(uniqueCities.length > 0
+      ? [
+          {
+            id: "city",
+            title: "المدينة",
+            options: uniqueCities.map((city) => ({
+              value: city,
+              label: city,
+            })),
+            filterFn: (item: Contract, val: string) =>
+              !val || val === "all" || item.property.city === val,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -386,6 +400,17 @@ export default function ContractsTable({
       emptyTitle={emptyTitle}
       emptyDescription={emptyDescription}
       syncWithUrl={syncWithUrl}
+      isLoading={isLoading}
+      totalCount={totalCount}
+      pageSize={pageSize}
+      manualPagination={manualPagination}
+      onRowDoubleClick={(item) => {
+        if (onViewDetails) {
+          onViewDetails(item);
+        } else {
+          navigate(`/contracts/${item.id}`, { viewTransition: true });
+        }
+      }}
       searchPlaceholder="بحث برقم العقد، رمز إيجار، العقار، المؤجر، المستأجر، أو المدينة..."
       searchKeys={["contractNumber"]}
       searchFilter={(item, query) => {
@@ -405,8 +430,7 @@ export default function ContractsTable({
         );
       }}
       filters={filterConfigs}
-      pageSize={10}
-      pageSizeOptions={[5, 10, 20, 50]}
+      pageSizeOptions={[5, 10, 15, 20, 50]}
     />
   );
 }

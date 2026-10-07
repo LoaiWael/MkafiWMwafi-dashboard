@@ -1,37 +1,36 @@
-import OptionItemDialog from "@/features/unit-options/components/option-item-dialog";
-import OptionItemsTable from "@/features/unit-options/components/option-items-table";
-import type { OptionItem } from "@/features/unit-options/constants";
-import type { useOptionItemEditor } from "@/features/unit-options/hooks/use-option-item-editor";
+import { Home } from "lucide-react";
+import UnitOptionDialog from "./unit-option-dialog";
+import UnitOptionsTable from "./unit-options-table";
+import type { useUnitTypes } from "../hooks/use-unit-types";
 
 interface UnitTypesTabProps {
-  items: OptionItem[];
-  editor: ReturnType<typeof useOptionItemEditor>;
+  controller: ReturnType<typeof useUnitTypes>;
 }
 
-export default function UnitTypesTab({ items, editor }: UnitTypesTabProps) {
+export default function UnitTypesTab({ controller }: UnitTypesTabProps) {
   return (
     <>
-      <OptionItemsTable
-        items={items}
+      <UnitOptionsTable
+        items={controller.items}
         tableId="unit-types"
         title="أنواع الوحدات العقارية"
-        subtitle="يمكنك تفعيل أو تعطيل أو إضافة أنواع وحدات جديدة لتظهر في القائمة المنسدلة بالموقع"
-        nameHeader="اسم الوحدة"
-        descriptionHeader="الوصف والتفاصيل"
-        showCategory
-        onEdit={editor.openEdit}
-        onDelete={editor.remove}
-        onToggleActive={editor.toggle}
+        subtitle="إدارة أنواع الوحدات المتاحة عند إنشاء عقود الإيجار (مثل: شقة، فيلا، مكتب، مستودع)"
+        nameHeader="نوع الوحدة"
+        entityLabel="نوع الوحدة"
+        icon={Home}
+        isLoading={controller.isLoading}
+        onAdd={controller.openAdd}
+        onEdit={controller.openEdit}
+        onDelete={controller.deleteItem}
+        onToggleActive={controller.toggleActive}
       />
-      <OptionItemDialog
-        open={editor.isDialogOpen}
-        onOpenChange={editor.setIsDialogOpen}
-        editingItem={editor.editingItem}
-        addTitle="إضافة نوع وحدة جديد"
-        showCategory
-        formData={editor.formData}
-        onFormDataChange={editor.setFormData}
-        onSave={editor.save}
+      <UnitOptionDialog
+        open={controller.isDialogOpen}
+        onOpenChange={controller.setIsDialogOpen}
+        editingItem={controller.editingItem}
+        entityLabel="نوع الوحدة"
+        isSaving={controller.isSaving}
+        onSave={controller.saveItem}
       />
     </>
   );

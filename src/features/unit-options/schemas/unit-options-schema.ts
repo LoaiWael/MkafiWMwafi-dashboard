@@ -1,20 +1,15 @@
 import { z } from "zod";
 
-export const optionCategories = [
-  "سكني",
-  "تجاري",
-  "صناعي/لوجستي",
-  "مختلط",
-] as const;
-
-export const optionItemSchema = z.object({
-  nameAr: z
+export const unitOptionFormSchema = z.object({
+  name: z
     .string()
     .trim()
     .min(1, "يرجى إدخال اسم الخيار بالعربية"),
-  category: z.string().optional().default(""),
-  description: z.string().trim().optional().default(""),
+  sortOrder: z.coerce
+    .number()
+    .min(0, "يجب أن يكون ترتيب العرض صفراً أو أكبر")
+    .default(1),
   isActive: z.boolean().default(true),
 });
 
-export type OptionItemFormData = z.infer<typeof optionItemSchema>;
+export type UnitOptionFormData = z.infer<typeof unitOptionFormSchema>;

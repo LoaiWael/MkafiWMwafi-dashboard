@@ -51,6 +51,7 @@ export interface DataTableProps<TData> {
   pageSize?: number;
   pageSizeOptions?: number[];
   onRowClick?: (item: TData) => void;
+  onRowDoubleClick?: (item: TData) => void;
   className?: string;
   headerSlot?: ReactNode;
   /**
@@ -65,6 +66,30 @@ export interface DataTableProps<TData> {
    * The query parameter key to use for table search in the URL (defaults to "q").
    */
   searchParamKey?: string;
+  /**
+   * The query parameter key to use for page number in the URL (defaults to "page").
+   */
+  pageParamKey?: string;
+  /**
+   * The query parameter key to use for page size in the URL (defaults to "per_page").
+   */
+  pageSizeParamKey?: string;
+  /**
+   * Whether pagination is handled externally/server-side.
+   */
+  manualPagination?: boolean;
+  /**
+   * Total number of items across all pages when using server-side pagination.
+   */
+  totalCount?: number;
+  /**
+   * Callback fired when page index changes.
+   */
+  onPageChange?: (pageIndex: number) => void;
+  /**
+   * Callback fired when page size changes.
+   */
+  onPageSizeChange?: (pageSize: number) => void;
   /**
    * Callback fired when search or active filters state change.
    */
@@ -93,11 +118,18 @@ export function DataTable<TData>({
   pageSize: initialPageSize = 10,
   pageSizeOptions = [5, 10, 20, 50],
   onRowClick,
+  onRowDoubleClick,
   className,
   headerSlot,
   striped = true,
   syncWithUrl = true,
   searchParamKey = "q",
+  pageParamKey = "page",
+  pageSizeParamKey = "per_page",
+  manualPagination = false,
+  totalCount,
+  onPageChange,
+  onPageSizeChange,
   onStateChange,
 }: DataTableProps<TData>) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -125,8 +157,22 @@ export function DataTable<TData>({
   );
 
   const [sorting, setSorting] = useState<DataTableSortingState | null>(null);
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(initialPageSize);
+
+  const [pageIndex, setPageIndex] = useState(() => {
+    if (syncWithUrl && searchParams.has(pageParamKey)) {
+      const p = Number(searchParams.get(pageParamKey));
+      if (!Number.isNaN(p) && p > 0) return p - 1;
+    }
+    return 0;
+  });
+
+  const [pageSize, setPageSize] = useState(() => {
+    if (syncWithUrl && searchParams.has(pageSizeParamKey)) {
+      const ps = Number(searchParams.get(pageSizeParamKey));
+      if (!Number.isNaN(ps) && ps > 0) return ps;
+    }
+    return initialPageSize;
+  });
 
   // Sync state with URL params changes (e.g. browser navigation or external link clicks)
   useEffect(() => {
@@ -134,6 +180,16 @@ export function DataTable<TData>({
 
     const urlSearch = searchParams.get(searchParamKey) ?? "";
     setSearchQuery((prev) => (prev !== urlSearch ? urlSearch : prev));
+
+    const urlPage = searchParams.has(pageParamKey)
+      ? Math.max(0, Number(searchParams.get(pageParamKey)) - 1)
+      : 0;
+    setPageIndex((prev) => (prev !== urlPage ? urlPage : prev));
+
+    const urlPageSize = searchParams.has(pageSizeParamKey)
+      ? Number(searchParams.get(pageSizeParamKey)) || initialPageSize
+      : initialPageSize;
+    setPageSize((prev) => (prev !== urlPageSize ? urlPageSize : prev));
 
     const urlFilters: Record<string, string> = {};
     for (const f of filters) {
@@ -235,12 +291,57 @@ export function DataTable<TData>({
   })();
 
   // Pagination
-  const pageCount = Math.max(1, Math.ceil(sortedData.length / pageSize));
+  const isServerPagination = manualPagination || totalCount !== undefined;
+  const totalItems = isServerPagination ? (totalCount ?? data.length) : sortedData.length;
+  const pageCount = Math.max(1, Math.ceil(totalItems / pageSize));
   const safePageIndex = Math.min(Math.max(0, pageIndex), pageCount - 1);
-  const paginatedData = sortedData.slice(
-    safePageIndex * pageSize,
-    safePageIndex * pageSize + pageSize,
-  );
+  const paginatedData = isServerPagination
+    ? data
+    : sortedData.slice(
+        safePageIndex * pageSize,
+        safePageIndex * pageSize + pageSize,
+      );
+
+  const handlePageChange = (newIdx: number) => {
+    const clamped = Math.min(Math.max(0, newIdx), pageCount - 1);
+    setPageIndex(clamped);
+
+    if (syncWithUrl) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (clamped > 0) {
+            next.set(pageParamKey, String(clamped + 1));
+          } else {
+            next.delete(pageParamKey);
+          }
+          return next;
+        },
+        { replace: true },
+      );
+    }
+
+    onPageChange?.(clamped);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPageIndex(0);
+
+    if (syncWithUrl) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete(pageParamKey);
+          next.set(pageSizeParamKey, String(newSize));
+          return next;
+        },
+        { replace: true },
+      );
+    }
+
+    onPageSizeChange?.(newSize);
+  };
 
   // Filter management handlers
   const handleFilterChange = (filterId: string, value: string) => {
@@ -255,6 +356,7 @@ export function DataTable<TData>({
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
+          next.delete(pageParamKey);
           if (value && value !== "all") {
             next.set(filterId, value);
           } else {
@@ -277,6 +379,7 @@ export function DataTable<TData>({
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
+          next.delete(pageParamKey);
           if (value.trim()) {
             next.set(searchParamKey, value.trim());
           } else {
@@ -302,6 +405,7 @@ export function DataTable<TData>({
         (prev) => {
           const next = new URLSearchParams(prev);
           next.delete(searchParamKey);
+          next.delete(pageParamKey);
           for (const f of filters) {
             next.delete(f.id);
           }
@@ -447,6 +551,7 @@ export function DataTable<TData>({
               <TableRow
                 key={rIndex}
                 onClick={() => onRowClick?.(item)}
+                onDoubleClick={() => onRowDoubleClick?.(item)}
                 className={cn(
                   "border-b border-border/50 transition-colors duration-150",
                   striped &&
@@ -454,7 +559,7 @@ export function DataTable<TData>({
                       ? "bg-muted/40 dark:bg-muted/20"
                       : "bg-card dark:bg-card"),
                   !striped && "bg-card",
-                  onRowClick
+                  onRowClick || onRowDoubleClick
                     ? "cursor-pointer hover:bg-primary-50/50 dark:hover:bg-primary-950/40"
                     : "hover:bg-muted/70 dark:hover:bg-muted/40",
                 )}
@@ -500,19 +605,14 @@ export function DataTable<TData>({
       </Table>
 
       {/* Pagination */}
-      {!isLoading && sortedData.length > 0 && (
+      {!isLoading && totalItems > 0 && (
         <DataTablePagination
           pageIndex={safePageIndex}
           pageSize={pageSize}
-          totalItems={sortedData.length}
+          totalItems={totalItems}
           pageSizeOptions={pageSizeOptions}
-          onPageChange={(newIdx) =>
-            setPageIndex(Math.min(Math.max(0, newIdx), pageCount - 1))
-          }
-          onPageSizeChange={(newSize) => {
-            setPageSize(newSize);
-            setPageIndex(0);
-          }}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
         />
       )}
     </div>

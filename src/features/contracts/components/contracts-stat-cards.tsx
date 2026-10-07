@@ -9,10 +9,11 @@ import {
 import { StaggerContainer, StaggerItem } from "@/components/animations";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { Contract } from "../types";
+import type { Contract, ContractsStatisticsDto } from "../types";
 
 interface ContractsStatCardsProps {
   contracts: Contract[];
+  statistics?: ContractsStatisticsDto;
   activeTypeFilter?: string;
   activePaymentFilter?: string;
   onFilterChange?: (
@@ -50,25 +51,29 @@ const colorStyles = {
 
 export default function ContractsStatCards({
   contracts,
+  statistics,
   onFilterChange,
 }: ContractsStatCardsProps) {
-  const totalCount = contracts.length;
-  const residentialCount = contracts.filter(
-    (c) => c.type === "residential",
-  ).length;
-  const commercialCount = contracts.filter(
-    (c) => c.type === "commercial",
-  ).length;
-  const certifiedCount = contracts.filter(
-    (c) => c.status === "certified",
-  ).length;
-  const paidCount = contracts.filter(
-    (c) => c.financials.paymentStatus === "paid",
-  ).length;
-  const pendingPaymentCount = contracts.filter(
-    (c) =>
-      c.financials.paymentStatus === "unpaid" || c.status === "pending_payment",
-  ).length;
+  const totalCount = statistics?.total ?? contracts.length;
+  const residentialCount =
+    statistics?.residential ??
+    contracts.filter((c) => c.type === "residential").length;
+  const commercialCount =
+    statistics?.commercial ??
+    contracts.filter((c) => c.type === "commercial").length;
+  const certifiedCount =
+    statistics?.documented ??
+    contracts.filter((c) => c.status === "certified").length;
+  const paidCount =
+    statistics?.feesPaid ??
+    contracts.filter((c) => c.financials.paymentStatus === "paid").length;
+  const pendingPaymentCount =
+    statistics?.pendingPayment ??
+    contracts.filter(
+      (c) =>
+        c.financials.paymentStatus === "unpaid" ||
+        c.status === "pending_payment",
+    ).length;
 
   const stats: {
     id: string;

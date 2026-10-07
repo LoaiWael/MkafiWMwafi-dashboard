@@ -166,3 +166,9 @@ export function logoutAdmin(): void {
 
   emit();
 }
+
+if (typeof window !== "undefined") {
+  window.addEventListener("unauthorized-api-error", () => {
+    logoutAdmin();
+  });
+}

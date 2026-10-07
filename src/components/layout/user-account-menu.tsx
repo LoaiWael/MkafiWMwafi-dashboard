@@ -6,6 +6,7 @@ import { profileInitials } from "@/features/profile/components/profile-banner";
 import { useAdminProfile } from "@/features/profile/hooks/use-admin-profile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ROUTES } from "@/lib/constants";
 
 const MENU_CHEVRON_CLASS =
@@ -13,7 +14,7 @@ const MENU_CHEVRON_CLASS =
 
 export default function UserAccountMenu() {
   const { pathname } = useLocation();
-  const { profile } = useAdminProfile();
+  const { profile, isLoading } = useAdminProfile();
   const [open, setOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [prevPathname, setPrevPathname] = useState(pathname);
@@ -33,22 +34,36 @@ export default function UserAccountMenu() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
+        disabled={isLoading}
         aria-label="الحساب"
-        className="inline-flex h-10 cursor-pointer items-center gap-1 rounded-full border border-border bg-card ps-1 pe-2 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring sm:max-w-60 sm:gap-2 [&[data-popup-open]_svg]:rotate-180"
+        className="inline-flex h-10 cursor-pointer items-center gap-1 rounded-full border border-border bg-card ps-1 pe-2 outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring sm:max-w-60 sm:gap-2 [&[data-popup-open]_svg]:rotate-180 disabled:pointer-events-none disabled:opacity-80"
       >
-        <Avatar className="size-8">
-          {profile.avatarUrl ? <AvatarImage src={profile.avatarUrl} alt="" /> : null}
-          <AvatarFallback className="bg-primary/10 text-xs text-primary">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
+        {isLoading ? (
+          <Skeleton className="size-8 shrink-0 rounded-full" />
+        ) : (
+          <Avatar className="size-8">
+            {profile.avatarUrl ? <AvatarImage src={profile.avatarUrl} alt="" /> : null}
+            <AvatarFallback className="bg-primary/10 text-xs text-primary">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        )}
         <span className="hidden min-w-0 flex-1 text-start sm:block">
-          <span className="block truncate text-sm font-semibold leading-tight text-foreground">
-            {displayName}
-          </span>
-          <span className="block truncate text-xs leading-tight text-muted-foreground">
-            {profile.role}
-          </span>
+          {isLoading ? (
+            <div className="space-y-1 py-1">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-2 w-10" />
+            </div>
+          ) : (
+            <>
+              <span className="block truncate text-sm font-semibold leading-tight text-foreground">
+                {displayName}
+              </span>
+              <span className="block truncate text-xs leading-tight text-muted-foreground">
+                {profile.role}
+              </span>
+            </>
+          )}
         </span>
         <ChevronDown
           size={16}

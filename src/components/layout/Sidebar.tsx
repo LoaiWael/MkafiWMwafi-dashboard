@@ -1,10 +1,11 @@
 import { Link, NavLink, useLocation } from "react-router";
+import { Loader2 } from "lucide-react";
 import { SITE, ROUTES } from "@/lib/constants";
 import {
   SIDEBAR_NAV_GROUPS,
   isNavItemActive,
 } from "@/components/layout/constants";
-import { MOCK_CONTRACTS } from "@/features/contracts/constants";
+import { useContractsCount } from "@/features/contracts/hooks";
 import { MOCK_PROPERTIES } from "@/features/properties/constants";
 import {
   Sidebar as SidebarShell,
@@ -21,14 +22,14 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const NAV_ITEM_COUNTS: Record<string, number> = {
-  [ROUTES.contracts]: MOCK_CONTRACTS.length,
+const STATIC_ITEM_COUNTS: Record<string, number> = {
   [ROUTES.properties]: MOCK_PROPERTIES.length,
 };
 
 export default function Sidebar() {
   const { pathname } = useLocation();
   const { isMobile, setOpenMobile } = useSidebar();
+  const { count: contractsTotal, isLoading: isContractsLoading } = useContractsCount();
 
   function handleNavigate() {
     if (isMobile) {
@@ -80,7 +81,10 @@ export default function Sidebar() {
                     {group.items.map((item) => {
                       const Icon = item.icon;
                       const isActive = isNavItemActive(pathname, item.href);
-                      const count = NAV_ITEM_COUNTS[item.href];
+                      const isContractsItem = item.href === ROUTES.contracts;
+                      const count = isContractsItem
+                        ? contractsTotal
+                        : STATIC_ITEM_COUNTS[item.href];
 
                       return (
                         <SidebarMenuItem key={item.href}>
@@ -92,11 +96,15 @@ export default function Sidebar() {
                           >
                             <Icon size={18} />
                             <span className="truncate">{item.label}</span>
-                            {count !== undefined && (
+                            {isContractsItem && isContractsLoading ? (
+                              <span className="ms-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-secondary-gradient px-1 text-secondary-foreground shadow-xs group-data-[collapsible=icon]:hidden">
+                                <Loader2 className="size-3 animate-spin text-secondary-foreground" />
+                              </span>
+                            ) : count !== undefined ? (
                               <span className="ms-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-secondary-gradient px-1.5 text-xs font-bold text-secondary-foreground shadow-xs group-data-[collapsible=icon]:hidden tabular-nums">
                                 {count}
                               </span>
-                            )}
+                            ) : null}
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       );

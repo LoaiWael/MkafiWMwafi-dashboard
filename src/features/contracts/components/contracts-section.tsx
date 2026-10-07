@@ -1,10 +1,19 @@
 import { useState } from "react";
-import { Download } from "lucide-react";
+import { AlertCircle, Download, RefreshCw } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/animations";
+import FeaturePageSkeleton from "@/components/layout/feature-page-skeleton";
 import PageHeader from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import {
@@ -13,10 +22,10 @@ import {
   CONTRACT_STATUS_PARAM,
   CONTRACT_TYPE_PARAM,
   CONTRACT_TYPE_TABS,
-  MOCK_CONTRACTS,
   PAYMENT_STATUS_OPTIONS,
   parseContractType,
 } from "../constants";
+import { useContracts } from "../hooks";
 import type {
   Contract,
   ContractStatus,
@@ -31,14 +40,6 @@ import UpdatePaymentStatusDialog from "./update-payment-status-dialog";
 export default function ContractsSection() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [contracts, setContracts] = useState<Contract[]>(MOCK_CONTRACTS);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // Selected contract for status & payment dialogs
-  const [selectedContractForStatus, setSelectedContractForStatus] =
-    useState<Contract | null>(null);
-  const [selectedContractForPayment, setSelectedContractForPayment] =
-    useState<Contract | null>(null);
 
   // URL State
   const activeType = parseContractType(searchParams.get(CONTRACT_TYPE_PARAM));
@@ -46,6 +47,43 @@ export default function ContractsSection() {
     searchParams.get(CONTRACT_PAYMENT_PARAM) ||
     searchParams.get("paymentStatus") ||
     "all";
+  const activeStatus = searchParams.get(CONTRACT_STATUS_PARAM) || "all";
+  const searchQuery = searchParams.get("q") || "";
+  const page = Number(searchParams.get("page")) || 1;
+  const per_page = Number(searchParams.get("per_page")) || 15;
+
+  // API Query
+  const {
+    contracts: apiContracts,
+    statistics,
+    meta,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useContracts({
+    page,
+    per_page,
+    search: searchQuery.trim() || undefined,
+    contract_type: activeType !== "all" ? activeType : undefined,
+    payment_status: activePayment !== "all" ? activePayment : undefined,
+    status: activeStatus !== "all" ? activeStatus : undefined,
+  });
+
+  // Local overrides map for optimistic updates during dialog interactions
+  const [localOverrides, setLocalOverrides] = useState<
+    Record<string, Contract>
+  >({});
+
+  // Selected contract for status & payment dialogs
+  const [selectedContractForStatus, setSelectedContractForStatus] =
+    useState<Contract | null>(null);
+  const [selectedContractForPayment, setSelectedContractForPayment] =
+    useState<Contract | null>(null);
+
+  // Compute actual list of contracts purely from API + local optimistic overrides
+  const contracts = apiContracts.map((c) => localOverrides[c.id] || c);
 
   // Tab change handler
   function handleTypeChange(value: string | null) {
@@ -97,16 +135,23 @@ export default function ContractsSection() {
   }
 
   // Refresh handler
-  function handleRefresh() {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-      toast.success("تم تحديث بيانات ومزامنة العقود مع شبكة إيجار بنجاح");
-    }, 600);
+  async function handleRefresh() {
+    try {
+      await refetch();
+      setLocalOverrides({});
+      toast.success("تم تحديث البيانات بنجاح");
+    } catch {
+      toast.error("تعذر تحديث البيانات من الخادم، يرجى المحاولة مرة أخرى");
+    }
   }
 
   // Export CSV handler
   function handleExport() {
+    if (contracts.length === 0) {
+      toast.info("لا توجد عقود لتصديرها حالياً");
+      return;
+    }
+
     const csvContent = [
       [
         "رقم العقد",
@@ -162,53 +207,54 @@ export default function ContractsSection() {
     note?: string,
     ejarNumber?: string,
   ) {
+    const target = contracts.find((c) => c.id === contractId);
+    if (!target) return;
+
     const statusOption = CONTRACT_STATUS_OPTIONS.find(
       (s) => s.value === newStatus,
     );
 
-    setContracts((prev) =>
-      prev.map((c) => {
-        if (c.id !== contractId) return c;
+    const updatedHistory = [
+      {
+        id: `log-${Date.now()}`,
+        timestamp: new Date().toISOString().replace("T", " ").slice(0, 16),
+        action: `تحديث الحالة إلى ${statusOption?.label || newStatus}`,
+        performedBy: "مدير العمليات",
+        note: note || undefined,
+        previousStatus: target.statusLabel,
+        newStatus: statusOption?.label || newStatus,
+      },
+      ...target.historyLogs,
+    ];
 
-        const updatedHistory = [
-          {
-            id: `log-${Date.now()}`,
-            timestamp: new Date().toISOString().replace("T", " ").slice(0, 16),
-            action: `تحديث الحالة إلى ${statusOption?.label || newStatus}`,
-            performedBy: "مدير العمليات",
-            note: note || undefined,
-            previousStatus: c.statusLabel,
-            newStatus: statusOption?.label || newStatus,
-          },
-          ...c.historyLogs,
-        ];
+    const updatedContract: Contract = {
+      ...target,
+      status: newStatus,
+      statusLabel: statusOption?.label || newStatus,
+      statusColorClass: statusOption?.badgeClass || target.statusColorClass,
+      updatedAt: new Date().toISOString(),
+      notes: note || target.notes,
+      historyLogs: updatedHistory,
+      ejar: {
+        ...target.ejar,
+        ejarContractNumber: ejarNumber || target.ejar.ejarContractNumber,
+        ejarStatus:
+          newStatus === "certified" ? "synced_active" : target.ejar.ejarStatus,
+        ejarStatusLabel:
+          newStatus === "certified"
+            ? "متزامن ونشط في شبكة إيجار"
+            : target.ejar.ejarStatusLabel,
+        ejarSyncedAt:
+          newStatus === "certified"
+            ? new Date().toISOString().replace("T", " ").slice(0, 16)
+            : target.ejar.ejarSyncedAt,
+      },
+    };
 
-        const updatedContract: Contract = {
-          ...c,
-          status: newStatus,
-          statusLabel: statusOption?.label || newStatus,
-          statusColorClass: statusOption?.badgeClass || c.statusColorClass,
-          updatedAt: new Date().toISOString(),
-          notes: note || c.notes,
-          historyLogs: updatedHistory,
-          ejar: {
-            ...c.ejar,
-            ejarContractNumber: ejarNumber || c.ejar.ejarContractNumber,
-            ejarStatus: newStatus === "certified" ? "synced_active" : c.ejar.ejarStatus,
-            ejarStatusLabel:
-              newStatus === "certified"
-                ? "متزامن ونشط في شبكة إيجار"
-                : c.ejar.ejarStatusLabel,
-            ejarSyncedAt:
-              newStatus === "certified"
-                ? new Date().toISOString().replace("T", " ").slice(0, 16)
-                : c.ejar.ejarSyncedAt,
-          },
-        };
-
-        return updatedContract;
-      }),
-    );
+    setLocalOverrides((prev) => ({
+      ...prev,
+      [contractId]: updatedContract,
+    }));
 
     toast.success(`تم تحديث حالة العقد إلى "${statusOption?.label}" بنجاح`);
   }
@@ -220,61 +266,106 @@ export default function ContractsSection() {
     paymentMethod?: PaymentMethod,
     transactionId?: string,
   ) {
+    const target = contracts.find((c) => c.id === contractId);
+    if (!target) return;
+
     const paymentOption = PAYMENT_STATUS_OPTIONS.find(
       (p) => p.value === newPaymentStatus,
     );
 
-    setContracts((prev) =>
-      prev.map((c) => {
-        if (c.id !== contractId) return c;
-
-        const isPaid = newPaymentStatus === "paid";
-        const updatedInstallments = c.financials.installments.map((inst) =>
-          isPaid
-            ? {
-                ...inst,
-                status: "paid" as const,
-                statusLabel: "تم السداد",
-                paidDate: new Date().toISOString().slice(0, 10),
-              }
-            : inst,
-        );
-
-        const updatedContract: Contract = {
-          ...c,
-          updatedAt: new Date().toISOString(),
-          financials: {
-            ...c.financials,
-            paymentStatus: newPaymentStatus,
-            paymentStatusLabel: paymentOption?.label || newPaymentStatus,
-            paymentMethod: paymentMethod || c.financials.paymentMethod,
-            paymentMethodLabel: paymentMethod
-              ? paymentMethod === "mada"
-                ? "مدى (Mada)"
-                : paymentMethod === "visa"
-                  ? "فيزا (Visa)"
-                  : paymentMethod === "apple_pay"
-                    ? "أبل باي (Apple Pay)"
-                    : paymentMethod === "bank_transfer"
-                      ? "تحويل بنكي مباشر"
-                      : "نظام سداد"
-              : c.financials.paymentMethodLabel,
-            transactionId: transactionId || c.financials.transactionId,
-            paidAt: isPaid
-              ? new Date().toISOString().replace("T", " ").slice(0, 16)
-              : undefined,
-            totalPaid: isPaid
-              ? c.financials.platformFee + c.financials.taxAmount
-              : 0,
-            installments: updatedInstallments,
-          },
-        };
-
-        return updatedContract;
-      }),
+    const isPaid = newPaymentStatus === "paid";
+    const updatedInstallments = target.financials.installments.map((inst) =>
+      isPaid
+        ? {
+            ...inst,
+            status: "paid" as const,
+            statusLabel: "تم السداد",
+            paidDate: new Date().toISOString().slice(0, 10),
+          }
+        : inst,
     );
 
+    const updatedContract: Contract = {
+      ...target,
+      updatedAt: new Date().toISOString(),
+      financials: {
+        ...target.financials,
+        paymentStatus: newPaymentStatus,
+        paymentStatusLabel: paymentOption?.label || newPaymentStatus,
+        paymentMethod: paymentMethod || target.financials.paymentMethod,
+        paymentMethodLabel: paymentMethod
+          ? paymentMethod === "mada"
+            ? "مدى (Mada)"
+            : paymentMethod === "visa"
+              ? "فيزا (Visa)"
+              : paymentMethod === "apple_pay"
+                ? "أبل باي (Apple Pay)"
+                : paymentMethod === "bank_transfer"
+                  ? "تحويل بنكي مباشر"
+                  : "نظام سداد"
+          : target.financials.paymentMethodLabel,
+        transactionId: transactionId || target.financials.transactionId,
+        paidAt: isPaid
+          ? new Date().toISOString().replace("T", " ").slice(0, 16)
+          : undefined,
+        totalPaid: isPaid
+          ? target.financials.platformFee + target.financials.taxAmount
+          : 0,
+        installments: updatedInstallments,
+      },
+    };
+
+    setLocalOverrides((prev) => ({
+      ...prev,
+      [contractId]: updatedContract,
+    }));
+
     toast.success(`تم تحديث حالة السداد إلى "${paymentOption?.label}" بنجاح`);
+  }
+
+  if (isLoading) {
+    return <FeaturePageSkeleton />;
+  }
+
+  if (isError && contracts.length === 0) {
+    return (
+      <div className="page-shell space-y-6 py-6">
+        <PageHeader
+          title="عقود الإيجار والتوثيق الإلكتروني"
+          description="إدارة شاملة لجميع عقود الإيجار السكنية والتجارية، وتحديث الحالات والربط مع شبكة إيجار والهيئة العامة للعقار."
+          showRefresh
+          onRefresh={handleRefresh}
+          isRefreshing={isFetching}
+        />
+        <Empty className="border border-destructive/20 bg-destructive/5 py-12">
+          <EmptyMedia
+            variant="icon"
+            className="bg-destructive/10 text-destructive size-12"
+          >
+            <AlertCircle className="size-6" />
+          </EmptyMedia>
+          <EmptyHeader>
+            <EmptyTitle className="text-base text-destructive">
+              تعذر تحميل العقود من الخادم
+            </EmptyTitle>
+            <EmptyDescription>
+              {error?.message || "حدث خطأ أثناء جلب قائمة العقود من الخادم."}
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => refetch()}
+              className="gap-2 cursor-pointer rounded-xl font-semibold"
+            >
+              <RefreshCw className="size-4" />
+              <span>إعادة المحاولة</span>
+            </Button>
+          </EmptyContent>
+        </Empty>
+      </div>
+    );
   }
 
   return (
@@ -285,7 +376,7 @@ export default function ContractsSection() {
         description="إدارة شاملة لجميع عقود الإيجار السكنية والتجارية (المدفوعة وغير المدفوعة)، وتحديث الحالات والربط مع شبكة إيجار والهيئة العامة للعقار."
         showRefresh
         onRefresh={handleRefresh}
-        isRefreshing={isRefreshing}
+        isRefreshing={isFetching}
         refreshTooltip="تحديث البيانات ومزامنة إيجار"
         actions={
           <Button
@@ -293,7 +384,8 @@ export default function ContractsSection() {
             variant="outline"
             size="sm"
             onClick={handleExport}
-            className="gap-2 rounded-xl text-sm font-semibold cursor-pointer"
+            disabled={contracts.length === 0}
+            className="gap-2 rounded-xl text-sm font-semibold cursor-pointer disabled:opacity-50"
           >
             <Download className="size-4" />
             <span>تصدير CSV</span>
@@ -304,6 +396,7 @@ export default function ContractsSection() {
       {/* Summary KPI Stat Cards */}
       <ContractsStatCards
         contracts={contracts}
+        statistics={statistics}
         activeTypeFilter={activeType}
         activePaymentFilter={activePayment}
         onFilterChange={handleFilterChange}
@@ -315,12 +408,21 @@ export default function ContractsSection() {
           {/* Primary Type Tabs - Swipeable on mobile */}
           <div className="overflow-x-auto no-scrollbar max-w-full">
             <Tabs value={activeType} onValueChange={handleTypeChange}>
-              <TabsList className="w-auto flex flex-nowrap" aria-label="نوع العقد">
+              <TabsList
+                className="w-auto flex flex-nowrap"
+                aria-label="نوع العقد"
+              >
                 {CONTRACT_TYPE_TABS.map((tab) => {
                   const count =
                     tab.value === "all"
-                      ? contracts.length
-                      : contracts.filter((c) => c.type === tab.value).length;
+                      ? (statistics?.total ?? contracts.length)
+                      : tab.value === "residential"
+                        ? (statistics?.residential ??
+                          contracts.filter((c) => c.type === "residential")
+                            .length)
+                        : (statistics?.commercial ??
+                          contracts.filter((c) => c.type === "commercial")
+                            .length);
                   return (
                     <TabsTrigger
                       key={tab.value}
@@ -387,11 +489,19 @@ export default function ContractsSection() {
       <FadeIn duration={0.3} delay={0.15}>
         <ContractsTable
           contracts={contracts}
+          totalCount={meta?.total}
+          pageSize={per_page}
+          manualPagination={true}
+          isLoading={isFetching}
           onViewDetails={(contract) =>
             navigate(`/contracts/${contract.id}`, { viewTransition: true })
           }
           onUpdateStatus={(contract) => setSelectedContractForStatus(contract)}
-          onUpdatePayment={(contract) => setSelectedContractForPayment(contract)}
+          onUpdatePayment={(contract) =>
+            setSelectedContractForPayment(contract)
+          }
+          emptyTitle="لا توجد عقود مسجلة"
+          emptyDescription="لم يتم العثور على أي عقود في النظام حتى الآن. ستظهر العقود فور إنشائها عبر المنصة."
         />
       </FadeIn>
 

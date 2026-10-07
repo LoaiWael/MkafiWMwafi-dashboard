@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Clock,
   CreditCard,
-  ExternalLink,
   FileCheck2,
   FilePlus2,
   FileText,
@@ -17,12 +16,10 @@ import {
   Mail,
   MapPin,
   Phone,
-  QrCode,
   RefreshCw,
   SaudiRiyal,
   Shield,
   ShieldAlert,
-  ShieldCheck,
   Sparkles,
   Store,
   User,
@@ -45,18 +42,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   CONTRACT_STATUS_OPTIONS,
-  MOCK_CONTRACTS,
   PAYMENT_STATUS_OPTIONS,
 } from "../constants";
+import { useContractDetails } from "../hooks";
 import type {
   Contract,
   ContractHistoryLog,
@@ -67,15 +58,23 @@ import type {
 import UpdateContractStatusDialog from "./update-contract-status-dialog";
 import UpdatePaymentStatusDialog from "./update-payment-status-dialog";
 
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { FilterTabs, type FilterTabItem } from "@/components/ui/filter-tabs";
 import { useUrlTab } from "@/hooks/use-url-tab";
+import ContractDetailsPageSkeleton from "@/routes/dashboard/contract-details-page-skeleton";
 
 const CONTRACT_DETAILS_TABS = [
   "overview",
   "parties",
   "property",
   "financials",
-  "ejar",
   "terms",
   "history",
 ] as const;
@@ -89,21 +88,86 @@ interface ContractDetailsViewProps {
 export default function ContractDetailsView({
   contractId,
 }: ContractDetailsViewProps) {
-  // Find initial contract
-  const initialContract =
-    MOCK_CONTRACTS.find((c) => c.id === contractId) || MOCK_CONTRACTS[0];
+  // Fetch contract from API
+  const {
+    contract: fetchedContract,
+    isLoading,
+    refetch,
+  } = useContractDetails(contractId);
 
-  const [contract, setContract] = useState<Contract>(initialContract);
+  // Local optimistic overrides
+  const [localOverrides, setLocalOverrides] = useState<Partial<Contract> | null>(null);
+
   const [activeTab, setActiveTab] = useUrlTab<ContractDetailsTab>({
     paramKey: "tab",
     defaultValue: "overview",
     validValues: CONTRACT_DETAILS_TABS,
   });
 
-  // Dialog & Modal states
+  // Dialog states
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [isSyncingWithEjar, setIsSyncingWithEjar] = useState(false);
+
+  if (isLoading) {
+    return <ContractDetailsPageSkeleton />;
+  }
+
+  if (!fetchedContract) {
+    return (
+      <div className="page-shell space-y-6 py-8">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Link to="/contracts" viewTransition className="hover:text-foreground">
+            العقود
+          </Link>
+          <span>/</span>
+          <span>تفاصيل العقد</span>
+        </div>
+
+        <Empty className="border border-border bg-card py-16">
+          <EmptyMedia variant="icon" className="size-14 bg-muted text-muted-foreground">
+            <FileText className="size-7" />
+          </EmptyMedia>
+          <EmptyHeader>
+            <EmptyTitle className="text-lg font-bold">لم يتم العثور على بيانات العقد</EmptyTitle>
+            <EmptyDescription className="max-w-md">
+              العقد المطلوب برقم المعرّف ({contractId}) غير متوفر في النظام أو قد يكون تم حذفه.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent className="flex flex-row gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => refetch()}
+              className="gap-2 cursor-pointer rounded-xl font-semibold"
+            >
+              <RefreshCw className="size-4" />
+              <span>إعادة المحاولة</span>
+            </Button>
+            <Link to="/contracts" viewTransition>
+              <Button type="button" className="gap-2 cursor-pointer rounded-xl font-semibold">
+                <ArrowRight className="size-4" />
+                <span>العودة إلى قائمة العقود</span>
+              </Button>
+            </Link>
+          </EmptyContent>
+        </Empty>
+      </div>
+    );
+  }
+
+  const contract: Contract = {
+    ...fetchedContract,
+    ...(localOverrides || {}),
+    financials: {
+      ...fetchedContract.financials,
+      ...(localOverrides?.financials || {}),
+    },
+    ejar: {
+      ...fetchedContract.ejar,
+      ...(localOverrides?.ejar || {}),
+    },
+    historyLogs: localOverrides?.historyLogs || fetchedContract.historyLogs,
+  };
 
   const isResidential = contract.type === "residential";
 
@@ -131,27 +195,17 @@ export default function ContractDetailsView({
       ...contract.historyLogs,
     ];
 
-    setContract((prev) => ({
-      ...prev,
+    setLocalOverrides((prev) => ({
+      ...(prev || {}),
       status: newStatus,
       statusLabel: statusOption?.label || newStatus,
-      statusColorClass: statusOption?.badgeClass || prev.statusColorClass,
+      statusColorClass: statusOption?.badgeClass || contract.statusColorClass,
       updatedAt: new Date().toISOString(),
-      notes: note || prev.notes,
+      notes: note || contract.notes,
       historyLogs: updatedHistory,
       ejar: {
-        ...prev.ejar,
-        ejarContractNumber: ejarNumber || prev.ejar.ejarContractNumber,
-        ejarStatus:
-          newStatus === "certified" ? "synced_active" : prev.ejar.ejarStatus,
-        ejarStatusLabel:
-          newStatus === "certified"
-            ? "متزامن ونشط في شبكة إيجار"
-            : prev.ejar.ejarStatusLabel,
-        ejarSyncedAt:
-          newStatus === "certified"
-            ? new Date().toISOString().replace("T", " ").slice(0, 16)
-            : prev.ejar.ejarSyncedAt,
+        ...contract.ejar,
+        ejarContractNumber: ejarNumber || contract.ejar.ejarContractNumber,
       },
     }));
 
@@ -181,14 +235,14 @@ export default function ContractDetailsView({
         : inst,
     );
 
-    setContract((prev) => ({
-      ...prev,
+    setLocalOverrides((prev) => ({
+      ...(prev || {}),
       updatedAt: new Date().toISOString(),
       financials: {
-        ...prev.financials,
+        ...contract.financials,
         paymentStatus: newPaymentStatus,
         paymentStatusLabel: paymentOption?.label || newPaymentStatus,
-        paymentMethod: paymentMethod || prev.financials.paymentMethod,
+        paymentMethod: paymentMethod || contract.financials.paymentMethod,
         paymentMethodLabel: paymentMethod
           ? paymentMethod === "mada"
             ? "مدى (Mada)"
@@ -199,13 +253,13 @@ export default function ContractDetailsView({
                 : paymentMethod === "bank_transfer"
                   ? "تحويل بنكي مباشر"
                   : "نظام سداد"
-          : prev.financials.paymentMethodLabel,
-        transactionId: transactionId || prev.financials.transactionId,
+          : contract.financials.paymentMethodLabel,
+        transactionId: transactionId || contract.financials.transactionId,
         paidAt: isPaid
           ? new Date().toISOString().replace("T", " ").slice(0, 16)
           : undefined,
         totalPaid: isPaid
-          ? prev.financials.platformFee + prev.financials.taxAmount
+          ? contract.financials.platformFee + contract.financials.taxAmount
           : 0,
         installments: updatedInstallments,
       },
@@ -214,144 +268,12 @@ export default function ContractDetailsView({
     toast.success(`تم تحديث حالة السداد إلى "${paymentOption?.label}" بنجاح`);
   }
 
-  // Handle live Ejar sync simulation
-  function handleSyncWithEjar() {
-    setIsSyncingWithEjar(true);
-    setTimeout(() => {
-      setIsSyncingWithEjar(false);
-      toast.success(
-        "تمت المزامنة اللحظية والتحقق من حالة العقد مع شبكة إيجار بنجاح",
-      );
-    }, 800);
-  }
-
-  // Calculate lifecycle step states
-  type StepState = "completed" | "current" | "upcoming" | "failed";
-
-  const isPaymentDone =
-    contract.financials.paymentStatus === "paid" ||
-    contract.financials.paymentStatus === "partially_paid";
-
-  const isReviewDone =
-    contract.status === "pending_approval" || contract.status === "certified";
-
-  const isApprovalDone = contract.status === "certified";
-  const isEjarDone = contract.status === "certified";
-  const isFailed =
-    contract.status === "rejected" || contract.status === "expired";
-
-  let currentStepIndex = 2;
-  if (isEjarDone) {
-    currentStepIndex = 5; // all done
-  } else if (contract.status === "pending_approval") {
-    currentStepIndex = 3;
-  } else if (contract.status === "under_review") {
-    currentStepIndex = 2;
-  } else if (!isPaymentDone) {
-    currentStepIndex = 1;
-  }
-
-  const lifecycleSteps: {
-    stepNumber: number;
-    title: string;
-    subtitle: string;
-    state: StepState;
-    stateLabel: string;
-    note?: string;
-  }[] = [
-    {
-      stepNumber: 1,
-      title: "إنشاء الطلب والبيانات",
-      subtitle: `بواسطة ${contract.owner.name}`,
-      state: "completed",
-      stateLabel: "مكتمل",
-      note: "تم إدخال كامل بيانات الأطراف والوحدة وتدقيقها",
-    },
-    {
-      stepNumber: 2,
-      title: "سداد رسوم التوثيق",
-      subtitle: contract.financials.paymentStatusLabel,
-      state: isPaymentDone
-        ? "completed"
-        : currentStepIndex === 1
-          ? "current"
-          : "upcoming",
-      stateLabel: isPaymentDone
-        ? "تم السداد"
-        : currentStepIndex === 1
-          ? "بانتظار السداد"
-          : "لم تبدأ بعد",
-      note: isPaymentDone
-        ? `عبر ${contract.financials.paymentMethodLabel || "المنصة"}`
-        : "بانتظار سداد الفاتورة",
-    },
-    {
-      stepNumber: 3,
-      title: "مطابقة الصك وتدقيق الهوية",
-      subtitle: "البورصة العقارية ونفاذ",
-      state: isReviewDone
-        ? "completed"
-        : currentStepIndex === 2
-          ? isFailed
-            ? "failed"
-            : "current"
-          : "upcoming",
-      stateLabel: isReviewDone
-        ? "تم التدقيق"
-        : currentStepIndex === 2
-          ? isFailed
-            ? "مرفوض"
-            : "قيد التدقيق"
-          : "لم تبدأ بعد",
-      note: isReviewDone
-        ? "مطابقة الصك 100% مع وزارة العدل"
-        : "التحقق من سريان الصك وصلاحية المؤجر",
-    },
-    {
-      stepNumber: 4,
-      title: "موافقة أطراف العقد عبر نفاذ",
-      subtitle: "قبول المؤجر والمستأجر",
-      state: isApprovalDone
-        ? "completed"
-        : currentStepIndex === 3
-          ? "current"
-          : "upcoming",
-      stateLabel: isApprovalDone
-        ? "تمت الموافقة"
-        : currentStepIndex === 3
-          ? "بانتظار القبول"
-          : "لم تبدأ بعد",
-      note: isApprovalDone
-        ? "موافقة واعتماد كافة الأطراف"
-        : "إرسال رسائل التحقق عبر نفاذ الوطني",
-    },
-    {
-      stepNumber: 5,
-      title: "اعتماد وتوثيق شبكة إيجار",
-      subtitle: contract.ejar.ejarContractNumber || "إصدار العقد الرسمي",
-      state: isEjarDone
-        ? "completed"
-        : currentStepIndex === 4
-          ? "current"
-          : "upcoming",
-      stateLabel: isEjarDone
-        ? "موثق رسمي"
-        : currentStepIndex === 4
-          ? "قيد الربط"
-          : "المرحلة النهائية",
-      note: isEjarDone
-        ? "عقد ساري وموثق ومعتمد نظامياً"
-        : "المصادقة النهائية لدى الهيئة العامة للعقار",
-    },
-  ];
-
   // Tab definitions
   const tabsList: FilterTabItem<ContractDetailsTab>[] = [
-    { id: "overview", label: "نظرة عامة والمسار", icon: Layers },
+    { id: "overview", label: "نظرة عامة", icon: Layers },
     { id: "parties", label: "أطراف العقد", icon: Users },
     { id: "property", label: "العقار والوحدة", icon: Building2 },
     { id: "financials", label: "المالية والدفعات", icon: CreditCard },
-    { id: "ejar", label: "شبكة إيجار", icon: ShieldCheck },
     { id: "terms", label: "البنود والشروط", icon: FileCheck2 },
     {
       id: "history",
@@ -435,37 +357,14 @@ export default function ContractDetailsView({
             </div>
           </div>
 
-          {/* Action Buttons - 2x2 grid on mobile, flexible row on tablet/desktop */}
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
-            <TooltipProvider delay={150}>
-              <Tooltip>
-                <TooltipTrigger
-                  type="button"
-                  onClick={handleSyncWithEjar}
-                  disabled={isSyncingWithEjar}
-                  className="inline-flex h-8.5 sm:h-9 w-full sm:w-auto items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-2.5 sm:px-3 text-[11px] sm:text-xs font-semibold text-foreground transition-colors hover:bg-muted active:scale-98 cursor-pointer disabled:opacity-50"
-                  aria-label="مزامنة لحظية مع إيجار"
-                >
-                  <RefreshCw
-                    className={cn(
-                      "size-3.5 shrink-0",
-                      isSyncingWithEjar && "animate-spin text-primary",
-                    )}
-                  />
-                  <span className="truncate">مزامنة إيجار</span>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  فحص وتحديث حالة العقد مع بوابة شبكة إيجار الرسمية
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => setIsStatusDialogOpen(true)}
-              className="gap-1.5 rounded-xl text-[11px] sm:text-xs font-semibold cursor-pointer w-full sm:w-auto justify-center h-8.5 sm:h-9 px-2.5 sm:px-3 active:scale-98"
+              className="gap-1.5 rounded-xl text-[11px] sm:text-xs font-semibold cursor-pointer h-8.5 sm:h-9 px-2.5 sm:px-3 active:scale-98"
             >
               <RefreshCw className="size-3.5 text-secondary shrink-0" />
               <span className="truncate">تحديث الحالة</span>
@@ -476,7 +375,7 @@ export default function ContractDetailsView({
               variant="outline"
               size="sm"
               onClick={() => setIsPaymentDialogOpen(true)}
-              className="gap-1.5 rounded-xl text-[11px] sm:text-xs font-semibold cursor-pointer w-full sm:w-auto justify-center h-8.5 sm:h-9 px-2.5 sm:px-3 active:scale-98"
+              className="gap-1.5 rounded-xl text-[11px] sm:text-xs font-semibold cursor-pointer h-8.5 sm:h-9 px-2.5 sm:px-3 active:scale-98"
             >
               <CreditCard className="size-3.5 text-emerald-600 shrink-0" />
               <span className="truncate">تحديث السداد</span>
@@ -497,7 +396,7 @@ export default function ContractDetailsView({
               )}
             >
               <span className="size-1.5 sm:size-2 rounded-full bg-current" />
-              <span>حالة التوثيق: {contract.statusLabel}</span>
+              <span>حالة العقد: {contract.statusLabel}</span>
             </Badge>
 
             <Badge
@@ -510,19 +409,6 @@ export default function ContractDetailsView({
               )}
             >
               حالة السداد: {contract.financials.paymentStatusLabel}
-            </Badge>
-
-            <Badge
-              variant="outline"
-              className="gap-1.5 border-border bg-muted/80 px-2 sm:px-3 py-1 text-[11px] sm:text-xs font-medium text-foreground shadow-2xs"
-            >
-              <ShieldCheck className="size-3.5 sm:size-4 text-tertiary-600 dark:text-tertiary-400 shrink-0" />
-              <span>رقم إيجار: {contract.ejar.ejarContractNumber}</span>
-              <CopyButton
-                value={contract.ejar.ejarContractNumber}
-                itemId={`ejar-${contract.id}`}
-                label="نسخ رمز إيجار"
-              />
             </Badge>
 
             {contract.purposeLabel && (
@@ -580,12 +466,14 @@ export default function ContractDetailsView({
                   <span className="text-[11px] sm:text-xs font-semibold text-primary-700 dark:text-primary-300">
                     منشئ ومقدّم طلب العقد:
                   </span>
-                  <Badge
-                    variant="outline"
-                    className="border-primary-200 bg-primary-50 text-primary-800 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300 text-[10px] sm:text-xs font-bold px-2 py-0.5"
-                  >
-                    {contract.owner.roleLabel}
-                  </Badge>
+                  {contract.owner.roleLabel && (
+                    <Badge
+                      variant="outline"
+                      className="border-primary-200 bg-primary-50 text-primary-800 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300 text-[10px] sm:text-xs font-bold px-2 py-0.5"
+                    >
+                      {contract.owner.roleLabel}
+                    </Badge>
+                  )}
                   {contract.owner.verifiedViaNafath && (
                     <Badge
                       variant="outline"
@@ -651,18 +539,21 @@ export default function ContractDetailsView({
 
             {/* Owner Quick Meta Cards */}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:items-center">
-              <div className="rounded-xl sm:rounded-2xl border border-border bg-card/80 p-2 sm:p-3 text-center backdrop-blur-xs">
-                <span className="block text-[10px] sm:text-[11px] font-medium text-muted-foreground">
-                  صفة مقدم الطلب
-                </span>
-                <span className="block mt-0.5 text-xs font-bold text-foreground truncate">
-                  {contract.owner.role === "lessee"
-                    ? "المستأجر"
-                    : contract.owner.role === "lessor"
-                      ? "المؤجر"
-                      : "وسيط عقاري"}
-                </span>
-              </div>
+              {Boolean(contract.owner.role || contract.owner.roleLabel) && (
+                <div className="rounded-xl sm:rounded-2xl border border-border bg-card/80 p-2 sm:p-3 text-center backdrop-blur-xs">
+                  <span className="block text-[10px] sm:text-[11px] font-medium text-muted-foreground">
+                    صفة مقدم الطلب
+                  </span>
+                  <span className="block mt-0.5 text-xs font-bold text-foreground truncate">
+                    {contract.owner.roleLabel ||
+                      (contract.owner.role === "lessee"
+                        ? "المستأجر"
+                        : contract.owner.role === "lessor"
+                          ? "المؤجر"
+                          : "وسيط عقاري")}
+                  </span>
+                </div>
+              )}
 
               <div className="rounded-xl sm:rounded-2xl border border-border bg-card/80 p-2 sm:p-3 text-center backdrop-blur-xs">
                 <span className="block text-[10px] sm:text-[11px] font-medium text-muted-foreground">
@@ -733,18 +624,20 @@ export default function ContractDetailsView({
           </div>
         </StaggerItem>
 
-        {/* Metric 3: Ejar Status */}
+        {/* Metric 3: Security Deposit */}
         <StaggerItem>
           <div className="rounded-xl sm:rounded-2xl border border-border bg-card p-2.5 sm:p-4 shadow-2xs space-y-1">
             <span className="text-[10px] sm:text-xs font-medium text-muted-foreground line-clamp-1">
-              حالة التوثيق في إيجار
+              مبلغ الضمان المسترد
             </span>
-            <div className="flex items-center gap-1 text-xs font-bold text-tertiary-700 dark:text-tertiary-300 sm:text-base">
-              <ShieldCheck className="size-3 sm:size-4 shrink-0" />
-              <span className="truncate">{contract.ejar.ejarStatusLabel}</span>
+            <div className="flex items-center gap-1 text-sm sm:text-lg md:text-xl font-bold text-foreground">
+              <span className="truncate">
+                {contract.financials.securityDeposit.toLocaleString("en-US")}
+              </span>
+              <SaudiRiyal className="size-3 sm:size-4 text-muted-foreground shrink-0" />
             </div>
-            <div className="text-[10px] sm:text-xs font-mono text-muted-foreground pt-0.5 truncate">
-              {contract.ejar.ejarContractNumber}
+            <div className="text-[10px] sm:text-xs text-muted-foreground pt-0.5 truncate">
+              يُسترد بنهاية مدة العقد
             </div>
           </div>
         </StaggerItem>
@@ -753,7 +646,7 @@ export default function ContractDetailsView({
         <StaggerItem>
           <div className="rounded-xl sm:rounded-2xl border border-border bg-card p-2.5 sm:p-4 shadow-2xs space-y-1">
             <span className="text-[10px] sm:text-xs font-medium text-muted-foreground line-clamp-1">
-              رسوم التوثيق والضريبة
+              رسوم المنصة والضريبة
             </span>
             <div className="flex items-center gap-1 text-sm sm:text-lg md:text-xl font-bold text-foreground">
               <span className="truncate">
@@ -771,185 +664,21 @@ export default function ContractDetailsView({
         </StaggerItem>
       </StaggerContainer>
 
-      {/* 5. ROBUST CUSTOM SEGMENTED TAB BAR WITH HORIZONTAL SCROLL ON MOBILE */}
+      {/* 5. TAB BAR AND CONTENT */}
       <FadeIn duration={0.3} delay={0.15}>
         <div className="space-y-4 sm:space-y-6">
           <FilterTabs
             items={tabsList}
             value={activeTab}
             onValueChange={setActiveTab}
-            gridColsClass="sm:grid-cols-4 lg:grid-cols-7"
+            gridColsClass="sm:grid-cols-3 lg:grid-cols-6"
             ariaLabel="تبويبات تفاصيل العقد"
             idPrefix="contract-details-tab"
           />
 
-          {/* TAB 1: OVERVIEW & LIFECYCLE */}
+          {/* TAB 1: OVERVIEW */}
           {activeTab === "overview" && (
             <FadeIn duration={0.2} className="space-y-4 sm:space-y-6">
-              {/* Lifecycle Stepper with High-Contrast Visible Badges */}
-              <div className="rounded-2xl sm:rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-5">
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3 sm:pb-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="size-4 text-primary shrink-0" />
-                      <h3 className="font-bold text-foreground text-sm sm:text-base">
-                        متتبع مسار ومراحل توثيق العقد
-                      </h3>
-                    </div>
-                    <p className="text-[11px] sm:text-xs text-muted-foreground">
-                      متابعة حية لتقدم مراحل إصدار العقد من الإنشاء حتى الاعتماد
-                      الرسمي في شبكة إيجار
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "gap-1.5 px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs font-semibold shadow-2xs",
-                        contract.statusColorClass,
-                      )}
-                    >
-                      <span className="size-1.5 sm:size-2 rounded-full bg-current" />
-                      <span>{contract.statusLabel}</span>
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Stepper Cards */}
-                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
-                  {lifecycleSteps.map((step) => {
-                    const isDone = step.state === "completed";
-                    const isCurrent = step.state === "current";
-                    const isUpcoming = step.state === "upcoming";
-                    const isFailedStep = step.state === "failed";
-
-                    return (
-                      <div
-                        key={step.stepNumber}
-                        className={cn(
-                          "relative flex flex-col justify-between rounded-xl sm:rounded-2xl border p-3.5 sm:p-4 transition-all duration-200 shadow-2xs overflow-hidden",
-                          isDone &&
-                            "border-emerald-300 bg-emerald-50/90 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100",
-                          isCurrent &&
-                            "border-primary-400 bg-primary-50/90 text-primary-950 dark:border-primary-600 dark:bg-primary-950/50 dark:text-primary-100 ring-2 ring-primary/25 shadow-sm",
-                          isUpcoming &&
-                            "border-border/80 bg-muted/20 text-muted-foreground dark:bg-muted/10 opacity-75 hover:opacity-100",
-                          isFailedStep &&
-                            "border-destructive/40 bg-destructive/10 text-destructive dark:bg-destructive/20",
-                        )}
-                      >
-                        {/* Top decorative accent bar */}
-                        <div
-                          className={cn(
-                            "absolute top-0 inset-x-0 h-1",
-                            isDone && "bg-emerald-500",
-                            isCurrent && "bg-primary animate-pulse",
-                            isUpcoming && "bg-muted-foreground/20",
-                            isFailedStep && "bg-destructive",
-                          )}
-                        />
-
-                        {/* Top Step Header */}
-                        <div className="flex items-center justify-between mb-2 sm:mb-3 pt-0.5">
-                          {/* Step Number Circle */}
-                          <div
-                            className={cn(
-                              "flex size-6 sm:size-7 items-center justify-center rounded-full text-xs font-bold shadow-xs transition-transform",
-                              isDone &&
-                                "bg-emerald-600 text-white shadow-emerald-600/20",
-                              isCurrent &&
-                                "bg-primary text-primary-foreground shadow-primary/30 ring-2 ring-primary/20 animate-pulse",
-                              isUpcoming &&
-                                "bg-muted text-muted-foreground border border-border",
-                              isFailedStep &&
-                                "bg-destructive text-destructive-foreground",
-                            )}
-                          >
-                            {isDone ? (
-                              <CheckCircle2 className="size-3.5 sm:size-4" />
-                            ) : (
-                              <span>{step.stepNumber}</span>
-                            )}
-                          </div>
-
-                          {/* State Tag Badge */}
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "px-2 py-0.5 text-[10px] font-bold",
-                              isDone &&
-                                "border-emerald-300 bg-emerald-100 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-200",
-                              isCurrent &&
-                                "border-primary bg-primary text-primary-foreground shadow-2xs",
-                              isUpcoming &&
-                                "border-border bg-muted/60 text-muted-foreground",
-                              isFailedStep &&
-                                "border-destructive bg-destructive text-destructive-foreground",
-                            )}
-                          >
-                            {isCurrent && (
-                              <span className="size-1.5 rounded-full bg-current animate-ping me-1" />
-                            )}
-                            <span>{step.stateLabel}</span>
-                          </Badge>
-                        </div>
-
-                        {/* Step Details */}
-                        <div className="space-y-1 flex-1">
-                          <h4
-                            className={cn(
-                              "text-xs font-bold leading-snug",
-                              isDone &&
-                                "text-emerald-950 dark:text-emerald-100",
-                              isCurrent &&
-                                "text-primary-950 dark:text-primary-100 font-extrabold",
-                              isUpcoming && "text-foreground/80",
-                              isFailedStep && "text-destructive",
-                            )}
-                          >
-                            {step.title}
-                          </h4>
-
-                          <p
-                            className={cn(
-                              "text-[11px] leading-tight line-clamp-1",
-                              isDone &&
-                                "text-emerald-700 dark:text-emerald-300 font-medium",
-                              isCurrent &&
-                                "text-primary-700 dark:text-primary-300 font-semibold",
-                              isUpcoming && "text-muted-foreground",
-                              isFailedStep && "text-destructive/80",
-                            )}
-                          >
-                            {step.subtitle}
-                          </p>
-
-                          {step.note && (
-                            <p
-                              className={cn(
-                                "text-[10px] pt-1 border-t leading-tight",
-                                isDone &&
-                                  "border-emerald-200/80 text-emerald-600/90 dark:border-emerald-800/60 dark:text-emerald-400",
-                                isCurrent &&
-                                  "border-primary-200/80 text-primary-700/90 dark:border-primary-800/60 dark:text-primary-300",
-                                isUpcoming &&
-                                  "border-border/60 text-muted-foreground/70",
-                                isFailedStep &&
-                                  "border-destructive/30 text-destructive",
-                              )}
-                            >
-                              {step.note}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Quick Summary Grid */}
               <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
                 {/* Card 1: Contract Details Summary */}
                 <div className="rounded-2xl sm:rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-xs space-y-3 sm:space-y-4">
@@ -988,7 +717,7 @@ export default function ContractDetailsView({
                         الغرض من التأجير:
                       </span>
                       <span className="font-semibold text-foreground text-end text-[11px] sm:text-xs truncate">
-                        {contract.purposeLabel || "سكني عائلي"}
+                        {contract.purposeLabel || "—"}
                       </span>
                     </div>
 
@@ -1037,7 +766,7 @@ export default function ContractDetailsView({
                         التجديد التلقائي:
                       </span>
                       <span className="font-semibold text-foreground text-[11px] sm:text-xs">
-                        {contract.autoRenewal ? "نعم (تلقائي)" : "لا"}
+                        {contract.autoRenewal ? "مفعل" : "غير مفعل"}
                       </span>
                     </div>
                   </div>
@@ -1135,7 +864,7 @@ export default function ContractDetailsView({
             </FadeIn>
           )}
 
-          {/* TAB 2: PARTIES & VERIFICATION */}
+          {/* TAB 2: PARTIES */}
           {activeTab === "parties" && (
             <FadeIn duration={0.2} className="space-y-4 sm:space-y-6">
               <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
@@ -1152,7 +881,7 @@ export default function ContractDetailsView({
                         </h3>
                         <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
                           {contract.lessor.representationTypeLabel ||
-                            "مالك العقار الأصيل"}
+                            "المؤجر"}
                         </p>
                       </div>
                     </div>
@@ -1229,9 +958,11 @@ export default function ContractDetailsView({
                             label="نسخ الآيبان"
                           />
                         </div>
-                        <span className="block text-[10px] sm:text-[11px] text-muted-foreground">
-                          البنك: {contract.lessor.bankName || "مصرف معتمد"}
-                        </span>
+                        {contract.lessor.bankName && (
+                          <span className="block text-[10px] sm:text-[11px] text-muted-foreground">
+                            البنك: {contract.lessor.bankName}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1250,7 +981,7 @@ export default function ContractDetailsView({
                         </h3>
                         <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
                           {contract.lessee.representationTypeLabel ||
-                            "المستأجر المستفيد الأصيل"}
+                            "المستأجر المستفيد"}
                         </p>
                       </div>
                     </div>
@@ -1314,23 +1045,6 @@ export default function ContractDetailsView({
                         />
                       </div>
                     </div>
-
-                    {/* Government support eligibility pills */}
-                    <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1">
-                      {contract.lessee.citizenAccountEligible && (
-                        <div className="flex items-center gap-1.5 rounded-xl border border-primary-200 bg-primary-50/60 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold text-primary-800 dark:border-primary-800 dark:bg-primary-950/40 dark:text-primary-300">
-                          <CheckCircle2 className="size-3.5 shrink-0" />
-                          <span>متوافق مع حساب المواطن</span>
-                        </div>
-                      )}
-
-                      {contract.lessee.socialInsuranceEligible && (
-                        <div className="flex items-center gap-1.5 rounded-xl border border-secondary-200 bg-secondary-50/60 px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold text-secondary-800 dark:border-secondary-800 dark:bg-secondary-950/40 dark:text-secondary-300">
-                          <CheckCircle2 className="size-3.5 shrink-0" />
-                          <span>متوافق مع الضمان الاجتماعي المطور</span>
-                        </div>
-                      )}
-                    </div>
                   </div>
                 </div>
               </div>
@@ -1345,20 +1059,18 @@ export default function ContractDetailsView({
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-bold text-foreground text-sm sm:text-base truncate">
-                          الوسيط العقاري المرخص (الهيئة العامة للعقار - فال)
+                          الوسيط العقاري
                         </h3>
-                        <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
-                          وساطة وإبرام عقود معتمدة
-                        </p>
                       </div>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className="border-border bg-muted/60 text-foreground text-[10px] sm:text-xs font-medium px-2 sm:px-2.5 py-0.5 shrink-0"
-                    >
-                      رخصة فال:{" "}
-                      {contract.broker.valLicenseNumber || "VAL-1200029"}
-                    </Badge>
+                    {contract.broker.valLicenseNumber && (
+                      <Badge
+                        variant="outline"
+                        className="border-border bg-muted/60 text-foreground text-[10px] sm:text-xs font-medium px-2 sm:px-2.5 py-0.5 shrink-0"
+                      >
+                        رخصة فال: {contract.broker.valLicenseNumber}
+                      </Badge>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 text-xs">
@@ -1376,11 +1088,13 @@ export default function ContractDetailsView({
                         رقم السجل التجاري:
                       </span>
                       <div className="flex items-center gap-1 font-mono font-medium text-foreground text-xs">
-                        <span>{contract.broker.crNumber}</span>
-                        <CopyButton
-                          value={contract.broker.crNumber || ""}
-                          label="نسخ"
-                        />
+                        <span>{contract.broker.crNumber || "—"}</span>
+                        {contract.broker.crNumber && (
+                          <CopyButton
+                            value={contract.broker.crNumber}
+                            label="نسخ"
+                          />
+                        )}
                       </div>
                     </div>
 
@@ -1392,7 +1106,7 @@ export default function ContractDetailsView({
                         className="font-mono font-medium text-foreground text-xs block"
                         dir="ltr"
                       >
-                        {contract.broker.phone}
+                        {contract.broker.phone || "—"}
                       </span>
                     </div>
                   </div>
@@ -1401,7 +1115,7 @@ export default function ContractDetailsView({
             </FadeIn>
           )}
 
-          {/* TAB 3: PROPERTY, DEED & UNITS */}
+          {/* TAB 3: PROPERTY & UNITS */}
           {activeTab === "property" && (
             <FadeIn duration={0.2} className="space-y-4 sm:space-y-6">
               <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
@@ -1475,47 +1189,44 @@ export default function ContractDetailsView({
                   </div>
 
                   {/* Facilities & Amenities */}
-                  <div className="space-y-2 pt-1 sm:pt-2">
-                    <span className="block text-[11px] sm:text-xs font-semibold text-foreground">
-                      المرافق والتجهيزات المشمولة:
-                    </span>
-                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                      {contract.property.hasElevator && (
-                        <Badge
-                          variant="outline"
-                          className="gap-1 border-border bg-muted/60 text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1"
-                        >
-                          <CheckCircle2 className="size-3 text-emerald-600 shrink-0" />
-                          <span>مصعد كهربائي</span>
-                        </Badge>
-                      )}
-                      {contract.property.hasParking && (
-                        <Badge
-                          variant="outline"
-                          className="gap-1 border-border bg-muted/60 text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1"
-                        >
-                          <CheckCircle2 className="size-3 text-emerald-600 shrink-0" />
-                          <span>موقف سيارة مخصص</span>
-                        </Badge>
-                      )}
-                      {contract.property.hasCentralAC && (
-                        <Badge
-                          variant="outline"
-                          className="gap-1 border-border bg-muted/60 text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1"
-                        >
-                          <CheckCircle2 className="size-3 text-emerald-600 shrink-0" />
-                          <span>تكييف مركزي</span>
-                        </Badge>
-                      )}
-                      <Badge
-                        variant="outline"
-                        className="gap-1 border-border bg-muted/60 text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1"
-                      >
-                        <CheckCircle2 className="size-3 text-emerald-600 shrink-0" />
-                        <span>صيانة مشتركة</span>
-                      </Badge>
+                  {(contract.property.hasElevator ||
+                    contract.property.hasParking ||
+                    contract.property.hasCentralAC) && (
+                    <div className="space-y-2 pt-1 sm:pt-2">
+                      <span className="block text-[11px] sm:text-xs font-semibold text-foreground">
+                        المرافق والتجهيزات المشمولة:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                        {contract.property.hasElevator && (
+                          <Badge
+                            variant="outline"
+                            className="gap-1 border-border bg-muted/60 text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1"
+                          >
+                            <CheckCircle2 className="size-3 text-emerald-600 shrink-0" />
+                            <span>مصعد كهربائي</span>
+                          </Badge>
+                        )}
+                        {contract.property.hasParking && (
+                          <Badge
+                            variant="outline"
+                            className="gap-1 border-border bg-muted/60 text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1"
+                          >
+                            <CheckCircle2 className="size-3 text-emerald-600 shrink-0" />
+                            <span>موقف سيارة مخصص</span>
+                          </Badge>
+                        )}
+                        {contract.property.hasCentralAC && (
+                          <Badge
+                            variant="outline"
+                            className="gap-1 border-border bg-muted/60 text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1"
+                          >
+                            <CheckCircle2 className="size-3 text-emerald-600 shrink-0" />
+                            <span>تكييف مركزي</span>
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* National Address & Meters Card */}
@@ -1543,7 +1254,7 @@ export default function ContractDetailsView({
                         اسم الشارع:
                       </span>
                       <span className="font-semibold text-foreground text-end text-[11px] sm:text-xs truncate">
-                        {contract.property.street}
+                        {contract.property.street || "—"}
                       </span>
                     </div>
 
@@ -1553,7 +1264,7 @@ export default function ContractDetailsView({
                           رقم المبنى
                         </span>
                         <span className="font-mono font-bold text-foreground text-xs sm:text-sm">
-                          {contract.property.buildingNumber}
+                          {contract.property.buildingNumber || "—"}
                         </span>
                       </div>
 
@@ -1562,7 +1273,7 @@ export default function ContractDetailsView({
                           الرمز البريدي
                         </span>
                         <span className="font-mono font-bold text-foreground text-xs sm:text-sm">
-                          {contract.property.postalCode}
+                          {contract.property.postalCode || "—"}
                         </span>
                       </div>
 
@@ -1571,53 +1282,60 @@ export default function ContractDetailsView({
                           الرقم الإضافي
                         </span>
                         <span className="font-mono font-bold text-foreground text-xs sm:text-sm">
-                          {contract.property.additionalNumber}
+                          {contract.property.additionalNumber || "—"}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Meters info */}
-                  <div className="space-y-2 pt-2 border-t border-border/60">
-                    <span className="block text-[11px] sm:text-xs font-semibold text-foreground">
-                      أرقام حسابات العدادات الملحقة:
-                    </span>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 text-xs">
-                      <div className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-2 sm:p-2.5">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <Zap className="size-3.5 text-amber-500 shrink-0" />
-                          <span className="text-[11px] sm:text-xs text-muted-foreground truncate">
-                            عداد الكهرباء:
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 font-mono font-semibold text-foreground text-xs shrink-0">
-                          <span>
-                            {contract.property.electricityMeterNumber}
-                          </span>
-                          <CopyButton
-                            value={contract.property.electricityMeterNumber}
-                            label="نسخ"
-                          />
-                        </div>
-                      </div>
+                  {/* Meters info if present */}
+                  {(contract.property.electricityMeterNumber ||
+                    contract.property.waterMeterNumber) && (
+                    <div className="space-y-2 pt-2 border-t border-border/60">
+                      <span className="block text-[11px] sm:text-xs font-semibold text-foreground">
+                        أرقام حسابات العدادات الملحقة:
+                      </span>
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 text-xs">
+                        {contract.property.electricityMeterNumber && (
+                          <div className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-2 sm:p-2.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <Zap className="size-3.5 text-amber-500 shrink-0" />
+                              <span className="text-[11px] sm:text-xs text-muted-foreground truncate">
+                                عداد الكهرباء:
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 font-mono font-semibold text-foreground text-xs shrink-0">
+                              <span>
+                                {contract.property.electricityMeterNumber}
+                              </span>
+                              <CopyButton
+                                value={contract.property.electricityMeterNumber}
+                                label="نسخ"
+                              />
+                            </div>
+                          </div>
+                        )}
 
-                      <div className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-2 sm:p-2.5">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <DropletsIcon className="size-3.5 text-cyan-500 shrink-0" />
-                          <span className="text-[11px] sm:text-xs text-muted-foreground truncate">
-                            عداد المياه:
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 font-mono font-semibold text-foreground text-xs shrink-0">
-                          <span>{contract.property.waterMeterNumber}</span>
-                          <CopyButton
-                            value={contract.property.waterMeterNumber}
-                            label="نسخ"
-                          />
-                        </div>
+                        {contract.property.waterMeterNumber && (
+                          <div className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-2 sm:p-2.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <DropletsIcon className="size-3.5 text-cyan-500 shrink-0" />
+                              <span className="text-[11px] sm:text-xs text-muted-foreground truncate">
+                                عداد المياه:
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 font-mono font-semibold text-foreground text-xs shrink-0">
+                              <span>{contract.property.waterMeterNumber}</span>
+                              <CopyButton
+                                value={contract.property.waterMeterNumber}
+                                label="نسخ"
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </FadeIn>
@@ -1683,11 +1401,10 @@ export default function ContractDetailsView({
                     طريقة وسداد الرسوم
                   </span>
                   <div className="text-xs sm:text-sm font-bold text-foreground truncate">
-                    {contract.financials.paymentMethodLabel ||
-                      "بوابة مدى الإلكترونية"}
+                    {contract.financials.paymentMethodLabel || "—"}
                   </div>
                   <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground block truncate">
-                    {contract.financials.transactionId || "سداد إلكتروني"}
+                    {contract.financials.transactionId || "—"}
                   </span>
                 </div>
               </div>
@@ -1700,7 +1417,7 @@ export default function ContractDetailsView({
                       جدول سداد الدفعات الإيجارية
                     </h3>
                     <p className="text-[11px] sm:text-xs text-muted-foreground">
-                      مواعيد الاستحقاق وقيم الدفعات المجدولة في شبكة إيجار
+                      مواعيد الاستحقاق وقيم الدفعات المجدولة للعقد
                     </p>
                   </div>
                   <Badge
@@ -1778,191 +1495,39 @@ export default function ContractDetailsView({
             </FadeIn>
           )}
 
-          {/* TAB 5: EJAR INTEGRATION & SEALS */}
-          {activeTab === "ejar" && (
-            <FadeIn duration={0.2} className="space-y-4 sm:space-y-6">
-              <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
-                {/* Ejar Status & QR Code */}
-                <div className="rounded-2xl sm:rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-xs space-y-3.5 sm:space-y-4 lg:col-span-2">
-                  <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <ShieldCheck className="size-5 text-tertiary-600 shrink-0" />
-                      <div className="min-w-0">
-                        <h3 className="font-bold text-foreground text-sm sm:text-base truncate">
-                          بيانات التوثيق والربط مع شبكة إيجار
-                        </h3>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-                          رقم العقد الموحد والربط مع الهيئة العامة للعقار
-                        </p>
-                      </div>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className="border-tertiary-200 bg-tertiary-50 text-tertiary-800 dark:border-tertiary-800 dark:bg-tertiary-950 dark:text-tertiary-300 text-[10px] sm:text-xs font-semibold shrink-0"
-                    >
-                      {contract.ejar.ejarStatusLabel}
-                    </Badge>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-4 text-xs">
-                    <div className="rounded-xl sm:rounded-2xl border border-border bg-muted/20 p-3 sm:p-3.5 space-y-1">
-                      <span className="text-[11px] text-muted-foreground">
-                        رقم العقد في شبكة إيجار:
-                      </span>
-                      <div className="flex items-center gap-1.5 font-mono text-sm sm:text-base font-bold text-foreground">
-                        <span>{contract.ejar.ejarContractNumber}</span>
-                        <CopyButton
-                          value={contract.ejar.ejarContractNumber}
-                          label="نسخ رقم إيجار"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl sm:rounded-2xl border border-border bg-muted/20 p-3 sm:p-3.5 space-y-1">
-                      <span className="text-[11px] text-muted-foreground">
-                        ترخيص الهيئة العامة للعقار (REGA):
-                      </span>
-                      <div className="flex items-center gap-1.5 font-mono text-sm sm:text-base font-bold text-foreground">
-                        <span>{contract.ejar.regaLicenseNumber}</span>
-                        <CopyButton
-                          value={contract.ejar.regaLicenseNumber}
-                          label="نسخ رقم الترخيص"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Digital Seals with Visible High-Contrast Backgrounds */}
-                  <div className="space-y-2.5 sm:space-y-3 pt-1 sm:pt-2">
-                    <span className="block text-[11px] sm:text-xs font-bold text-foreground">
-                      الأختام والشهادات الرقمية المعتمدة:
-                    </span>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
-                      <div className="flex items-center gap-2.5 rounded-xl sm:rounded-2xl border border-emerald-200 bg-emerald-50 p-2.5 sm:p-3.5 dark:border-emerald-800 dark:bg-emerald-950/60">
-                        <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <div>
-                          <span className="block text-xs font-bold text-emerald-900 dark:text-emerald-200">
-                            ختم شبكة إيجار
-                          </span>
-                          <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">
-                            معتمد وموثق رقمياً
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2.5 rounded-xl sm:rounded-2xl border border-emerald-200 bg-emerald-50 p-2.5 sm:p-3.5 dark:border-emerald-800 dark:bg-emerald-950/60">
-                        <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <div>
-                          <span className="block text-xs font-bold text-emerald-900 dark:text-emerald-200">
-                            هيئة العقار (REGA)
-                          </span>
-                          <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">
-                            مطابق للأنظمة واللوائح
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2.5 rounded-xl sm:rounded-2xl border border-emerald-200 bg-emerald-50 p-2.5 sm:p-3.5 dark:border-emerald-800 dark:bg-emerald-950/60">
-                        <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <div>
-                          <span className="block text-xs font-bold text-emerald-900 dark:text-emerald-200">
-                            المركز السعودي للأعمال
-                          </span>
-                          <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">
-                            مصادق للسجلات والمنشآت
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* QR Code Card */}
-                <div className="flex flex-col items-center justify-between rounded-2xl sm:rounded-3xl border border-border bg-card p-4 sm:p-6 text-center shadow-xs space-y-3.5 sm:space-y-4">
-                  <div className="space-y-1">
-                    <div className="flex size-9 sm:size-10 mx-auto items-center justify-center rounded-2xl bg-muted text-foreground">
-                      <QrCode className="size-4 sm:size-5" />
-                    </div>
-                    <h4 className="font-bold text-foreground text-xs sm:text-sm">
-                      رمز التحقق السريع (QR)
-                    </h4>
-                    <p className="text-[10px] sm:text-[11px] text-muted-foreground">
-                      امسح الرمز للتحقق الفوري من صحة العقد عبر منصة إيجار
-                      الرسمية
-                    </p>
-                  </div>
-
-                  {/* QR Display box */}
-                  <div className="flex size-30 sm:size-36 items-center justify-center rounded-2xl border-2 border-dashed border-border bg-white p-2 shadow-inner">
-                    <svg
-                      viewBox="0 0 100 100"
-                      className="size-full text-foreground"
-                      fill="currentColor"
-                    >
-                      <rect x="10" y="10" width="30" height="30" rx="4" />
-                      <rect x="16" y="16" width="18" height="18" fill="white" />
-                      <rect x="20" y="20" width="10" height="10" />
-
-                      <rect x="60" y="10" width="30" height="30" rx="4" />
-                      <rect x="66" y="16" width="18" height="18" fill="white" />
-                      <rect x="70" y="20" width="10" height="10" />
-
-                      <rect x="10" y="60" width="30" height="30" rx="4" />
-                      <rect x="16" y="66" width="18" height="18" fill="white" />
-                      <rect x="20" y="70" width="10" height="10" />
-
-                      <rect x="45" y="15" width="8" height="8" />
-                      <rect x="45" y="30" width="8" height="15" />
-                      <rect x="45" y="60" width="15" height="8" />
-                      <rect x="65" y="50" width="20" height="8" />
-                      <rect x="75" y="65" width="15" height="15" />
-                    </svg>
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      window.open(contract.ejar.verificationQrUrl, "_blank")
-                    }
-                    className="w-full gap-1.5 text-xs font-semibold cursor-pointer active:scale-98"
-                  >
-                    <ExternalLink className="size-3.5" />
-                    <span>فتح صفحة التحقق</span>
-                  </Button>
-                </div>
-              </div>
-            </FadeIn>
-          )}
-
-          {/* TAB 6: TERMS & CONDITIONS */}
+          {/* TAB 5: TERMS & CONDITIONS */}
           {activeTab === "terms" && (
             <FadeIn duration={0.2} className="space-y-4 sm:space-y-6">
               <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
-                {/* Standard Ejar Terms */}
+                {/* Standard Terms */}
                 <div className="rounded-2xl sm:rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-xs space-y-3.5 sm:space-y-4">
                   <div className="flex items-center gap-2 border-b border-border/60 pb-3">
                     <FileCheck2 className="size-4 text-primary shrink-0" />
                     <h3 className="font-bold text-foreground text-sm sm:text-base">
-                      البنود الموحدة لشبكة إيجار
+                      بنود وشروط العقد الأساسية
                     </h3>
                   </div>
 
                   <div className="space-y-2 sm:space-y-2.5">
-                    {contract.termsAndConditions.map((term, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-start gap-2.5 rounded-xl sm:rounded-2xl border border-border/70 bg-muted/20 p-2.5 sm:p-3 text-[11px] sm:text-xs"
-                      >
-                        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-800 dark:bg-primary-950 dark:text-primary-300 text-[10px] sm:text-[11px] font-bold">
-                          {idx + 1}
-                        </span>
-                        <p className="text-foreground/90 leading-relaxed">
-                          {term}
-                        </p>
+                    {contract.termsAndConditions && contract.termsAndConditions.length > 0 ? (
+                      contract.termsAndConditions.map((term, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-start gap-2.5 rounded-xl sm:rounded-2xl border border-border/70 bg-muted/20 p-2.5 sm:p-3 text-[11px] sm:text-xs"
+                        >
+                          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-800 dark:bg-primary-950 dark:text-primary-300 text-[10px] sm:text-[11px] font-bold">
+                            {idx + 1}
+                          </span>
+                          <p className="text-foreground/90 leading-relaxed">
+                            {term}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-xl sm:rounded-2xl border border-dashed border-border p-5 text-center text-xs text-muted-foreground">
+                        لا توجد بنود عامة مسجلة.
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
 
@@ -2001,7 +1566,7 @@ export default function ContractDetailsView({
             </FadeIn>
           )}
 
-          {/* TAB 7: ACTIVITY LOGS & AUDIT TRAIL TIMELINE */}
+          {/* TAB 6: ACTIVITY LOGS & AUDIT TRAIL TIMELINE */}
           {activeTab === "history" && (
             <FadeIn duration={0.2} className="space-y-4 sm:space-y-6">
               <div className="rounded-2xl sm:rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-6">
@@ -2029,22 +1594,14 @@ export default function ContractDetailsView({
                   </Badge>
                 </div>
 
-                {/* Modern Timeline Container with Pixel-Perfect Responsive Alignment */}
+                {/* Timeline Container */}
                 <div className="relative space-y-4 sm:space-y-6 ps-7 sm:ps-10 before:absolute before:inset-y-3 before:start-3.5 sm:before:start-4 before:w-0.5 before:bg-linear-to-b before:from-primary before:via-border before:to-muted-foreground/30">
                   {contract.historyLogs.map((log) => {
-                    // Determine icon and color based on action
                     const isCreation =
                       log.action.includes("إنشاء") ||
                       log.action.includes("رفع");
                     const isPayment =
                       log.action.includes("سداد") || log.action.includes("دفع");
-                    const isVerification =
-                      log.action.includes("نفاذ") ||
-                      log.action.includes("قبول");
-                    const isEjar =
-                      log.action.includes("إيجار") ||
-                      log.action.includes("توثيق") ||
-                      log.action.includes("اعتماد");
                     const isCancelled =
                       log.action.includes("إلغاء") ||
                       log.action.includes("رفض");
@@ -2053,10 +1610,6 @@ export default function ContractDetailsView({
                       <FilePlus2 className="size-3.5 sm:size-4 text-primary" />
                     ) : isPayment ? (
                       <CreditCard className="size-3.5 sm:size-4 text-emerald-600 dark:text-emerald-400" />
-                    ) : isVerification ? (
-                      <ShieldCheck className="size-3.5 sm:size-4 text-tertiary-600 dark:text-tertiary-400" />
-                    ) : isEjar ? (
-                      <CheckCircle2 className="size-3.5 sm:size-4 text-emerald-600 dark:text-emerald-400" />
                     ) : isCancelled ? (
                       <ShieldAlert className="size-3.5 sm:size-4 text-destructive" />
                     ) : (
@@ -2067,13 +1620,9 @@ export default function ContractDetailsView({
                       ? "bg-primary-50 border-primary-300 text-primary-700 dark:bg-primary-950 dark:border-primary-800 dark:text-primary-300"
                       : isPayment
                         ? "bg-emerald-50 border-emerald-300 text-emerald-700 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-300"
-                        : isVerification
-                          ? "bg-tertiary-50 border-tertiary-300 text-tertiary-700 dark:bg-tertiary-950 dark:border-tertiary-800 dark:text-tertiary-300"
-                          : isEjar
-                            ? "bg-emerald-50 border-emerald-300 text-emerald-700 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-300"
-                            : isCancelled
-                              ? "bg-destructive/10 border-destructive/30 text-destructive dark:bg-destructive/20"
-                              : "bg-secondary-50 border-secondary-300 text-secondary-700 dark:bg-secondary-950 dark:border-secondary-800 dark:text-secondary-300";
+                        : isCancelled
+                          ? "bg-destructive/10 border-destructive/30 text-destructive dark:bg-destructive/20"
+                          : "bg-secondary-50 border-secondary-300 text-secondary-700 dark:bg-secondary-950 dark:border-secondary-800 dark:text-secondary-300";
 
                     return (
                       <div key={log.id} className="relative group">

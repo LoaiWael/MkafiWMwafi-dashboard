@@ -6,7 +6,7 @@ import {
   SaudiRiyal,
   Store,
 } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { CopyButton } from "@/components/ui/copy-button";
 import {
@@ -27,6 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export default function OverviewContractsTable() {
+  const navigate = useNavigate();
   const columns: DataTableColumn<OverviewContract>[] = [
     {
       id: "contractNumber",
@@ -300,6 +301,9 @@ export default function OverviewContractsTable() {
       filters={filterConfigs}
       pageSize={5}
       pageSizeOptions={[5, 10, 20]}
+      onRowDoubleClick={(item) =>
+        navigate(`/contracts/${item.id}`, { viewTransition: true })
+      }
     />
   );
 }

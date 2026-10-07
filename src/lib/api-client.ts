@@ -74,6 +74,12 @@ export async function apiClient<T>(
   const response = await fetch(url.toString(), config);
 
   if (!response.ok) {
+    if (response.status === 401) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("unauthorized-api-error"));
+      }
+    }
+
     let errorData;
     try {
       errorData = await response.json();
