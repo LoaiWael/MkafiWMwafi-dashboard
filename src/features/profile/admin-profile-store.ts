@@ -1,7 +1,4 @@
-import {
-  ADMIN_ACTIVITY,
-  DEFAULT_ADMIN_PROFILE,
-} from "@/features/profile/constants";
+import { DEFAULT_ADMIN_PROFILE } from "@/features/profile/constants";
 import type { AdminProfile, ProfileActivity } from "@/features/profile/types";
 
 export interface AdminProfilePatch {
@@ -25,7 +22,7 @@ function formatStamp(date: Date) {
 
 let state: AdminState = {
   profile: { ...DEFAULT_ADMIN_PROFILE },
-  activity: [...ADMIN_ACTIVITY],
+  activity: [],
 };
 
 const listeners = new Set<() => void>();
@@ -43,6 +40,20 @@ export function subscribeAdminState(listener: () => void) {
   return () => {
     listeners.delete(listener);
   };
+}
+
+export function setAdminProfile(profile: AdminProfile) {
+  state = {
+    ...state,
+    profile: {
+      ...state.profile,
+      ...profile,
+      // preserve avatar or phone if already set locally and not present in incoming profile
+      phone: profile.phone || state.profile.phone,
+      avatarUrl: profile.avatarUrl || state.profile.avatarUrl,
+    },
+  };
+  emit();
 }
 
 export function updateAdminProfile(patch: AdminProfilePatch) {

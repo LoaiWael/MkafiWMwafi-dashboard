@@ -1,5 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 
+export * from "./api";
+
 export interface ProfileIdentity {
   name: string;
   role: string;
@@ -15,9 +17,15 @@ export interface DirectoryPerson extends ProfileIdentity {
 }
 
 export interface AdminProfile extends ProfileIdentity {
+  id?: string;
   email: string;
   phone: string;
   joinedAt: string;
+  lastLoginAt?: string | null;
+  isActive?: boolean;
+  isSuperAdmin?: boolean;
+  roles?: string[];
+  permissions?: string[];
 }
 
 export interface ProfilePermission {

@@ -12,13 +12,18 @@ import ProfilePermissions from "@/features/profile/components/profile-permission
 import { ADMIN_PERMISSIONS } from "@/features/profile/constants";
 import { useAdminProfile } from "@/features/profile/hooks/use-admin-profile";
 import { useDocumentTitle } from "@/hooks/use-document-title";
+import ProfilePageSkeleton from "./profile-page-skeleton";
 
 export default function ProfilePage() {
-  const { profile, activity } = useAdminProfile();
+  const { profile, activity, isLoading } = useAdminProfile();
   const [editOpen, setEditOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
 
   useDocumentTitle(profile.name || "الملف الشخصي");
+
+  if (isLoading && !profile.id && !profile.email && !profile.name) {
+    return <ProfilePageSkeleton />;
+  }
 
   return (
     <div className="page-shell space-y-4 py-4 sm:space-y-6 sm:py-8">
@@ -63,7 +68,13 @@ export default function ProfilePage() {
         joinedAt={profile.joinedAt}
         role={profile.role}
       />
-      <ProfilePermissions permissions={ADMIN_PERMISSIONS} />
+      <ProfilePermissions
+        permissions={
+          profile.permissions && profile.permissions.length > 0
+            ? profile.permissions
+            : ADMIN_PERMISSIONS
+        }
+      />
       <ProfileActivityLog entries={activity} />
 
       <EditProfileDialog

@@ -1,12 +1,11 @@
 import { useSyncExternalStore } from "react";
 import {
   getAuthState,
-  loginWithOtp,
   loginWithPassword,
   logoutAdmin,
   subscribeAuthState,
-} from "@/features/auth/auth-store";
-import type { OtpCredentials, PasswordCredentials } from "@/features/auth/types";
+} from "../auth-store";
+import type { PasswordCredentials } from "../types";
 
 export function useAuth() {
   const auth = useSyncExternalStore(subscribeAuthState, getAuthState, getAuthState);
@@ -14,7 +13,6 @@ export function useAuth() {
   return {
     ...auth,
     loginWithPassword: (creds: PasswordCredentials) => loginWithPassword(creds),
-    loginWithOtp: (creds: OtpCredentials) => loginWithOtp(creds),
     logout: () => logoutAdmin(),
   };
 }

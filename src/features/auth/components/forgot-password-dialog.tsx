@@ -114,7 +114,6 @@ export default function ForgotPasswordDialog({
                 <Input
                   id="forgot-identifier"
                   type="text"
-                  placeholder="admin@makfiwamufi.sa أو 0501234567"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   className="h-10 ps-10 pe-4 text-start"

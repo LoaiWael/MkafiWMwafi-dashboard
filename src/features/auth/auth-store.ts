@@ -1,31 +1,55 @@
-import { STORAGE_KEYS } from "@/lib/constants";
-import { DEFAULT_ADMIN_PROFILE } from "@/features/profile/constants";
-import type { AuthState, AuthUser, OtpCredentials, PasswordCredentials } from "@/features/auth/types";
+import { COOKIE_KEYS, STORAGE_KEYS } from "@/lib/constants";
+import { getCookie, removeCookie, setCookie } from "@/lib/cookies";
+import { loginAdmin } from "./api/admin-login";
+import { logoutAdminApi } from "./api/admin-logout";
+import type { AdminUser, AuthState, PasswordCredentials } from "./types";
 
-export const DEMO_CREDENTIALS = {
-  identifier: DEFAULT_ADMIN_PROFILE.email,
-  password: "password123",
-  phone: DEFAULT_ADMIN_PROFILE.phone,
-  otpCode: "1234",
-} as const;
-
-function readStoredAuth(): { user: AuthUser | null; token: string | null } {
+/**
+ * Clean up any legacy or lingering auth data from localStorage and sessionStorage
+ */
+export function purgeLocalStorageAuth(): void {
   if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    localStorage.removeItem(STORAGE_KEYS.authToken);
+    localStorage.removeItem(STORAGE_KEYS.authUser);
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("authUser");
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
+  } catch {
+    // Ignore storage access errors
+  }
+
+  try {
+    sessionStorage.removeItem(STORAGE_KEYS.authToken);
+    sessionStorage.removeItem(STORAGE_KEYS.authUser);
+    sessionStorage.removeItem("authToken");
+    sessionStorage.removeItem("authUser");
+    sessionStorage.removeItem("auth_token");
+    sessionStorage.removeItem("auth_user");
+  } catch {
+    // Ignore storage access errors
+  }
+}
+
+// Proactively purge local storage auth on script load
+purgeLocalStorageAuth();
+
+function readStoredAuth(): { user: AdminUser | null; token: string | null } {
+  if (typeof document === "undefined") {
     return { user: null, token: null };
   }
 
   try {
-    const token =
-      localStorage.getItem(STORAGE_KEYS.authToken) ??
-      sessionStorage.getItem(STORAGE_KEYS.authToken);
-    const rawUser =
-      localStorage.getItem(STORAGE_KEYS.authUser) ??
-      sessionStorage.getItem(STORAGE_KEYS.authUser);
+    const token = getCookie(COOKIE_KEYS.authToken);
+    const rawUser = getCookie(COOKIE_KEYS.authUser);
 
     if (!token || !rawUser) {
       return { user: null, token: null };
     }
-    const user = JSON.parse(rawUser) as AuthUser;
+    const user = JSON.parse(rawUser) as AdminUser;
     return { user, token };
   } catch {
     return { user: null, token: null };
@@ -58,115 +82,76 @@ export function subscribeAuthState(listener: () => void): () => void {
   };
 }
 
-function createDefaultUser(name?: string, email?: string): AuthUser {
-  return {
-    id: "admin-01",
-    name: name || DEFAULT_ADMIN_PROFILE.name,
-    email: email || DEFAULT_ADMIN_PROFILE.email,
-    phone: DEFAULT_ADMIN_PROFILE.phone,
-    role: DEFAULT_ADMIN_PROFILE.role,
-    avatarUrl: DEFAULT_ADMIN_PROFILE.avatarUrl,
-    lastLoginAt: new Intl.DateTimeFormat("ar-SA", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date()),
+export function setAuthUser(user: AdminUser): void {
+  state = {
+    ...state,
+    user,
   };
+
+  try {
+    setCookie(COOKIE_KEYS.authUser, JSON.stringify(user), {
+      days: 30,
+      path: "/",
+    });
+  } catch {
+    // Ignore cookie errors
+  }
+
+  purgeLocalStorageAuth();
+  emit();
 }
 
-export async function loginWithPassword(credentials: PasswordCredentials): Promise<AuthUser> {
+export async function loginWithPassword(credentials: PasswordCredentials): Promise<AdminUser> {
   state = { ...state, isLoading: true };
   emit();
 
-  await new Promise((resolve) => setTimeout(resolve, 600));
+  try {
+    const trimmedIdentifier = credentials.identifier.trim();
+    const trimmedPassword = credentials.password;
 
-  const trimmedIdentifier = credentials.identifier.trim().toLowerCase();
-  const trimmedPassword = credentials.password.trim();
+    if (!trimmedIdentifier || !trimmedPassword) {
+      throw new Error("يرجى إدخال البريد الإلكتروني وكلمة المرور.");
+    }
 
-  if (!trimmedIdentifier || !trimmedPassword) {
+    const session = await loginAdmin({
+      email: trimmedIdentifier,
+      password: trimmedPassword,
+    });
+
+    state = {
+      isAuthenticated: true,
+      user: session.user,
+      token: session.accessToken,
+      isLoading: false,
+    };
+
+    const remember = credentials.rememberMe !== false;
+    const cookieOptions = {
+      path: "/",
+      days: remember ? 30 : undefined,
+    };
+
+    setCookie(COOKIE_KEYS.authToken, session.accessToken, cookieOptions);
+    setCookie(COOKIE_KEYS.authUser, JSON.stringify(session.user), cookieOptions);
+
+    // Make sure local storage has no auth data
+    purgeLocalStorageAuth();
+
+    emit();
+    return session.user;
+  } catch (error) {
     state = { ...state, isLoading: false };
     emit();
-    throw new Error("يرجى إدخال البريد الإلكتروني أو رقم الجوال وكلمة المرور.");
+    throw error;
   }
-
-  if (trimmedPassword.length < 6) {
-    state = { ...state, isLoading: false };
-    emit();
-    throw new Error("كلمة المرور يجب ألا تقل عن 6 خانات.");
-  }
-
-  const isPhone = /^(\+966|05|\d{8,})/.test(trimmedIdentifier.replace(/\s+/g, ""));
-  const user = createDefaultUser(
-    isPhone ? DEFAULT_ADMIN_PROFILE.name : trimmedIdentifier.includes("@") ? trimmedIdentifier.split("@")[0] : trimmedIdentifier,
-    isPhone ? DEFAULT_ADMIN_PROFILE.email : trimmedIdentifier.includes("@") ? trimmedIdentifier : DEFAULT_ADMIN_PROFILE.email,
-  );
-  if (isPhone) {
-    user.phone = trimmedIdentifier;
-  }
-  const token = `token-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-
-  state = {
-    isAuthenticated: true,
-    user,
-    token,
-    isLoading: false,
-  };
-
-  if (credentials.rememberMe && typeof localStorage !== "undefined") {
-    localStorage.setItem(STORAGE_KEYS.authToken, token);
-    localStorage.setItem(STORAGE_KEYS.authUser, JSON.stringify(user));
-  } else if (typeof sessionStorage !== "undefined") {
-    sessionStorage.setItem(STORAGE_KEYS.authToken, token);
-    sessionStorage.setItem(STORAGE_KEYS.authUser, JSON.stringify(user));
-  }
-
-  emit();
-  return user;
-}
-
-export async function loginWithOtp(credentials: OtpCredentials): Promise<AuthUser> {
-  state = { ...state, isLoading: true };
-  emit();
-
-  await new Promise((resolve) => setTimeout(resolve, 600));
-
-  const cleanPhone = credentials.phone.replace(/\D/g, "");
-  const cleanCode = credentials.code.trim();
-
-  if (!cleanPhone || cleanPhone.length < 9) {
-    state = { ...state, isLoading: false };
-    emit();
-    throw new Error("يرجى إدخال رقم جوال سعودي صحيح (مثال: 0501234567).");
-  }
-
-  if (cleanCode.length !== 4) {
-    state = { ...state, isLoading: false };
-    emit();
-    throw new Error("رمز التحقق غير مكتمل. يرجى إدخال الرمز المكون من 4 أرقام.");
-  }
-
-  const user = createDefaultUser();
-  const token = `otp-token-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-
-  state = {
-    isAuthenticated: true,
-    user,
-    token,
-    isLoading: false,
-  };
-
-  if (credentials.rememberMe && typeof localStorage !== "undefined") {
-    localStorage.setItem(STORAGE_KEYS.authToken, token);
-    localStorage.setItem(STORAGE_KEYS.authUser, JSON.stringify(user));
-  } else if (typeof sessionStorage !== "undefined") {
-    sessionStorage.setItem(STORAGE_KEYS.authToken, token);
-    sessionStorage.setItem(STORAGE_KEYS.authUser, JSON.stringify(user));
-  }
-
-  emit();
-  return user;
 }
 
 export function logoutAdmin(): void {
+  // Fire-and-forget backend revocation so local logout is never blocked
+  logoutAdminApi().catch(() => {
+    // Ignore revocation network failures
+  });
+
   state = {
     isAuthenticated: false,
     user: null,
@@ -174,14 +159,10 @@ export function logoutAdmin(): void {
     isLoading: false,
   };
 
-  if (typeof localStorage !== "undefined") {
-    localStorage.removeItem(STORAGE_KEYS.authToken);
-    localStorage.removeItem(STORAGE_KEYS.authUser);
-  }
-  if (typeof sessionStorage !== "undefined") {
-    sessionStorage.removeItem(STORAGE_KEYS.authToken);
-    sessionStorage.removeItem(STORAGE_KEYS.authUser);
-  }
+  removeCookie(COOKIE_KEYS.authToken, "/");
+  removeCookie(COOKIE_KEYS.authUser, "/");
+
+  purgeLocalStorageAuth();
 
   emit();
 }

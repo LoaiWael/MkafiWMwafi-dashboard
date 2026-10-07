@@ -5,6 +5,11 @@ export const STORAGE_KEYS = {
   authUser: `${APP_SLUG}.auth-user`,
 } as const;
 
+export const COOKIE_KEYS = {
+  authToken: `${APP_SLUG}_admin_token`,
+  authUser: `${APP_SLUG}_admin_user`,
+} as const;
+
 export const SITE = {
   name: "مكفي وموفي",
   logo: "/logo.svg",

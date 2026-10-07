@@ -5,8 +5,6 @@ import {
   EyeOff,
   Lock,
   Mail,
-  Phone,
-  Sparkles,
 } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
@@ -17,13 +15,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import { DEMO_CREDENTIALS } from "@/features/auth/auth-store";
 import ForgotPasswordDialog from "@/features/auth/components/forgot-password-dialog";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import {
   loginSchema,
   type LoginFormData,
 } from "@/features/auth/schemas/login-schema";
+import { ApiError } from "@/lib/api-client";
 import { ROUTES, SITE } from "@/lib/constants";
 import { useState } from "react";
 
@@ -38,8 +36,6 @@ export default function LoginForm() {
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
     control,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
@@ -51,23 +47,7 @@ export default function LoginForm() {
     },
   });
 
-  const identifierValue = watch("identifier");
-  const isPhoneIdentifier = /^(\+966|05|\d)/.test(
-    (identifierValue || "").trim()
-  );
-
   const isPending = isLoading || isSubmitting;
-
-  function fillDemoPassword() {
-    setValue("identifier", DEMO_CREDENTIALS.identifier, {
-      shouldValidate: true,
-    });
-    setValue("password", DEMO_CREDENTIALS.password, {
-      shouldValidate: true,
-    });
-    setErrorMessage(null);
-    toast.info("تم ملء بيانات الدخول التجريبية للمسؤول.");
-  }
 
   async function onSubmit(data: LoginFormData) {
     setErrorMessage(null);
@@ -81,6 +61,23 @@ export default function LoginForm() {
       toast.success(`مرحباً بك مجدداً، ${user.name}`);
       navigate(ROUTES.home, { viewTransition: true });
     } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          setErrorMessage("بيانات الدخول غير صحيحة. يرجى التحقق من البريد وكلمة المرور.");
+          return;
+        }
+        if (err.status === 422 && err.data?.errors) {
+          const firstErr =
+            err.data.errors.email?.[0] ||
+            err.data.errors.password?.[0] ||
+            Object.values(err.data.errors as Record<string, string[]>)[0]?.[0];
+          setErrorMessage(firstErr || err.message);
+          return;
+        }
+        setErrorMessage(err.data?.message || err.message || "تعذر الاتصال بالخادم.");
+        return;
+      }
+
       const message =
         err instanceof Error
           ? err.message
@@ -105,7 +102,7 @@ export default function LoginForm() {
             تسجيل الدخول إلى لوحة التحكم
           </h1>
           <p className="text-xs text-muted-foreground sm:text-sm">
-            أدخل البريد الإلكتروني أو رقم الجوال وكلمة المرور للمتابعة
+            أدخل البريد الإلكتروني وكلمة المرور للمتابعة
           </p>
         </div>
       </div>
@@ -130,20 +127,15 @@ export default function LoginForm() {
             htmlFor="identifier"
             className="text-xs font-semibold text-foreground"
           >
-            البريد الإلكتروني أو رقم الجوال
+            البريد الإلكتروني
           </Label>
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3.5 text-muted-foreground">
-              {isPhoneIdentifier ? (
-                <Phone className="size-4" />
-              ) : (
-                <Mail className="size-4" />
-              )}
+              <Mail className="size-4" />
             </div>
             <Input
               id="identifier"
               type="text"
-              placeholder="awad@makfiwamufi.sa أو 0504111307"
               disabled={isPending}
               autoComplete="username"
               aria-invalid={Boolean(errors.identifier)}
@@ -181,7 +173,6 @@ export default function LoginForm() {
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
               disabled={isPending}
               autoComplete="current-password"
               aria-invalid={Boolean(errors.password)}
@@ -227,15 +218,6 @@ export default function LoginForm() {
             />
             <span>تذكر بيانات الدخول</span>
           </label>
-
-          <button
-            type="button"
-            onClick={fillDemoPassword}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50/80 px-2.5 py-1 text-[11px] font-semibold text-primary-900 transition-colors hover:bg-primary-100/80"
-          >
-            <Sparkles className="size-3 text-secondary-500" />
-            <span>بيانات تجريبية</span>
-          </button>
         </div>
 
         <Button

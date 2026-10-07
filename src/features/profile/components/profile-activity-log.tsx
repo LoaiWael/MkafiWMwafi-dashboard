@@ -2,6 +2,13 @@ import { Clock } from "lucide-react";
 import { motion } from "motion/react";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/animations";
 import { Badge } from "@/components/ui/badge";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import type { ProfileActivity } from "@/features/profile/types";
 
 interface ProfileActivityLogProps {
@@ -29,14 +36,31 @@ export default function ProfileActivityLog({ entries }: ProfileActivityLogProps)
             </div>
           </div>
           <Badge variant="outline" className="h-5 px-2 text-[11px] sm:h-6 sm:px-2.5 sm:text-xs">
-            {entries.length} عمليات
+            {entries.length === 0
+              ? "لا توجد عمليات"
+              : entries.length === 1
+                ? "عملية واحدة"
+                : `${entries.length} عمليات`}
           </Badge>
         </div>
 
         {entries.length === 0 ? (
-          <p className="py-6 text-center text-xs text-muted-foreground sm:py-8 sm:text-sm">
-            لا يوجد نشاط مسجل بعد.
-          </p>
+          <Empty className="py-10 sm:py-14 border-0">
+            <EmptyHeader>
+              <EmptyMedia
+                variant="icon"
+                className="size-12 rounded-2xl bg-muted/60 text-muted-foreground"
+              >
+                <Clock className="size-6 text-muted-foreground/80" />
+              </EmptyMedia>
+              <EmptyTitle className="text-sm font-semibold text-foreground sm:text-base">
+                لا يوجد نشاط مسجل بعد
+              </EmptyTitle>
+              <EmptyDescription className="max-w-xs text-xs text-muted-foreground sm:text-sm">
+                سيتم توثيق أي عمليات أو تعديلات جديدة تتم على الحساب هنا تلقائيًا.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <StaggerContainer
             staggerDelay={0.06}

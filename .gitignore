@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# env
+.env*
+!.env.example
+
+# docs
+MakfiwaMufi-Backend.postman_collection.json
