@@ -1,98 +1,177 @@
+import type { ContractType, DurationUnit } from "./types";
+
 export interface PricingPlan {
   id: string;
+  numericId?: number;
+  contractType?: ContractType;
+  contractTypeLabel?: string;
   duration: string;
-  durationUnit: "months" | "years";
+  durationUnit: DurationUnit;
   durationValue: number;
   amount: number;
   isPopular?: boolean;
   notes?: string;
+  sortOrder?: number;
+  isActive?: boolean;
+  yearlyAverage?: number | null;
 }
 
 export const CONTRACT_PRICING_PLANS: readonly PricingPlan[] = [
   {
     id: "3-months",
+    numericId: 1,
+    contractType: "residential",
+    contractTypeLabel: "سكني",
     duration: "3 شهور",
     durationUnit: "months",
     durationValue: 3,
     amount: 249,
+    isPopular: false,
+    sortOrder: 1,
+    isActive: true,
   },
   {
     id: "6-months",
+    numericId: 2,
+    contractType: "residential",
+    contractTypeLabel: "سكني",
     duration: "6 شهور",
     durationUnit: "months",
     durationValue: 6,
     amount: 249,
+    isPopular: false,
+    sortOrder: 2,
+    isActive: true,
   },
   {
     id: "1-year",
+    numericId: 3,
+    contractType: "residential",
+    contractTypeLabel: "سكني",
     duration: "سنة",
     durationUnit: "years",
     durationValue: 1,
     amount: 249,
     isPopular: true,
+    sortOrder: 3,
+    isActive: true,
   },
   {
     id: "2-years",
+    numericId: 4,
+    contractType: "residential",
+    contractTypeLabel: "سكني",
     duration: "سنتين",
     durationUnit: "years",
     durationValue: 2,
     amount: 399,
+    isPopular: false,
+    sortOrder: 4,
+    isActive: true,
   },
   {
     id: "3-years",
+    numericId: 5,
+    contractType: "residential",
+    contractTypeLabel: "سكني",
     duration: "3 سنوات",
     durationUnit: "years",
     durationValue: 3,
     amount: 599,
+    isPopular: false,
+    sortOrder: 5,
+    isActive: true,
   },
   {
     id: "4-years",
+    numericId: 6,
+    contractType: "residential",
+    contractTypeLabel: "سكني",
     duration: "4 سنوات",
     durationUnit: "years",
     durationValue: 4,
     amount: 799,
+    isPopular: false,
+    sortOrder: 6,
+    isActive: true,
   },
   {
     id: "5-years",
+    numericId: 7,
+    contractType: "residential",
+    contractTypeLabel: "سكني",
     duration: "5 سنوات",
     durationUnit: "years",
     durationValue: 5,
     amount: 950,
+    isPopular: false,
+    sortOrder: 7,
+    isActive: true,
   },
   {
     id: "6-years",
+    numericId: 8,
+    contractType: "residential",
+    contractTypeLabel: "سكني",
     duration: "6 سنوات",
     durationUnit: "years",
     durationValue: 6,
     amount: 1199,
+    isPopular: false,
+    sortOrder: 8,
+    isActive: true,
   },
   {
     id: "7-years",
+    numericId: 9,
+    contractType: "residential",
+    contractTypeLabel: "سكني",
     duration: "7 سنوات",
     durationUnit: "years",
     durationValue: 7,
     amount: 1499,
+    isPopular: false,
+    sortOrder: 9,
+    isActive: true,
   },
   {
     id: "8-years",
+    numericId: 10,
+    contractType: "residential",
+    contractTypeLabel: "سكني",
     duration: "8 سنوات",
     durationUnit: "years",
     durationValue: 8,
     amount: 1599,
+    isPopular: false,
+    sortOrder: 10,
+    isActive: true,
   },
   {
     id: "9-years",
+    numericId: 11,
+    contractType: "residential",
+    contractTypeLabel: "سكني",
     duration: "9 سنوات",
     durationUnit: "years",
     durationValue: 9,
     amount: 1699,
+    isPopular: false,
+    sortOrder: 11,
+    isActive: true,
   },
   {
     id: "10-years",
+    numericId: 12,
+    contractType: "residential",
+    contractTypeLabel: "سكني",
     duration: "10 سنوات",
     durationUnit: "years",
     durationValue: 10,
     amount: 1999,
+    isPopular: false,
+    sortOrder: 12,
+    isActive: true,
   },
 ] as const;
 

@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 export const pricingPlanSchema = z.object({
+  contractType: z.enum(["residential", "commercial"], {
+    message: "يرجى اختيار نوع العقد",
+  }),
   duration: z
     .string()
     .trim()
@@ -12,8 +15,8 @@ export const pricingPlanSchema = z.object({
     .string()
     .trim()
     .min(1, "يرجى إدخال القيمة الرقمية للمدة")
-    .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
-      message: "يجب أن تكون القيمة الرقمية أكبر من الصفر",
+    .refine((val) => !isNaN(Number(val)) && Number(val) >= 1, {
+      message: "يجب أن تكون القيمة الرقمية 1 على الأقل",
     }),
   amount: z
     .string()
@@ -22,7 +25,15 @@ export const pricingPlanSchema = z.object({
     .refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
       message: "يجب أن يكون المبلغ رقماً صالحاً وغير سالب",
     }),
+  sortOrder: z
+    .string()
+    .trim()
+    .optional()
+    .refine((val) => !val || (!isNaN(Number(val)) && Number(val) >= 0), {
+      message: "يجب أن يكون الترتيب رقماً غير سالب",
+    }),
   isPopular: z.boolean(),
+  isActive: z.boolean(),
   notes: z.string().optional(),
 });
 
