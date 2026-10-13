@@ -49,6 +49,7 @@ export function MediaPreviewDialog({
   const [rotation, setRotation] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const transformRef = useRef<ReactZoomPanPinchRef>(null);
 
   useEffect(() => {
@@ -86,8 +87,6 @@ export function MediaPreviewDialog({
     /\.(png|jpe?g|webp|gif|svg|bmp)(\?.*)?$/i.test(item.url || "");
   const isPdf =
     item.mimeType?.includes("pdf") || /\.pdf(\?.*)?$/i.test(item.url || "");
-
-  const [isDownloading, setIsDownloading] = useState(false);
 
   async function handleDownload() {
     if (!item?.url || isDownloading) return;
