@@ -86,10 +86,10 @@ export function FilterTabs<T extends string = string>({
   let layoutClasses = "";
   if (layout === "scroll") {
     layoutClasses =
-      "flex overflow-x-auto no-scrollbar scroll-smooth gap-1 sm:gap-1.5 snap-x snap-mandatory touch-pan-x";
+      "flex w-full min-w-0 items-center overflow-x-auto no-scrollbar scroll-smooth gap-1 sm:gap-1.5 snap-x snap-mandatory touch-pan-x overscroll-x-contain";
   } else if (layout === "grid") {
     layoutClasses = cn(
-      "grid gap-1 sm:gap-1.5",
+      "grid w-full min-w-0 gap-1 sm:gap-1.5",
       gridColsClass || "grid-cols-2 md:grid-cols-4",
     );
   } else if (layout === "wrap") {
@@ -97,7 +97,7 @@ export function FilterTabs<T extends string = string>({
   } else {
     // "auto" responsive scroll-on-mobile, grid-on-larger screens
     layoutClasses = cn(
-      "flex overflow-x-auto no-scrollbar scroll-smooth gap-1 sm:gap-1.5 snap-x snap-mandatory touch-pan-x",
+      "flex w-full min-w-0 items-center overflow-x-auto no-scrollbar scroll-smooth gap-1 sm:gap-1.5 snap-x snap-mandatory touch-pan-x overscroll-x-contain",
       gridColsClass
         ? `sm:grid ${gridColsClass}`
         : "sm:grid sm:grid-cols-2 md:grid-cols-4",
@@ -119,6 +119,8 @@ export function FilterTabs<T extends string = string>({
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
+          const isScrollLayout = layout === "scroll" || layout === "auto";
+
           return (
             <button
               key={item.id}
@@ -131,7 +133,8 @@ export function FilterTabs<T extends string = string>({
               disabled={item.disabled}
               onClick={() => handleTabClick(item.id)}
               className={cn(
-                "flex shrink-0 snap-start items-center justify-center gap-1.5 sm:gap-2 rounded-xl px-2.5 py-2 sm:px-3.5 sm:py-2.5 text-[11px] sm:text-xs font-bold transition-all duration-200 cursor-pointer select-none whitespace-nowrap active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed",
+                "flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl px-2.5 py-2 sm:px-3.5 sm:py-2.5 text-[11px] sm:text-xs font-bold transition-all duration-200 cursor-pointer select-none whitespace-nowrap active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed",
+                isScrollLayout ? "shrink-0 min-w-fit snap-start" : "w-full",
                 isActive
                   ? cn(
                       "bg-linear-to-r from-primary-800 via-primary to-primary-400 text-primary-foreground shadow-md shadow-inner-primary hover:brightness-105 ring-1 ring-primary/40",
@@ -145,13 +148,13 @@ export function FilterTabs<T extends string = string>({
               )}
             >
               {Icon && <Icon className="size-3.5 sm:size-4 shrink-0" />}
-              <span>{item.label}</span>
+              <span className="truncate">{item.label}</span>
               {item.count !== undefined && (
                 <span
                   className={cn(
-                    "ms-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-extrabold",
+                    "ms-1 inline-flex shrink-0 items-center justify-center min-w-5 h-5 rounded-full px-1.5 text-[10px] font-extrabold tabular-nums",
                     isActive
-                      ? "bg-white/20 text-white"
+                      ? "bg-white/25 text-white"
                       : "bg-muted-foreground/15 text-muted-foreground",
                   )}
                 >

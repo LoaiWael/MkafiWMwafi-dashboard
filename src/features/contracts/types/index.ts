@@ -1,3 +1,5 @@
+import type { ContractFinancialItemDto } from "./api";
+
 export * from "./api";
 
 export type ContractType = "residential" | "commercial";
@@ -65,6 +67,8 @@ export interface ContractParty {
   verifiedViaNafath: boolean;
   citizenAccountEligible?: boolean;
   socialInsuranceEligible?: boolean;
+  entityType?: string;
+  entityTypeLabel?: string;
 }
 
 export interface ContractProperty {
@@ -80,19 +84,26 @@ export interface ContractProperty {
     | "showroom"
     | "building";
   typeLabel: string;
+  deedType?: string;
   deedNumber: string;
   deedDate: string;
+  hijriDate?: string;
+  gregorianDate?: string;
+  deedImage?: string | null;
   unitNumber: string;
   areaSqm: number;
   roomsCount?: number;
   bathroomsCount?: number;
   floorsCount?: number;
+  floor?: string;
   floorNumber?: number | string;
   furnishingStatus?: "unfurnished" | "semi_furnished" | "fully_furnished";
   furnishingStatusLabel?: string;
   hasElevator?: boolean;
   hasParking?: boolean;
   hasCentralAC?: boolean;
+  regionId?: number;
+  region?: string;
   city: string;
   district: string;
   street: string;
@@ -128,6 +139,7 @@ export interface InstallmentItem {
   statusLabel: string;
   paidDate?: string;
   paymentMethod?: string;
+  paymentReference?: string | null;
 }
 
 export interface ContractFinancials {
@@ -141,6 +153,11 @@ export interface ContractFinancials {
   platformFeeFormatted: string;
   taxAmount: number;
   taxAmountFormatted: string;
+  subtotal?: number;
+  totalAmount?: number;
+  discountAmount?: number;
+  currency?: string;
+  couponCode?: string | null;
   totalPaid: number;
   paymentFrequency: PaymentFrequency;
   paymentFrequencyLabel: string;
@@ -152,6 +169,7 @@ export interface ContractFinancials {
   invoicedAt?: string;
   paidAt?: string;
   installments: InstallmentItem[];
+  items?: ContractFinancialItemDto[];
 }
 
 export interface ContractHistoryLog {
@@ -160,8 +178,22 @@ export interface ContractHistoryLog {
   action: string;
   performedBy: string;
   note?: string;
+  reason?: string;
   previousStatus?: string;
   newStatus?: string;
+}
+
+export interface ContractDocument {
+  id: number;
+  documentType: string;
+  url: string;
+  filePath?: string;
+  fileName: string;
+  mimeType?: string;
+  fileSize?: number;
+  version?: number;
+  uploadedBy?: number;
+  createdAt?: string;
 }
 
 export interface Contract {
@@ -175,9 +207,14 @@ export interface Contract {
   statusLabel: string;
   statusVariant: "default" | "secondary" | "outline" | "destructive" | "ghost";
   statusColorClass: string;
+  stage?: string;
+  stageLabel?: string;
+  isPaid?: boolean;
   startDate: string;
   endDate: string;
   durationMonths: number;
+  durationValue?: number;
+  durationUnit?: string;
   autoRenewal?: boolean;
   createdAt: string;
   updatedAt: string;
@@ -187,6 +224,7 @@ export interface Contract {
   broker?: ContractParty;
   property: ContractProperty;
   financials: ContractFinancials;
+  documents?: ContractDocument[];
   ejar: EjarIntegrationInfo;
   termsAndConditions: string[];
   customTerms?: string[];

@@ -204,7 +204,12 @@ function mapParty(
 
   const isCompany =
     partyDto.entityType === "company" ||
+    partyDto.entityType === "منشأة" ||
     Boolean(partyDto.crNumber || partyDto.unifiedNumber);
+
+  const entityType = partyDto.entityType || (isCompany ? "company" : "individual");
+  const entityTypeLabel =
+    entityType === "company" || entityType === "منشأة" ? "منشأة" : "فرد";
 
   return {
     name:
@@ -235,6 +240,8 @@ function mapParty(
     verifiedViaNafath: partyDto.verifiedViaNafath ?? true,
     citizenAccountEligible: role === "lessee",
     socialInsuranceEligible: role === "lessee",
+    entityType,
+    entityTypeLabel,
   };
 }
 
@@ -298,13 +305,18 @@ export function mapContractDtoToViewModel(dto: ContractResourceDto): Contract {
               : "office") as any,
     typeLabel:
       unit?.unitType || (type === "residential" ? "شقة سكنية" : "مكتب تجاري"),
+    deedType: prop?.deedType,
     deedNumber: prop?.deedNumber || "—",
     deedDate: prop?.gregorianDate || prop?.hijriDate || "—",
+    hijriDate: prop?.hijriDate,
+    gregorianDate: prop?.gregorianDate,
+    deedImage: prop?.deedImage,
     unitNumber: unit?.unitNumber ? `وحدة رقم ${unit.unitNumber}` : "—",
     areaSqm: Number(unit?.area) || 0,
     roomsCount: unit?.roomsCount,
     bathroomsCount: unit?.bathroomsCount,
     floorsCount: unit?.floorsCount,
+    floor: unit?.floor,
     floorNumber: unit?.floor || "—",
     furnishingStatus: (unit?.furnishingStatus as any) || "unfurnished",
     furnishingStatusLabel:
@@ -314,6 +326,8 @@ export function mapContractDtoToViewModel(dto: ContractResourceDto): Contract {
     hasElevator: unit?.hasElevator ?? false,
     hasParking: unit?.hasParking ?? false,
     hasCentralAC: unit?.hasCentralAC ?? false,
+    regionId: prop?.regionId,
+    region: prop?.region,
     city: prop?.city || "—",
     district: prop?.district || "—",
     street: prop?.street || "—",
@@ -340,11 +354,17 @@ export function mapContractDtoToViewModel(dto: ContractResourceDto): Contract {
   const securityDeposit = 0;
 
   const isPaid =
+    Boolean(dto.isPaid) ||
     status === "certified" ||
     Boolean(
       dto.payments &&
       dto.payments.length > 0 &&
-      dto.payments.some((p) => p.status === "paid"),
+      dto.payments.some(
+        (p) =>
+          p.status === "paid" ||
+          (typeof p.status === "string" && p.status.includes("مدفوع")) ||
+          Boolean(p.paidAt),
+      ),
     );
 
   const paymentStatus: PaymentStatus = isPaid ? "paid" : "unpaid";
@@ -352,17 +372,32 @@ export function mapContractDtoToViewModel(dto: ContractResourceDto): Contract {
 
   const installments: InstallmentItem[] =
     dto.payments && dto.payments.length > 0
-      ? dto.payments.map((p, idx) => ({
-          id: String(p.id || `inst-${idx + 1}`),
-          number: p.number || idx + 1,
-          dueDate: p.dueDate || "—",
-          amount: Number(p.amount) || rentalAmount,
-          amountFormatted: `${Number(p.amount || rentalAmount).toLocaleString("en-US")} ر.س`,
-          status: p.status === "paid" ? "paid" : "pending",
-          statusLabel: p.status === "paid" ? "تم السداد" : "بانتظار السداد",
-          paidDate: p.paidDate,
-          paymentMethod: p.paymentMethod,
-        }))
+      ? dto.payments.map((p, idx) => {
+          const isInstallmentPaid =
+            p.status === "paid" ||
+            (typeof p.status === "string" && p.status.includes("مدفوع")) ||
+            Boolean(p.paidAt || p.paidDate);
+
+          const statusLabel =
+            p.status === "paid"
+              ? "تم السداد"
+              : p.status === "قيد الانتظار"
+                ? "قيد الانتظار"
+                : p.status || (isInstallmentPaid ? "تم السداد" : "بانتظار السداد");
+
+          return {
+            id: String(p.id || `inst-${idx + 1}`),
+            number: p.installmentNumber || p.number || idx + 1,
+            dueDate: p.dueDate || "—",
+            amount: Number(p.amount) || rentalAmount,
+            amountFormatted: `${Number(p.amount || rentalAmount).toLocaleString("en-US")} ر.س`,
+            status: isInstallmentPaid ? ("paid" as const) : ("pending" as const),
+            statusLabel,
+            paidDate: p.paidAt ? p.paidAt.slice(0, 10) : p.paidDate,
+            paymentMethod: p.paymentMethod,
+            paymentReference: p.paymentReference || undefined,
+          };
+        })
       : rentalAmount > 0
         ? [
             {
@@ -379,6 +414,12 @@ export function mapContractDtoToViewModel(dto: ContractResourceDto): Contract {
           ]
         : [];
 
+  const subtotal = Number(dto.financial?.subtotal || platformFee);
+  const totalAmount = Number(
+    dto.financial?.totalAmount || platformFee + taxAmount,
+  );
+  const discountAmount = Number(dto.financial?.discountAmount || 0);
+
   const financials: ContractFinancials = {
     rentalAmount,
     rentalAmountFormatted: `${rentalAmount.toLocaleString("en-US")} ر.س`,
@@ -388,7 +429,12 @@ export function mapContractDtoToViewModel(dto: ContractResourceDto): Contract {
     platformFeeFormatted: `${platformFee.toLocaleString("en-US")} ر.س`,
     taxAmount,
     taxAmountFormatted: `${taxAmount.toLocaleString("en-US")} ر.س`,
-    totalPaid: isPaid ? platformFee + taxAmount : 0,
+    subtotal,
+    totalAmount,
+    discountAmount,
+    currency: dto.financial?.currency || "SAR",
+    couponCode: dto.financial?.couponCode || dto.financial?.coupon?.code,
+    totalPaid: isPaid ? totalAmount : 0,
     paymentFrequency,
     paymentFrequencyLabel,
     paymentStatus,
@@ -398,6 +444,7 @@ export function mapContractDtoToViewModel(dto: ContractResourceDto): Contract {
     transactionId: undefined,
     paidAt: isPaid ? dto.createdAt : undefined,
     installments,
+    items: dto.financial?.items || [],
   };
 
   // Ejar integration info
@@ -446,13 +493,34 @@ export function mapContractDtoToViewModel(dto: ContractResourceDto): Contract {
   // History logs
   const historyLogs: ContractHistoryLog[] =
     dto.statusHistory && dto.statusHistory.length > 0
-      ? dto.statusHistory.map((h, i) => ({
-          id: String(h.id || `log-${i}`),
-          timestamp: h.createdAt || dto.createdAt || "—",
-          action: h.status ? `تحديث الحالة إلى ${h.status}` : "تحديث سجل العقد",
-          performedBy: h.createdByName || "النظام الآلي",
-          note: h.notes,
-        }))
+      ? dto.statusHistory.map((h, i) => {
+          const action =
+            h.fromStatus && h.toStatus
+              ? `تغيير الحالة من "${h.fromStatus}" إلى "${h.toStatus}"`
+              : h.status
+                ? `تحديث الحالة إلى ${h.status}`
+                : h.reason === "submitted"
+                  ? "تقديم طلب العقد وتحديث الحالة"
+                  : "تحديث سجل العقد";
+
+          const reasonLabel =
+            h.reason === "submitted"
+              ? "تقديم وإرسال الطلب"
+              : h.reason || undefined;
+
+          return {
+            id: String(h.id || `log-${i}`),
+            timestamp: h.createdAt || dto.createdAt || "—",
+            action,
+            performedBy:
+              h.createdByName ||
+              (h.changedBy != null ? `المستخدم #${h.changedBy}` : "النظام الآلي"),
+            note: h.notes || (reasonLabel ? `السبب: ${reasonLabel}` : undefined),
+            reason: reasonLabel,
+            previousStatus: h.fromStatus,
+            newStatus: h.toStatus || h.status,
+          };
+        })
       : [
           {
             id: `log-init-${dto.id}`,
@@ -526,9 +594,14 @@ export function mapContractDtoToViewModel(dto: ContractResourceDto): Contract {
     statusLabel,
     statusVariant,
     statusColorClass,
+    stage: dto.stage,
+    stageLabel: dto.stageLabel,
+    isPaid: Boolean(dto.isPaid),
     startDate: dto.terms?.startDate || dto.createdAt?.slice(0, 10) || "—",
     endDate: dto.terms?.endDate || "—",
     durationMonths,
+    durationValue: dto.terms?.durationValue,
+    durationUnit: dto.terms?.durationUnit,
     autoRenewal: dto.terms?.autoRenewal ?? false,
     createdAt: dto.createdAt || new Date().toISOString(),
     updatedAt: dto.updatedAt || new Date().toISOString(),
@@ -538,6 +611,32 @@ export function mapContractDtoToViewModel(dto: ContractResourceDto): Contract {
     broker,
     property,
     financials,
+    documents: (dto.documents && dto.documents.length > 0)
+      ? dto.documents.map((doc, idx) => ({
+          id: doc.id ?? idx + 1,
+          documentType: doc.documentType || "صك",
+          url: doc.url || "",
+          filePath: doc.filePath,
+          fileName: doc.fileName || `مستند-${doc.id ?? idx + 1}`,
+          mimeType: doc.mimeType || "image/png",
+          fileSize: typeof doc.fileSize === "number" ? doc.fileSize : undefined,
+          version: doc.version ?? 1,
+          uploadedBy: doc.uploadedBy,
+          createdAt: doc.createdAt,
+        }))
+      : dto.property?.property?.deedImage
+        ? [
+            {
+              id: 1,
+              documentType: "صك",
+              url: dto.property.property.deedImage,
+              fileName: "صورة صك الملكية",
+              mimeType: "image/jpeg",
+              version: 1,
+              createdAt: dto.createdAt,
+            },
+          ]
+        : [],
     ejar,
     termsAndConditions: [
       "يلتزم المستأجر بسداد القيمة الإيجارية في المواعيد المحددة بالعقد دون تأخير.",

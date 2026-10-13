@@ -100,6 +100,7 @@ export interface ContractPropertyResourceDto {
     deedNumber?: string;
     hijriDate?: string;
     gregorianDate?: string;
+    deedImage?: string | null;
     regionId?: number;
     region?: string;
     cityId?: number;
@@ -152,7 +153,20 @@ export interface ContractTermsResourceDto {
   autoRenewal?: boolean;
 }
 
+export interface ContractFinancialItemDto {
+  id?: number;
+  type?: string;
+  name?: string;
+  amount?: string | number;
+  quantity?: number;
+  taxRate?: string | number | null;
+  taxAmount?: string | number;
+  total?: string | number;
+  metadata?: Record<string, unknown>;
+}
+
 export interface ContractFinancialQuoteDto {
+  id?: number;
   annualRent?: string | number;
   documentationFee?: {
     amount: string | number;
@@ -169,11 +183,14 @@ export interface ContractFinancialQuoteDto {
   isLocked?: boolean;
   pricingPlanId?: number;
   couponId?: number | null;
+  couponCode?: string | null;
   serviceFeeNet?: string | number;
   taxAmount?: string | number;
   discountAmount?: string | number;
   subtotal?: string | number;
   totalAmount?: string | number;
+  items?: ContractFinancialItemDto[];
+  calculationSnapshot?: Record<string, unknown>;
 }
 
 export interface ContractPaymentResourceDto {
@@ -193,6 +210,7 @@ export interface ContractPaymentResourceDto {
 export interface ContractDocumentResourceDto {
   id?: number;
   documentType?: string;
+  url?: string;
   filePath?: string;
   fileName?: string;
   mimeType?: string;
@@ -204,9 +222,13 @@ export interface ContractDocumentResourceDto {
 
 export interface ContractStatusHistoryDto {
   id?: number | string;
+  fromStatus?: string;
+  toStatus?: string;
   status?: string;
-  notes?: string;
+  reason?: string;
+  notes?: string | null;
   createdBy?: number | string;
+  changedBy?: number | string;
   createdByName?: string;
   createdAt?: string;
 }
@@ -217,6 +239,9 @@ export interface ContractResourceDto {
   contractNumber: string;
   contractType: string;
   status: string;
+  stage?: string;
+  stageLabel?: string;
+  isPaid?: boolean;
   ejarNumber?: string | null;
   ejarContractNumber?: string | null;
   createdBy?: number;

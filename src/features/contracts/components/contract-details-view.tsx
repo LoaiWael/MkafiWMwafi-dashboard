@@ -7,6 +7,8 @@ import {
   CheckCircle2,
   Clock,
   CreditCard,
+  Download,
+  Eye,
   FileCheck2,
   FilePlus2,
   FileText,
@@ -15,12 +17,13 @@ import {
   Layers,
   Mail,
   MapPin,
+  Paperclip,
   Phone,
+  Receipt,
   RefreshCw,
   SaudiRiyal,
   Shield,
   ShieldAlert,
-  Sparkles,
   Store,
   User,
   UserCheck,
@@ -55,6 +58,10 @@ import type {
   PaymentMethod,
   PaymentStatus,
 } from "../types";
+import {
+  MediaPreviewDialog,
+  type MediaPreviewItem,
+} from "@/components/ui/media-preview-dialog";
 import UpdateContractStatusDialog from "./update-contract-status-dialog";
 import UpdatePaymentStatusDialog from "./update-payment-status-dialog";
 
@@ -76,6 +83,7 @@ const CONTRACT_DETAILS_TABS = [
   "property",
   "financials",
   "terms",
+  "documents",
   "history",
 ] as const;
 
@@ -107,6 +115,7 @@ export default function ContractDetailsView({
   // Dialog states
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<MediaPreviewItem | null>(null);
 
   if (isLoading) {
     return <ContractDetailsPageSkeleton />;
@@ -227,11 +236,11 @@ export default function ContractDetailsView({
     const updatedInstallments = contract.financials.installments.map((inst) =>
       isPaid
         ? {
-            ...inst,
-            status: "paid" as const,
-            statusLabel: "تم السداد",
-            paidDate: new Date().toISOString().slice(0, 10),
-          }
+          ...inst,
+          status: "paid" as const,
+          statusLabel: "تم السداد",
+          paidDate: new Date().toISOString().slice(0, 10),
+        }
         : inst,
     );
 
@@ -275,6 +284,12 @@ export default function ContractDetailsView({
     { id: "property", label: "العقار والوحدة", icon: Building2 },
     { id: "financials", label: "المالية والدفعات", icon: CreditCard },
     { id: "terms", label: "البنود والشروط", icon: FileCheck2 },
+    {
+      id: "documents",
+      label: "الصك والوثائق",
+      icon: Paperclip,
+      count: contract.documents?.length || 0,
+    },
     {
       id: "history",
       label: "سجل العمليات",
@@ -398,6 +413,15 @@ export default function ContractDetailsView({
               <span className="size-1.5 sm:size-2 rounded-full bg-current" />
               <span>حالة العقد: {contract.statusLabel}</span>
             </Badge>
+
+            {contract.stageLabel && (
+              <Badge
+                variant="outline"
+                className="border-primary-200 bg-primary-50 text-primary-800 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300 px-2 sm:px-3 py-1 text-[11px] sm:text-xs font-semibold shadow-2xs"
+              >
+                <span>المرحلة: {contract.stageLabel}</span>
+              </Badge>
+            )}
 
             <Badge
               variant="outline"
@@ -671,7 +695,9 @@ export default function ContractDetailsView({
             items={tabsList}
             value={activeTab}
             onValueChange={setActiveTab}
-            gridColsClass="sm:grid-cols-3 lg:grid-cols-6"
+            layout="scroll"
+            className="w-full"
+            navClassName="w-full"
             ariaLabel="تبويبات تفاصيل العقد"
             idPrefix="contract-details-tab"
           />
@@ -723,7 +749,7 @@ export default function ContractDetailsView({
 
                     <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
                       <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
-                        رقم الصك الإلكتروني:
+                        {contract.property.deedType ? `رقم الصك (${contract.property.deedType}):` : "رقم الصك الإلكتروني:"}
                       </span>
                       <div className="flex items-center gap-1 font-mono font-semibold text-foreground text-[11px] sm:text-xs">
                         <span>{contract.property.deedNumber}</span>
@@ -732,6 +758,17 @@ export default function ContractDetailsView({
                           label="نسخ"
                         />
                       </div>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
+                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
+                        تاريخ الصك:
+                      </span>
+                      <span className="font-semibold text-foreground text-[11px] sm:text-xs text-end">
+                        {contract.property.hijriDate ? `${contract.property.hijriDate} هـ` : ""}
+                        {contract.property.gregorianDate ? ` (${contract.property.gregorianDate} م)` : ""}
+                        {!contract.property.hijriDate && !contract.property.gregorianDate && (contract.property.deedDate || "—")}
+                      </span>
                     </div>
 
                     <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
@@ -748,16 +785,16 @@ export default function ContractDetailsView({
                         تاريخ نهاية العقد:
                       </span>
                       <span className="font-semibold text-foreground text-[11px] sm:text-xs">
-                        {contract.endDate}
+                        {contract.endDate !== "—" ? contract.endDate : "يحسب بنهاية المدة"}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
                       <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
-                        المدة المحسوبة:
+                        المدة المعتمدة:
                       </span>
                       <span className="font-semibold text-foreground text-[11px] sm:text-xs">
-                        {contract.durationMonths} شهر
+                        {contract.durationValue || 1} {contract.durationUnit || "سنوات"} ({contract.durationMonths} شهر)
                       </span>
                     </div>
 
@@ -769,6 +806,31 @@ export default function ContractDetailsView({
                         {contract.autoRenewal ? "مفعل" : "غير مفعل"}
                       </span>
                     </div>
+
+                    {Boolean(contract.documents && contract.documents.length > 0) && (
+                      <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
+                        <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
+                          وثائق الملكية المرفقة:
+                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                          <span className="font-semibold text-primary text-[11px] sm:text-xs">
+                            {contract.documents?.length} مستندات ({contract.documents?.[0]?.documentType || "صك"})
+                          </span>
+                          {contract.documents?.[0]?.url && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setPreviewDoc(contract.documents![0])}
+                              className="h-6 px-2 text-[10px] font-bold text-primary hover:bg-primary-50 dark:hover:bg-primary-950 rounded-lg cursor-pointer inline-flex items-center gap-1"
+                            >
+                              <Eye className="size-3" />
+                              <span>معاينة الصك</span>
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -802,10 +864,19 @@ export default function ContractDetailsView({
 
                     <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
                       <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
+                        الدور / الطابق:
+                      </span>
+                      <span className="font-semibold text-foreground text-[11px] sm:text-xs">
+                        {contract.property.floor || contract.property.floorNumber || "—"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
+                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
                         الموقع:
                       </span>
                       <span className="font-semibold text-foreground text-end text-[11px] sm:text-xs truncate">
-                        {contract.property.city} — {contract.property.district}
+                        {contract.property.region ? `${contract.property.region} — ` : ""}{contract.property.city} — {contract.property.district}
                       </span>
                     </div>
 
@@ -885,12 +956,22 @@ export default function ContractDetailsView({
                         </p>
                       </div>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className="border-border bg-muted/60 text-foreground text-[10px] sm:text-xs font-medium px-2 sm:px-2.5 py-0.5 shrink-0"
-                    >
-                      {contract.lessor.idTypeLabel}
-                    </Badge>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {contract.lessor.entityTypeLabel && (
+                        <Badge
+                          variant="outline"
+                          className="border-primary-200 bg-primary-50 text-primary-800 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300 text-[10px] sm:text-xs font-semibold px-2 py-0.5"
+                        >
+                          {contract.lessor.entityTypeLabel}
+                        </Badge>
+                      )}
+                      <Badge
+                        variant="outline"
+                        className="border-border bg-muted/60 text-foreground text-[10px] sm:text-xs font-medium px-2 sm:px-2.5 py-0.5"
+                      >
+                        {contract.lessor.idTypeLabel}
+                      </Badge>
+                    </div>
                   </div>
 
                   <div className="space-y-3 text-xs">
@@ -929,20 +1010,31 @@ export default function ContractDetailsView({
                           />
                         </div>
                       </div>
-                    </div>
 
-                    <div>
-                      <span className="block text-[11px] text-muted-foreground">
-                        البريد الإلكتروني:
-                      </span>
-                      <div className="flex items-center gap-1 font-medium text-foreground text-xs min-w-0">
-                        <span className="truncate">
-                          {contract.lessor.email}
+                      {contract.lessor.birthDate && (
+                        <div>
+                          <span className="block text-[11px] text-muted-foreground">
+                            تاريخ الميلاد:
+                          </span>
+                          <span className="font-mono font-medium text-foreground text-xs" dir="ltr">
+                            {contract.lessor.birthDate}
+                          </span>
+                        </div>
+                      )}
+
+                      <div>
+                        <span className="block text-[11px] text-muted-foreground">
+                          البريد الإلكتروني:
                         </span>
-                        <CopyButton
-                          value={contract.lessor.email}
-                          label="نسخ البريد"
-                        />
+                        <div className="flex items-center gap-1 font-medium text-foreground text-xs min-w-0">
+                          <span className="truncate">
+                            {contract.lessor.email}
+                          </span>
+                          <CopyButton
+                            value={contract.lessor.email}
+                            label="نسخ البريد"
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -985,12 +1077,22 @@ export default function ContractDetailsView({
                         </p>
                       </div>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className="border-border bg-muted/60 text-foreground text-[10px] sm:text-xs font-medium px-2 sm:px-2.5 py-0.5 shrink-0"
-                    >
-                      {contract.lessee.idTypeLabel}
-                    </Badge>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {contract.lessee.entityTypeLabel && (
+                        <Badge
+                          variant="outline"
+                          className="border-secondary-200 bg-secondary-50 text-secondary-800 dark:border-secondary-800 dark:bg-secondary-950 dark:text-secondary-300 text-[10px] sm:text-xs font-semibold px-2 py-0.5"
+                        >
+                          {contract.lessee.entityTypeLabel}
+                        </Badge>
+                      )}
+                      <Badge
+                        variant="outline"
+                        className="border-border bg-muted/60 text-foreground text-[10px] sm:text-xs font-medium px-2 sm:px-2.5 py-0.5"
+                      >
+                        {contract.lessee.idTypeLabel}
+                      </Badge>
+                    </div>
                   </div>
 
                   <div className="space-y-3 text-xs">
@@ -1026,6 +1128,32 @@ export default function ContractDetailsView({
                           <CopyButton
                             value={contract.lessee.phone}
                             label="نسخ"
+                          />
+                        </div>
+                      </div>
+
+                      {contract.lessee.birthDate && (
+                        <div>
+                          <span className="block text-[11px] text-muted-foreground">
+                            تاريخ الميلاد:
+                          </span>
+                          <span className="font-mono font-medium text-foreground text-xs" dir="ltr">
+                            {contract.lessee.birthDate}
+                          </span>
+                        </div>
+                      )}
+
+                      <div>
+                        <span className="block text-[11px] text-muted-foreground">
+                          البريد الإلكتروني:
+                        </span>
+                        <div className="flex items-center gap-1 font-medium text-foreground text-xs min-w-0">
+                          <span className="truncate">
+                            {contract.lessee.email}
+                          </span>
+                          <CopyButton
+                            value={contract.lessee.email}
+                            label="نسخ البريد"
                           />
                         </div>
                       </div>
@@ -1149,6 +1277,15 @@ export default function ContractDetailsView({
 
                     <div className="rounded-xl sm:rounded-2xl border border-border/80 bg-muted/20 p-2.5 sm:p-3 space-y-1">
                       <span className="text-[10px] sm:text-[11px] text-muted-foreground">
+                        الدور / الطابق:
+                      </span>
+                      <div className="font-bold text-foreground text-xs sm:text-sm truncate">
+                        {contract.property.floor || contract.property.floorNumber || "الأرضي"}
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl sm:rounded-2xl border border-border/80 bg-muted/20 p-2.5 sm:p-3 space-y-1">
+                      <span className="text-[10px] sm:text-[11px] text-muted-foreground">
                         المساحة الإجمالية:
                       </span>
                       <div className="font-bold text-foreground text-xs sm:text-sm">
@@ -1192,41 +1329,41 @@ export default function ContractDetailsView({
                   {(contract.property.hasElevator ||
                     contract.property.hasParking ||
                     contract.property.hasCentralAC) && (
-                    <div className="space-y-2 pt-1 sm:pt-2">
-                      <span className="block text-[11px] sm:text-xs font-semibold text-foreground">
-                        المرافق والتجهيزات المشمولة:
-                      </span>
-                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                        {contract.property.hasElevator && (
-                          <Badge
-                            variant="outline"
-                            className="gap-1 border-border bg-muted/60 text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1"
-                          >
-                            <CheckCircle2 className="size-3 text-emerald-600 shrink-0" />
-                            <span>مصعد كهربائي</span>
-                          </Badge>
-                        )}
-                        {contract.property.hasParking && (
-                          <Badge
-                            variant="outline"
-                            className="gap-1 border-border bg-muted/60 text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1"
-                          >
-                            <CheckCircle2 className="size-3 text-emerald-600 shrink-0" />
-                            <span>موقف سيارة مخصص</span>
-                          </Badge>
-                        )}
-                        {contract.property.hasCentralAC && (
-                          <Badge
-                            variant="outline"
-                            className="gap-1 border-border bg-muted/60 text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1"
-                          >
-                            <CheckCircle2 className="size-3 text-emerald-600 shrink-0" />
-                            <span>تكييف مركزي</span>
-                          </Badge>
-                        )}
+                      <div className="space-y-2 pt-1 sm:pt-2">
+                        <span className="block text-[11px] sm:text-xs font-semibold text-foreground">
+                          المرافق والتجهيزات المشمولة:
+                        </span>
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                          {contract.property.hasElevator && (
+                            <Badge
+                              variant="outline"
+                              className="gap-1 border-border bg-muted/60 text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1"
+                            >
+                              <CheckCircle2 className="size-3 text-emerald-600 shrink-0" />
+                              <span>مصعد كهربائي</span>
+                            </Badge>
+                          )}
+                          {contract.property.hasParking && (
+                            <Badge
+                              variant="outline"
+                              className="gap-1 border-border bg-muted/60 text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1"
+                            >
+                              <CheckCircle2 className="size-3 text-emerald-600 shrink-0" />
+                              <span>موقف سيارة مخصص</span>
+                            </Badge>
+                          )}
+                          {contract.property.hasCentralAC && (
+                            <Badge
+                              variant="outline"
+                              className="gap-1 border-border bg-muted/60 text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1"
+                            >
+                              <CheckCircle2 className="size-3 text-emerald-600 shrink-0" />
+                              <span>تكييف مركزي</span>
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
 
                 {/* National Address & Meters Card */}
@@ -1234,12 +1371,52 @@ export default function ContractDetailsView({
                   <div className="flex items-center gap-2 border-b border-border/60 pb-3">
                     <MapPin className="size-4 text-secondary shrink-0" />
                     <h3 className="font-bold text-foreground text-sm sm:text-base">
-                      العنوان الوطني والعدادات
+                      العنوان الوطني والبيانات العقارية
                     </h3>
                   </div>
 
                   {/* National address grid */}
                   <div className="space-y-2 text-xs">
+                    {contract.property.region && (
+                      <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5">
+                        <span className="text-[11px] sm:text-xs text-muted-foreground shrink-0">
+                          المنطقة الإدارية:
+                        </span>
+                        <span className="font-semibold text-foreground text-end text-[11px] sm:text-xs truncate">
+                          {contract.property.region}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5">
+                      <span className="text-[11px] sm:text-xs text-muted-foreground shrink-0">
+                        وثيقة الملكية / الصك:
+                      </span>
+                      <div className="flex items-center gap-1.5 text-[11px] sm:text-xs">
+                        {contract.property.deedType && (
+                          <Badge variant="outline" className="border-secondary-200 bg-secondary-50 text-secondary-800 dark:border-secondary-800 dark:bg-secondary-950 dark:text-secondary-300 text-[10px] px-2 py-0.5 font-semibold">
+                            {contract.property.deedType}
+                          </Badge>
+                        )}
+                        <span className="font-mono font-semibold text-foreground">
+                          {contract.property.deedNumber}
+                        </span>
+                        <CopyButton value={contract.property.deedNumber} label="نسخ رقم الصك" />
+                      </div>
+                    </div>
+
+                    {(contract.property.hijriDate || contract.property.gregorianDate) && (
+                      <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5">
+                        <span className="text-[11px] sm:text-xs text-muted-foreground shrink-0">
+                          تاريخ الصك:
+                        </span>
+                        <span className="font-semibold text-foreground text-[11px] sm:text-xs text-end">
+                          {contract.property.hijriDate ? `${contract.property.hijriDate} هـ` : ""}
+                          {contract.property.gregorianDate ? ` (${contract.property.gregorianDate} م)` : ""}
+                        </span>
+                      </div>
+                    )}
+
                     <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5">
                       <span className="text-[11px] sm:text-xs text-muted-foreground shrink-0">
                         المدينة والحي:
@@ -1291,52 +1468,147 @@ export default function ContractDetailsView({
                   {/* Meters info if present */}
                   {(contract.property.electricityMeterNumber ||
                     contract.property.waterMeterNumber) && (
-                    <div className="space-y-2 pt-2 border-t border-border/60">
-                      <span className="block text-[11px] sm:text-xs font-semibold text-foreground">
-                        أرقام حسابات العدادات الملحقة:
-                      </span>
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 text-xs">
-                        {contract.property.electricityMeterNumber && (
-                          <div className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-2 sm:p-2.5">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <Zap className="size-3.5 text-amber-500 shrink-0" />
-                              <span className="text-[11px] sm:text-xs text-muted-foreground truncate">
-                                عداد الكهرباء:
-                              </span>
+                      <div className="space-y-2 pt-2 border-t border-border/60">
+                        <span className="block text-[11px] sm:text-xs font-semibold text-foreground">
+                          أرقام حسابات العدادات الملحقة:
+                        </span>
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 text-xs">
+                          {contract.property.electricityMeterNumber && (
+                            <div className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-2 sm:p-2.5">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <Zap className="size-3.5 text-amber-500 shrink-0" />
+                                <span className="text-[11px] sm:text-xs text-muted-foreground truncate">
+                                  عداد الكهرباء:
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1 font-mono font-semibold text-foreground text-xs shrink-0">
+                                <span>
+                                  {contract.property.electricityMeterNumber}
+                                </span>
+                                <CopyButton
+                                  value={contract.property.electricityMeterNumber}
+                                  label="نسخ"
+                                />
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1 font-mono font-semibold text-foreground text-xs shrink-0">
-                              <span>
-                                {contract.property.electricityMeterNumber}
-                              </span>
-                              <CopyButton
-                                value={contract.property.electricityMeterNumber}
-                                label="نسخ"
-                              />
-                            </div>
-                          </div>
-                        )}
+                          )}
 
-                        {contract.property.waterMeterNumber && (
-                          <div className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-2 sm:p-2.5">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <DropletsIcon className="size-3.5 text-cyan-500 shrink-0" />
-                              <span className="text-[11px] sm:text-xs text-muted-foreground truncate">
-                                عداد المياه:
-                              </span>
+                          {contract.property.waterMeterNumber && (
+                            <div className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-2 sm:p-2.5">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <DropletsIcon className="size-3.5 text-cyan-500 shrink-0" />
+                                <span className="text-[11px] sm:text-xs text-muted-foreground truncate">
+                                  عداد المياه:
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1 font-mono font-semibold text-foreground text-xs shrink-0">
+                                <span>{contract.property.waterMeterNumber}</span>
+                                <CopyButton
+                                  value={contract.property.waterMeterNumber}
+                                  label="نسخ"
+                                />
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1 font-mono font-semibold text-foreground text-xs shrink-0">
-                              <span>{contract.property.waterMeterNumber}</span>
-                              <CopyButton
-                                value={contract.property.waterMeterNumber}
-                                label="نسخ"
-                              />
-                            </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
+
+                {/* Documents & Deeds Attachment Card in Property Tab */}
+                {Boolean(contract.documents && contract.documents.length > 0) && (
+                  <div className="col-span-1 lg:col-span-2 rounded-2xl sm:rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-xs space-y-3.5 sm:space-y-4">
+                    <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                      <div className="flex items-center gap-2">
+                        <Paperclip className="size-4 text-primary shrink-0" />
+                        <h3 className="font-bold text-foreground text-sm sm:text-base">
+                          وثائق الملكية والصكوك المرفقة بالعقار
+                        </h3>
+                      </div>
+                      <Badge variant="outline" className="border-border bg-muted/60 text-foreground text-[10px] sm:text-xs font-semibold px-2.5 py-0.5">
+                        {contract.documents?.length} مستندات مرفقة
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {contract.documents?.map((doc) => {
+                        const isImage = doc.mimeType?.startsWith("image");
+                        return (
+                          <div
+                            key={doc.id}
+                            className="flex flex-col justify-between rounded-xl sm:rounded-2xl border border-border bg-muted/20 p-3 sm:p-4 hover:border-border/80 transition-all space-y-3"
+                          >
+                            <div className="flex items-start gap-3">
+                              {isImage && doc.url ? (
+                                <div
+                                  onClick={() => setPreviewDoc(doc)}
+                                  className="size-12 shrink-0 overflow-hidden rounded-xl border border-border bg-card cursor-pointer hover:opacity-85 transition-opacity"
+                                  title="انقر للمعاينة"
+                                >
+                                  <img
+                                    src={doc.url}
+                                    alt={doc.fileName || "مستند الصك"}
+                                    className="size-full object-cover"
+                                  />
+                                </div>
+                              ) : (
+                                <div
+                                  onClick={() => setPreviewDoc(doc)}
+                                  className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400 cursor-pointer hover:opacity-85 transition-opacity"
+                                  title="انقر للمعاينة"
+                                >
+                                  <FileText className="size-6" />
+                                </div>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <Badge
+                                    variant="outline"
+                                    className="border-primary-200 bg-primary-50 text-primary-800 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300 text-[10px] font-bold px-1.5 py-0.5"
+                                  >
+                                    {doc.documentType || "صك"}
+                                  </Badge>
+                                  <span className="text-[10px] text-muted-foreground font-mono">
+                                    نسخة #{doc.version || 1}
+                                  </span>
+                                </div>
+                                <p className="text-xs font-semibold text-foreground truncate mt-1" title={doc.fileName}>
+                                  {doc.fileName || `مستند #${doc.id}`}
+                                </p>
+                                <p className="text-[10px] text-muted-foreground mt-0.5">
+                                  {formatFileSize(doc.fileSize)} • {doc.createdAt ? doc.createdAt.slice(0, 10) : "—"}
+                                </p>
+                              </div>
+                            </div>
+
+                            {doc.url && (
+                              <div className="flex items-center gap-2 pt-1 border-t border-border/40">
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewDoc(doc)}
+                                  className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border border-border bg-card py-1.5 px-2.5 text-[11px] font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer"
+                                >
+                                  <Eye className="size-3.5 text-primary" />
+                                  <span>معاينة</span>
+                                </button>
+                                <a
+                                  href={doc.url}
+                                  download={doc.fileName || `document-${doc.id}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center justify-center gap-1 rounded-lg border border-border bg-card py-1.5 px-2 text-[11px] font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer"
+                                  title="تحميل الملف"
+                                >
+                                  <Download className="size-3.5 text-muted-foreground" />
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </FadeIn>
           )}
@@ -1409,6 +1681,81 @@ export default function ContractDetailsView({
                 </div>
               </div>
 
+              {/* Financial Invoice Breakdown Table */}
+              {Boolean(contract.financials.items && contract.financials.items.length > 0) && (
+                <div className="rounded-2xl sm:rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-xs space-y-3.5 sm:space-y-4">
+                  <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                    <div className="flex items-center gap-2">
+                      <Receipt className="size-4 text-emerald-600 shrink-0" />
+                      <h3 className="font-bold text-foreground text-sm sm:text-base">
+                        تفاصيل فاتورة الرسوم والخدمات الإدارية
+                      </h3>
+                    </div>
+                    <Badge variant="outline" className="border-border bg-muted/60 text-foreground text-[10px] sm:text-xs font-semibold px-2.5 py-0.5">
+                      {contract.financials.items?.length} بنود مفصلة
+                    </Badge>
+                  </div>
+
+                  <div className="overflow-x-auto rounded-2xl border border-border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/40 text-xs">
+                          <TableHead className="text-start font-bold">البند / البيان</TableHead>
+                          <TableHead className="text-center font-bold">النوع</TableHead>
+                          <TableHead className="text-center font-bold">الكمية</TableHead>
+                          <TableHead className="text-end font-bold">المبلغ</TableHead>
+                          <TableHead className="text-end font-bold">الضريبة</TableHead>
+                          <TableHead className="text-end font-bold">الإجمالي</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {contract.financials.items?.map((item) => (
+                          <TableRow key={item.id} className="text-xs">
+                            <TableCell className="font-semibold text-foreground">
+                              <div>{item.name || "رسوم الخدمة"}</div>
+                              {Boolean(item.metadata && (item.metadata as Record<string, unknown>).charged === false) && (
+                                <span className="text-[10px] text-muted-foreground block">(للعلم والإحاطة - غير محصل على المنصة)</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center text-muted-foreground">
+                              <Badge variant="outline" className="border-border bg-muted/40 text-[10px]">
+                                {item.type || "خدمة"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center font-mono font-medium text-foreground">
+                              {item.quantity || 1}
+                            </TableCell>
+                            <TableCell className="text-end font-mono font-bold text-foreground">
+                              {Number(item.amount || 0).toLocaleString("en-US")} {contract.financials.currency || "ر.س"}
+                            </TableCell>
+                            <TableCell className="text-end font-mono text-muted-foreground">
+                              {Number(item.taxAmount || 0).toLocaleString("en-US")} {contract.financials.currency || "ر.س"}
+                            </TableCell>
+                            <TableCell className="text-end font-mono font-bold text-primary">
+                              {Number(item.total || 0).toLocaleString("en-US")} {contract.financials.currency || "ر.س"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Financial Summary Strip */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/80 bg-muted/20 p-3 text-xs">
+                    <div className="flex items-center gap-4 text-muted-foreground">
+                      <span>المجموع الفرعي: <strong className="text-foreground font-mono">{contract.financials.subtotal?.toLocaleString("en-US")} {contract.financials.currency || "ر.س"}</strong></span>
+                      {Boolean(contract.financials.discountAmount) && (
+                        <span>الخصم: <strong className="text-emerald-600 font-mono">-{contract.financials.discountAmount?.toLocaleString("en-US")} {contract.financials.currency || "ر.س"}</strong></span>
+                      )}
+                      <span>الضريبة: <strong className="text-foreground font-mono">{contract.financials.taxAmount.toLocaleString("en-US")} {contract.financials.currency || "ر.س"}</strong></span>
+                    </div>
+                    <div className="text-xs sm:text-sm font-bold text-foreground">
+                      المبلغ الإجمالي النهائي: <span className="text-primary font-mono">{contract.financials.totalAmount?.toLocaleString("en-US")} {contract.financials.currency || "ر.س"}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Installments Table & Mobile Cards */}
               <div className="rounded-2xl sm:rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-xs space-y-3.5 sm:space-y-4">
                 <div className="flex items-center justify-between border-b border-border/60 pb-3">
@@ -1446,6 +1793,9 @@ export default function ContractDetailsView({
                           حالة السداد
                         </TableHead>
                         <TableHead className="text-start font-bold">
+                          رقم المرجع
+                        </TableHead>
+                        <TableHead className="text-start font-bold">
                           تاريخ السداد الفعلي
                         </TableHead>
                       </TableRow>
@@ -1481,6 +1831,9 @@ export default function ContractDetailsView({
                               >
                                 {inst.statusLabel}
                               </Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground font-mono">
+                              {inst.paymentReference || "—"}
                             </TableCell>
                             <TableCell className="text-muted-foreground font-mono">
                               {inst.paidDate || "—"}
@@ -1531,42 +1884,221 @@ export default function ContractDetailsView({
                   </div>
                 </div>
 
-                {/* Custom Clauses */}
+                {/* Agreed Lease Contract Summary */}
                 <div className="rounded-2xl sm:rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-xs space-y-3.5 sm:space-y-4">
                   <div className="flex items-center gap-2 border-b border-border/60 pb-3">
-                    <Sparkles className="size-4 text-secondary shrink-0" />
+                    <Calendar className="size-4 text-secondary shrink-0" />
                     <h3 className="font-bold text-foreground text-sm sm:text-base">
-                      الشروط والالتزامات الخاصة المتفق عليها
+                      تفاصيل الشروط والمدد المتفق عليها
                     </h3>
                   </div>
 
-                  {contract.customTerms && contract.customTerms.length > 0 ? (
-                    <div className="space-y-2 sm:space-y-2.5">
-                      {contract.customTerms.map((clause, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-start gap-2.5 rounded-xl sm:rounded-2xl border border-secondary-200/60 bg-secondary-50/20 p-2.5 sm:p-3 text-[11px] sm:text-xs dark:border-secondary-800/60 dark:bg-secondary-950/20"
-                        >
-                          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-secondary-100 text-secondary-800 dark:bg-secondary-950 dark:text-secondary-300 text-[10px] sm:text-[11px] font-bold">
-                            {idx + 1}
-                          </span>
-                          <p className="text-foreground/90 leading-relaxed">
-                            {clause}
-                          </p>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex items-center justify-between gap-2 border-b border-border/50 py-2">
+                      <span className="text-muted-foreground text-[11px] sm:text-xs">مدة العقد المحددة:</span>
+                      <span className="font-bold text-foreground text-[11px] sm:text-xs">
+                        {contract.durationValue || 1} {contract.durationUnit || "سنوات"} ({contract.durationMonths} شهر)
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 border-b border-border/50 py-2">
+                      <span className="text-muted-foreground text-[11px] sm:text-xs">تاريخ سريان البداية:</span>
+                      <span className="font-semibold text-foreground text-[11px] sm:text-xs">{contract.startDate}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 border-b border-border/50 py-2">
+                      <span className="text-muted-foreground text-[11px] sm:text-xs">تاريخ نهاية العقد:</span>
+                      <span className="font-semibold text-foreground text-[11px] sm:text-xs">
+                        {contract.endDate !== "—" ? contract.endDate : "يُحتسب بنهاية مدة العقد"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 border-b border-border/50 py-2">
+                      <span className="text-muted-foreground text-[11px] sm:text-xs">القيمة الإيجارية السنوية:</span>
+                      <div className="flex items-center gap-1 font-bold text-foreground text-[11px] sm:text-xs">
+                        <span>{contract.financials.rentalAmount.toLocaleString("en-US")}</span>
+                        <SaudiRiyal className="size-3 text-muted-foreground" />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 border-b border-border/50 py-2">
+                      <span className="text-muted-foreground text-[11px] sm:text-xs">دورية سداد الأقساط:</span>
+                      <span className="font-semibold text-foreground text-[11px] sm:text-xs">{contract.financials.paymentFrequencyLabel}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 border-b border-border/50 py-2">
+                      <span className="text-muted-foreground text-[11px] sm:text-xs">التجديد التلقائي للعقد:</span>
+                      <span className={cn("font-bold text-[11px] sm:text-xs", contract.autoRenewal ? "text-emerald-600" : "text-muted-foreground")}>
+                        {contract.autoRenewal ? "مفعل تلقائياً" : "غير مفعل"}
+                      </span>
+                    </div>
+
+                    {/* Custom Terms if any */}
+                    <div className="pt-2">
+                      <span className="block text-[11px] sm:text-xs font-semibold text-foreground mb-1.5">
+                        الشروط والالتزامات الإضافية الخاصة:
+                      </span>
+                      {contract.customTerms && contract.customTerms.length > 0 ? (
+                        <div className="space-y-1.5">
+                          {contract.customTerms.map((ct, idx) => (
+                            <div key={idx} className="rounded-xl border border-border/80 bg-muted/20 p-2.5 text-[11px] sm:text-xs text-foreground/90">
+                              {ct}
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      ) : (
+                        <div className="rounded-xl border border-dashed border-border p-3 text-center text-xs text-muted-foreground">
+                          لا توجد شروط خاصة إضافية مسجلة من قبل الأطراف.
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="rounded-xl sm:rounded-2xl border border-dashed border-border p-5 sm:p-6 text-center text-xs text-muted-foreground">
-                      لا توجد شروط خاصة إضافية مسجلة في هذا العقد.
-                    </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </FadeIn>
           )}
 
-          {/* TAB 6: ACTIVITY LOGS & AUDIT TRAIL TIMELINE */}
+          {/* TAB 6: DOCUMENTS & ATTACHMENTS */}
+          {activeTab === "documents" && (
+            <FadeIn duration={0.2} className="space-y-4 sm:space-y-6">
+              <div className="rounded-2xl sm:rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3 sm:pb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex size-8 sm:size-9 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-400 shrink-0">
+                      <Paperclip className="size-4 sm:size-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground text-sm sm:text-base">
+                        الوثائق والمستندات المرفقة بالعقد
+                      </h3>
+                      <p className="text-[11px] sm:text-xs text-muted-foreground">
+                        ملفات الصكوك، الوكالات، والمستندات الثبوتية المرفوعة مع طلب العقد
+                      </p>
+                    </div>
+                  </div>
+
+                  <Badge
+                    variant="outline"
+                    className="border-border bg-muted/60 px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs font-semibold text-foreground shrink-0"
+                  >
+                    {contract.documents?.length || 0} مستندات مرفقة
+                  </Badge>
+                </div>
+
+                {contract.documents && contract.documents.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {contract.documents.map((doc) => {
+                      const isImage = doc.mimeType?.startsWith("image");
+                      return (
+                        <div
+                          key={doc.id}
+                          className="flex flex-col justify-between rounded-2xl border border-border bg-muted/20 p-4 hover:border-border/80 hover:bg-card transition-all shadow-2xs space-y-4"
+                        >
+                          <div className="space-y-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <Badge
+                                variant="outline"
+                                className="border-primary-200 bg-primary-50 text-primary-800 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300 text-xs font-bold px-2 py-0.5"
+                              >
+                                {doc.documentType || "صك"}
+                              </Badge>
+                              <span className="text-[10px] text-muted-foreground font-mono">
+                                نسخة #{doc.version || 1}
+                              </span>
+                            </div>
+
+                            {isImage && doc.url ? (
+                              <div
+                                onClick={() => setPreviewDoc(doc)}
+                                className="group relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-card cursor-pointer"
+                                title="انقر لمعاينة المستند"
+                              >
+                                <img
+                                  src={doc.url}
+                                  alt={doc.fileName || "مستند الصك"}
+                                  className="size-full object-contain bg-muted/30 transition-transform duration-200 group-hover:scale-105"
+                                />
+                                <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                  <span className="inline-flex items-center gap-1.5 rounded-xl bg-card/95 px-3 py-1.5 text-xs font-bold text-foreground shadow-md backdrop-blur-xs">
+                                    <Eye className="size-3.5 text-primary" />
+                                    معاينة المستند
+                                  </span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div
+                                onClick={() => setPreviewDoc(doc)}
+                                className="flex aspect-video w-full items-center justify-center rounded-xl border border-border bg-muted/40 text-muted-foreground cursor-pointer hover:bg-muted/60 transition-colors"
+                                title="انقر لمعاينة المستند"
+                              >
+                                <FileText className="size-10 text-primary/70" />
+                              </div>
+                            )}
+
+                            <div>
+                              <h4 className="text-xs font-bold text-foreground truncate" title={doc.fileName}>
+                                {doc.fileName || `مستند #${doc.id}`}
+                              </h4>
+                              <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-1 flex-wrap">
+                                <span>{formatFileSize(doc.fileSize)}</span>
+                                <span>•</span>
+                                <span>{doc.mimeType || "ملف"}</span>
+                                <span>•</span>
+                                <span>{doc.createdAt ? doc.createdAt : "—"}</span>
+                                {doc.uploadedBy !== undefined && (
+                                  <>
+                                    <span>•</span>
+                                    <span>مستخدم #{doc.uploadedBy}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {doc.url && (
+                            <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+                              <button
+                                type="button"
+                                onClick={() => setPreviewDoc(doc)}
+                                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card py-2 px-3 text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer"
+                              >
+                                <Eye className="size-3.5 text-primary" />
+                                <span>معاينة المستند</span>
+                              </button>
+                              <a
+                                href={doc.url}
+                                download={doc.fileName || `document-${doc.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center gap-1 rounded-xl border border-border bg-card p-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer"
+                                title="تحميل المستند"
+                              >
+                                <Download className="size-4 text-muted-foreground" />
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <Empty className="border border-dashed border-border bg-muted/10 py-12">
+                    <EmptyMedia variant="icon" className="size-12 bg-muted text-muted-foreground">
+                      <Paperclip className="size-6" />
+                    </EmptyMedia>
+                    <EmptyHeader>
+                      <EmptyTitle className="text-base font-bold">لا توجد وثائق مرفقة</EmptyTitle>
+                      <EmptyDescription className="max-w-sm text-xs">
+                        لم يتم إرفاق أي ملفات أو صور صكوك مع هذا العقد.
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
+                )}
+              </div>
+            </FadeIn>
+          )}
+
+          {/* TAB 7: ACTIVITY LOGS & AUDIT TRAIL TIMELINE */}
           {activeTab === "history" && (
             <FadeIn duration={0.2} className="space-y-4 sm:space-y-6">
               <div className="rounded-2xl sm:rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-6">
@@ -1652,6 +2184,15 @@ export default function ContractDetailsView({
                                 <User className="size-3 text-muted-foreground" />
                                 <span>{log.performedBy}</span>
                               </Badge>
+
+                              {log.reason && (
+                                <Badge
+                                  variant="outline"
+                                  className="border-primary-200 bg-primary-50 text-[10px] sm:text-[11px] text-primary-700 dark:border-primary-800 dark:bg-primary-950 dark:text-primary-300 px-2 py-0.5"
+                                >
+                                  السبب: {log.reason}
+                                </Badge>
+                              )}
                             </div>
 
                             {/* Timestamp Badge */}
@@ -1718,8 +2259,22 @@ export default function ContractDetailsView({
         onClose={() => setIsPaymentDialogOpen(false)}
         onUpdatePayment={handleUpdatePayment}
       />
+
+      {/* Global Reusable Document & Media Preview Modal */}
+      <MediaPreviewDialog
+        isOpen={Boolean(previewDoc)}
+        onClose={() => setPreviewDoc(null)}
+        item={previewDoc}
+      />
     </div>
   );
+}
+
+function formatFileSize(bytes?: number): string {
+  if (!bytes || bytes === 0) return "—";
+  if (bytes < 1024) return `${bytes} بايت`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} ك.ب`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} م.ب`;
 }
 
 function DropletsIcon(props: React.ComponentProps<"svg">) {
