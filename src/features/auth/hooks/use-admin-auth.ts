@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchAdminMe } from "../api/get-admin-me";
 import { loginAdmin } from "../api/admin-login";
-import { logoutAdminApi } from "../api/admin-logout";
-import { getAuthState, logoutAdmin, setAuthUser } from "../auth-store";
+import { clearLocalAuth, getAuthState, logoutAdmin, setAuthUser } from "../auth-store";
 import type { AdminLoginRequest, AdminUser } from "../types";
 
 /**
@@ -34,7 +33,7 @@ export function useAdminMe() {
       .catch((err) => {
         if (isMounted) {
           if (err?.status === 401) {
-            logoutAdmin();
+            clearLocalAuth();
           }
           setError(err instanceof Error ? err : new Error(String(err)));
           setIsLoading(false);
@@ -93,9 +92,8 @@ export function useAdminLogout() {
   async function mutateAsync() {
     setIsPending(true);
     try {
-      await logoutAdminApi();
+      await logoutAdmin();
     } finally {
-      logoutAdmin();
       setIsPending(false);
     }
   }

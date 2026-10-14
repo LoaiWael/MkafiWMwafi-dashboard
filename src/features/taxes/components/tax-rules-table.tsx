@@ -1,14 +1,12 @@
 import { useState } from "react";
-import { toast } from "sonner";
 import {
   Building2,
-  Coins,
   Edit2,
   FileText,
   Home,
   Layers,
+  Lock,
   Percent,
-  Receipt,
   SaudiRiyal,
   ShieldCheck,
   Trash2,
@@ -23,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -39,65 +38,50 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import WarningDialog from "@/components/warning-dialog";
-import type { TaxSetting } from "@/features/taxes/constants";
+import type { TaxSetting } from "../types";
 
 interface TaxRulesTableProps {
   taxes: TaxSetting[];
-  onTaxesChange: (taxes: TaxSetting[]) => void;
+  isLoading?: boolean;
+  onToggleActive: (
+    tax: TaxSetting,
+    nextChecked: boolean,
+  ) => Promise<boolean | void>;
   onEdit: (tax: TaxSetting) => void;
-  onResetDefaults?: () => void;
+  onDelete: (id: string | number) => Promise<boolean | void>;
 }
 
-function getCategoryIcon(category: TaxSetting["category"]) {
-  switch (category) {
-    case "vat":
-      return Percent;
-    case "contract_tax":
-      return Receipt;
-    case "service_fee":
-      return Coins;
-    default:
-      return Layers;
-  }
+function getRuleIcon(calculationType: TaxSetting["calculationType"]) {
+  return calculationType === "percentage" ? Percent : SaudiRiyal;
 }
 
 export default function TaxRulesTable({
   taxes,
-  onTaxesChange,
+  isLoading = false,
+  onToggleActive,
   onEdit,
+  onDelete,
 }: TaxRulesTableProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeletingLocal, setIsDeletingLocal] = useState(false);
 
   const activeCount = taxes.filter((t) => t.isActive).length;
   const exemptCount = taxes.filter((t) => t.isExempt).length;
 
-  const handleToggleActive = (id: string, nextChecked: boolean) => {
-    const target = taxes.find((t) => t.id === id);
-    const updated = taxes.map((t) =>
-      t.id === id ? { ...t, isActive: nextChecked } : t,
-    );
-    onTaxesChange(updated);
-    if (nextChecked) {
-      toast.success(`تم تفعيل البند الضريبي "${target?.nameAr || ""}"`);
-    } else {
-      toast.info(`تم تعطيل البند الضريبي "${target?.nameAr || ""}"`);
-    }
-  };
+  async function handleToggle(tax: TaxSetting, checked: boolean) {
+    await onToggleActive(tax, checked);
+  }
 
-  const confirmDelete = () => {
-    if (deleteId) {
-      const target = taxes.find((t) => t.id === deleteId);
-      if (target?.isMandatory) {
-        toast.error("لا يمكن حذف بند ضريبي إلزامي أساسي في النظام");
-        setDeleteId(null);
-        return;
-      }
-      const updated = taxes.filter((t) => t.id !== deleteId);
-      onTaxesChange(updated);
-      toast.success("تم حذف البند الضريبي بنجاح");
+  async function confirmDelete() {
+    if (!deleteId) return;
+    setIsDeletingLocal(true);
+    try {
+      await onDelete(deleteId);
       setDeleteId(null);
+    } finally {
+      setIsDeletingLocal(false);
     }
-  };
+  }
 
   return (
     <TooltipProvider>
@@ -140,7 +124,28 @@ export default function TaxRulesTable({
           </CardHeader>
 
           <CardContent className="p-0">
-            {taxes.length === 0 ? (
+            {isLoading ? (
+              <div className="p-4 space-y-3">
+                {[1, 2, 3].map((idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between gap-4 py-3 border-b border-border/40 last:border-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="size-9 rounded-xl" />
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                    <Skeleton className="h-6 w-16" />
+                    <Skeleton className="h-6 w-20" />
+                    <Skeleton className="h-8 w-16" />
+                  </div>
+                ))}
+              </div>
+            ) : taxes.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-14 px-4 text-center">
                 <div className="flex size-14 items-center justify-center rounded-2xl bg-muted/50 text-muted-foreground mb-3">
                   <FileText className="size-7" />
@@ -149,7 +154,8 @@ export default function TaxRulesTable({
                   لا توجد قواعد ضريبية مضافة
                 </h3>
                 <p className="mt-1 text-xs text-muted-foreground max-w-sm">
-                  قم بإضافة بند ضريبي جديد من أعلى الصفحة أو استعادة القواعد والإعدادات الضريبية الافتراضية
+                  قم بإضافة بند ضريبي جديد من أعلى الصفحة أو تحديث البيانات من
+                  الخادم
                 </p>
               </div>
             ) : (
@@ -182,8 +188,7 @@ export default function TaxRulesTable({
                   </TableHeader>
                   <TableBody>
                     {taxes.map((tax) => {
-                      const isVat = tax.category === "vat";
-                      const CategoryIcon = getCategoryIcon(tax.category);
+                      const RuleIcon = getRuleIcon(tax.calculationType);
 
                       return (
                         <TableRow
@@ -201,7 +206,7 @@ export default function TaxRulesTable({
                                 <Switch
                                   checked={tax.isActive}
                                   onCheckedChange={(checked) =>
-                                    handleToggleActive(tax.id, checked)
+                                    handleToggle(tax, checked)
                                   }
                                   aria-label={`تفعيل ${tax.nameAr}`}
                                 />
@@ -214,17 +219,11 @@ export default function TaxRulesTable({
                             </Tooltip>
                           </TableCell>
 
-                          {/* Tax Name + Category */}
+                          {/* Tax Name + Calculation Subtitle */}
                           <TableCell className="py-4">
                             <div className="flex items-center gap-3">
-                              <div
-                                className={`flex size-9 shrink-0 items-center justify-center rounded-xl transition-colors ${
-                                  isVat
-                                    ? "bg-primary-50 text-primary border border-primary/20"
-                                    : "bg-muted text-muted-foreground border border-border"
-                                }`}
-                              >
-                                <CategoryIcon className="size-4" />
+                              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary border border-primary/20 transition-colors">
+                                <RuleIcon className="size-4" />
                               </div>
                               <div className="space-y-0.5">
                                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -241,13 +240,9 @@ export default function TaxRulesTable({
                                   )}
                                 </div>
                                 <span className="text-[11px] text-muted-foreground block">
-                                  {isVat
-                                    ? "ضريبة قيمة مضافة"
-                                    : tax.category === "contract_tax"
-                                      ? "ضريبة عقد"
-                                      : tax.category === "service_fee"
-                                        ? "رسوم خدمة"
-                                        : "بند مخصص"}
+                                  {tax.calculationType === "percentage"
+                                    ? "نسبة مئوية من القيمة"
+                                    : "مبلغ مقطوع ثابت"}
                                 </span>
                               </div>
                             </div>
@@ -362,7 +357,20 @@ export default function TaxRulesTable({
                                 <TooltipContent>تعديل الإعدادات</TooltipContent>
                               </Tooltip>
 
-                              {!tax.isMandatory && (
+                              {tax.isMandatory ? (
+                                <Tooltip>
+                                  <TooltipTrigger
+                                    render={<div className="inline-block" />}
+                                  >
+                                    <div className="flex size-8.5 items-center justify-center rounded-lg text-muted-foreground/40 cursor-not-allowed">
+                                      <Lock className="size-3.5" />
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    بند إلزامي أساسي محمي من الحذف
+                                  </TooltipContent>
+                                </Tooltip>
+                              ) : (
                                 <Tooltip>
                                   <TooltipTrigger
                                     render={<div className="inline-block" />}
@@ -397,11 +405,11 @@ export default function TaxRulesTable({
       <WarningDialog
         open={!!deleteId}
         onOpenChange={(open) => {
-          if (!open) setDeleteId(null);
+          if (!open && !isDeletingLocal) setDeleteId(null);
         }}
         title="تأكيد الحذف"
         description="هل أنت متأكد من رغبتك في حذف هذا البند الضريبي؟ لا يمكن التراجع عن هذا الإجراء."
-        confirmLabel="حذف"
+        confirmLabel={isDeletingLocal ? "جاري الحذف..." : "حذف"}
         onConfirm={confirmDelete}
       />
     </TooltipProvider>

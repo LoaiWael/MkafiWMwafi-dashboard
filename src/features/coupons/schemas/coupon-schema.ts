@@ -22,10 +22,7 @@ export const couponSchema = z
       .trim()
       .min(1, "رمز الكوبون مطلوب")
       .min(3, "رمز الكوبون يجب أن يكون 3 أحرف على الأقل"),
-    name: z
-      .string()
-      .trim()
-      .min(1, "اسم الكوبون مطلوب"),
+    name: z.string().trim().min(1, "اسم الكوبون مطلوب"),
     description: z.string().optional(),
     discountType: z.enum(couponDiscountTypes),
     discountValue: z
@@ -35,7 +32,14 @@ export const couponSchema = z
       .refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
         message: "قيمة الخصم يجب أن تكون أكبر من الصفر",
       }),
-    maxDiscountAmount: z.string().optional(),
+    maxDiscountAmount: z
+      .string()
+      .trim()
+      .optional()
+      .refine(
+        (val) => !val || (!isNaN(Number(val)) && Number(val) > 0),
+        { message: "الحد الأقصى للخصم يجب أن يكون أكبر من الصفر" }
+      ),
     minOrderAmount: z
       .string()
       .trim()
@@ -44,8 +48,7 @@ export const couponSchema = z
       }),
     targetServices: z
       .array(z.enum(targetServicesList))
-      .min(1, "يجب تحديد خدمة واحدة على الأقل"),
-    targetUserType: z.enum(targetUserTypes),
+      .min(1, "يجب تحديد نوع العقود المشمولة بالخصم"),
     hasUsageLimit: z.boolean(),
     usageLimitTotal: z.string().optional(),
     usageLimitPerUser: z
@@ -57,7 +60,7 @@ export const couponSchema = z
       }),
     status: z.enum(couponStatuses),
     startDate: z.string().min(1, "تاريخ بدء الصلاحية مطلوب"),
-    endDate: z.string().min(1, "تاريخ الانتهاء مطلوب"),
+    endDate: z.string().min(1, "تاريخ انتهاء الصلاحية مطلوب"),
     isPublic: z.boolean(),
   })
   .superRefine((data, ctx) => {
@@ -73,16 +76,16 @@ export const couponSchema = z
     }
 
     if (data.startDate && data.endDate) {
-      if (new Date(data.endDate) < new Date(data.startDate)) {
+      if (data.endDate < data.startDate) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["endDate"],
-          message: "تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء",
+          message: "تاريخ انتهاء الصلاحية لا يمكن أن يكون قبل تاريخ بدء الصلاحية",
         });
       }
     }
 
-    if (data.hasUsageLimit && data.usageLimitTotal) {
+    if (data.hasUsageLimit && data.usageLimitTotal && data.usageLimitTotal.trim() !== "") {
       const total = Number(data.usageLimitTotal);
       if (isNaN(total) || total < 1) {
         ctx.addIssue({

@@ -1,20 +1,15 @@
-import { useState } from "react";
-import { toast } from "sonner";
-import { Percent, Plus, Receipt, RotateCcw } from "lucide-react";
+import { AlertCircle, Percent, Plus, Receipt } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { FadeIn } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { FilterTabs, type FilterTabItem } from "@/components/ui/filter-tabs";
 import { useUrlTab } from "@/hooks/use-url-tab";
-import {
-  INITIAL_TAX_SETTINGS,
-  TAXES_METADATA,
-  type TaxSetting,
-} from "@/features/taxes/constants";
+import { TAXES_METADATA } from "@/features/taxes/constants";
 import InvoicePreviewCard from "@/features/taxes/components/invoice-preview-card";
 import TaxRuleDialog from "@/features/taxes/components/tax-rule-dialog";
 import TaxRulesTable from "@/features/taxes/components/tax-rules-table";
+import { useTaxRules } from "@/features/taxes/hooks/use-tax-rules";
 
 const TAXES_TABS = ["overview", "simulator"] as const;
 type TaxesTab = (typeof TAXES_TABS)[number];
@@ -26,68 +21,21 @@ export default function TaxesSection() {
     validValues: TAXES_TABS,
   });
 
-  // Dialog state for adding/editing taxes
-  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const [editingTax, setEditingTax] = useState<TaxSetting | null>(null);
-
-  const [taxes, setTaxes] = useState<TaxSetting[]>([...INITIAL_TAX_SETTINGS]);
-
-  const handleOpenAddTax = () => {
-    setEditingTax(null);
-    setIsDialogOpen(true);
-  };
-
-  const handleOpenEditTax = (tax: TaxSetting) => {
-    setEditingTax(tax);
-    setIsDialogOpen(true);
-  };
-
-  const handleSaveTax = (
-    taxData: Partial<TaxSetting>,
-    id?: string,
-  ) => {
-    if (id) {
-      setTaxes((prev) =>
-        prev.map((t) =>
-          t.id === id
-            ? ({
-                ...t,
-                ...taxData,
-              } as TaxSetting)
-            : t,
-        ),
-      );
-      toast.success("تم تحديث بند الضريبة بنجاح");
-    } else {
-      const newTax: TaxSetting = {
-        id: `tax_${Date.now()}`,
-        nameAr: taxData.nameAr || "ضريبة جديدة",
-        category: taxData.category || "custom",
-        description: taxData.description || "",
-        ratePercent: Number(taxData.ratePercent) || 0,
-        isExempt: !!taxData.isExempt,
-        exemptionLabel: taxData.exemptionLabel || "معفى",
-        appliesTo: taxData.appliesTo || "all",
-        calculationType: taxData.calculationType || "percentage",
-        fixedAmount: Number(taxData.fixedAmount) || 0,
-        isActive: taxData.isActive !== false,
-        order: taxes.length + 1,
-      };
-      setTaxes((prev) => [...prev, newTax]);
-      toast.success("تمت إضافة بند ضريبي جديد بنجاح");
-    }
-  };
-
-  const handleResetTaxes = () => {
-    if (
-      window.confirm(
-        "هل ترغب بإعادة تعيين القواعد والنسب الضريبية إلى الإعدادات الافتراضية؟",
-      )
-    ) {
-      setTaxes([...INITIAL_TAX_SETTINGS]);
-      toast.success("تمت استعادة الإعدادات والنسب الضريبية الافتراضية بنجاح");
-    }
-  };
+  const {
+    taxes,
+    isLoading,
+    isSaving,
+    error,
+    refetch,
+    isDialogOpen,
+    setIsDialogOpen,
+    editingTax,
+    openAdd,
+    openEdit,
+    saveRule,
+    toggleActive,
+    deleteRule,
+  } = useTaxRules();
 
   const filterTabs: FilterTabItem<TaxesTab>[] = [
     {
@@ -109,28 +57,37 @@ export default function TaxesSection() {
           title={TAXES_METADATA.title}
           description={TAXES_METADATA.description}
           actions={
-            <div className="flex w-full sm:w-auto items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleResetTaxes}
-                className="gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-              >
-                <RotateCcw className="size-3.5" />
-                <span>استعادة الافتراضي</span>
-              </Button>
-              <Button
-                onClick={handleOpenAddTax}
-                size="sm"
-                className="gap-1.5 cursor-pointer font-bold shadow-xs shrink-0"
-              >
-                <Plus className="size-4" />
-                <span>إضافة ضريبة / رسم</span>
-              </Button>
-            </div>
+            <Button
+              onClick={openAdd}
+              size="sm"
+              className="gap-1.5 cursor-pointer font-bold shadow-xs shrink-0"
+            >
+              <Plus className="size-4" />
+              <span>إضافة ضريبة / رسم</span>
+            </Button>
           }
         />
       </FadeIn>
+
+      {/* API Error Notification if fetch failed completely and no rules */}
+      {error && taxes.length === 0 && (
+        <FadeIn duration={0.3}>
+          <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3.5 flex items-center justify-between gap-3 text-destructive text-xs">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="size-4 shrink-0" />
+              <span>فشل تحميل القواعد الضريبية من الخادم. يرجى إعادة المحاولة.</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              className="h-7 text-xs border-destructive/40 text-destructive hover:bg-destructive/15 cursor-pointer"
+            >
+              إعادة المحاولة
+            </Button>
+          </div>
+        </FadeIn>
+      )}
 
       {/* Filter Tabs */}
       <FadeIn duration={0.3} delay={0.06}>
@@ -160,8 +117,10 @@ export default function TaxesSection() {
           {activeTab === "overview" ? (
             <TaxRulesTable
               taxes={taxes}
-              onTaxesChange={setTaxes}
-              onEdit={handleOpenEditTax}
+              isLoading={isLoading}
+              onToggleActive={toggleActive}
+              onEdit={openEdit}
+              onDelete={deleteRule}
             />
           ) : (
             <div className="mx-auto max-w-3xl">
@@ -176,7 +135,8 @@ export default function TaxesSection() {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         tax={editingTax}
-        onSave={handleSaveTax}
+        onSave={saveRule}
+        isSaving={isSaving}
       />
     </div>
   );

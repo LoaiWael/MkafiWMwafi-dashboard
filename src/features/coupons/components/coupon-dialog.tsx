@@ -1,8 +1,20 @@
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { DollarSign, Percent, RefreshCw, Tag } from "lucide-react";
-import { Controller, useForm } from "react-hook-form";
+import { format, isBefore, isValid, parseISO, startOfDay } from "date-fns";
+import { arSA } from "date-fns/locale";
+import {
+  Calendar as CalendarIcon,
+  ChevronDown,
+  DollarSign,
+  Loader2,
+  Percent,
+  RefreshCw,
+  Tag,
+} from "lucide-react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +25,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
@@ -24,13 +41,93 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  COUPON_STATUS_LABELS,
   type Coupon,
-  type TargetService,
 } from "@/features/coupons/constants";
 import {
   couponSchema,
   type CouponFormData,
 } from "@/features/coupons/schemas/coupon-schema";
+import { cn } from "@/lib/utils";
+
+interface CouponDatePickerProps {
+  value?: string;
+  onChange: (val: string) => void;
+  disabled?: boolean;
+  minDate?: string;
+  placeholder: string;
+  hasError?: boolean;
+  id?: string;
+}
+
+function CouponDatePicker({
+  value,
+  onChange,
+  disabled,
+  minDate,
+  placeholder,
+  hasError,
+  id,
+}: CouponDatePickerProps) {
+  const [open, setOpen] = useState(false);
+
+  const parsedDate = value ? parseISO(value) : undefined;
+  const isDateValid = Boolean(parsedDate && isValid(parsedDate));
+
+  const minDateObj = minDate ? parseISO(minDate) : undefined;
+  const isMinValid = Boolean(minDateObj && isValid(minDateObj));
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        id={id}
+        type="button"
+        disabled={disabled}
+        className={cn(
+          "flex h-9 w-full items-center justify-between rounded-lg border border-border bg-card px-3 text-start text-xs sm:text-sm font-normal transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer disabled:pointer-events-none disabled:opacity-50",
+          !isDateValid && "text-muted-foreground",
+          hasError && "border-destructive focus-visible:ring-destructive"
+        )}
+      >
+        <div className="flex items-center gap-2 truncate">
+          <CalendarIcon className="size-4 shrink-0 text-primary" />
+          {isDateValid && parsedDate ? (
+            <span className="truncate font-medium text-foreground">
+              {format(parsedDate, "yyyy/MM/dd")}
+              <span className="ms-1.5 text-xs text-muted-foreground font-normal">
+                ({format(parsedDate, "d MMMM yyyy", { locale: arSA })})
+              </span>
+            </span>
+          ) : (
+            <span className="truncate">{placeholder}</span>
+          )}
+        </div>
+        <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-auto p-0 border border-border bg-popover shadow-xl rounded-xl z-50"
+      >
+        <Calendar
+          mode="single"
+          selected={isDateValid ? parsedDate : undefined}
+          defaultMonth={isDateValid ? parsedDate : isMinValid ? minDateObj : new Date()}
+          onSelect={(selected) => {
+            if (selected) {
+              onChange(format(selected, "yyyy-MM-dd"));
+              setOpen(false);
+            }
+          }}
+          disabled={
+            isMinValid && minDateObj
+              ? (day) => isBefore(startOfDay(day), startOfDay(minDateObj))
+              : undefined
+          }
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 function generateRandomCouponCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -54,11 +151,10 @@ interface CouponDialogProps {
   onOpenChange: (open: boolean) => void;
   coupon?: Coupon | null;
   onSave: (
-    couponData: Omit<
-      Coupon,
-      "id" | "createdAt" | "createdBy" | "usedCount" | "totalDiscountedAmount"
-    > & { id?: string },
-  ) => void;
+    data: CouponFormData,
+    id?: string | number
+  ) => Promise<boolean>;
+  isSaving?: boolean;
 }
 
 export default function CouponDialog({
@@ -66,15 +162,17 @@ export default function CouponDialog({
   onOpenChange,
   coupon,
   onSave,
+  isSaving = false,
 }: CouponDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {open ? (
         <CouponDialogForm
-          key={coupon ? coupon.id : "new-coupon"}
+          key={coupon?.id ? coupon.id : "new-coupon"}
           coupon={coupon}
           onClose={() => onOpenChange(false)}
           onSave={onSave}
+          isSaving={isSaving}
         />
       ) : null}
     </Dialog>
@@ -85,17 +183,17 @@ function CouponDialogForm({
   coupon,
   onClose,
   onSave,
+  isSaving,
 }: {
   coupon?: Coupon | null;
   onClose: () => void;
   onSave: (
-    couponData: Omit<
-      Coupon,
-      "id" | "createdAt" | "createdBy" | "usedCount" | "totalDiscountedAmount"
-    > & { id?: string },
-  ) => void;
+    data: CouponFormData,
+    id?: string | number
+  ) => Promise<boolean>;
+  isSaving: boolean;
 }) {
-  const isEditing = Boolean(coupon);
+  const isEditing = Boolean(coupon && coupon.id);
   const defaultDates = getDefaultDates();
 
   const {
@@ -103,38 +201,82 @@ function CouponDialogForm({
     handleSubmit,
     control,
     setValue,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<CouponFormData>({
     resolver: zodResolver(couponSchema),
     defaultValues: {
-      code: coupon ? coupon.code : generateRandomCouponCode(),
-      name: coupon ? coupon.name : "",
-      description: coupon ? coupon.description : "",
-      discountType: coupon ? coupon.discountType : "percentage",
-      discountValue: coupon ? String(coupon.discountValue) : "20",
-      maxDiscountAmount: coupon?.maxDiscountAmount
-        ? String(coupon.maxDiscountAmount)
-        : "100",
-      minOrderAmount: coupon ? String(coupon.minOrderAmount) : "200",
-      targetServices: coupon
-        ? coupon.targetServices
-        : ["residential", "commercial"],
-      targetUserType: coupon ? coupon.targetUserType : "all",
-      hasUsageLimit: coupon ? coupon.usageLimitTotal !== undefined : true,
-      usageLimitTotal: coupon?.usageLimitTotal
-        ? String(coupon.usageLimitTotal)
-        : "500",
-      usageLimitPerUser: coupon ? String(coupon.usageLimitPerUser) : "1",
-      status: coupon ? coupon.status : "active",
-      startDate: coupon ? coupon.startDate : defaultDates.todayStr,
-      endDate: coupon ? coupon.endDate : defaultDates.nextMonthStr,
-      isPublic: coupon ? coupon.isPublic : true,
+      code: coupon?.code ? coupon.code : generateRandomCouponCode(),
+      name: coupon?.name ? coupon.name : "",
+      description: coupon?.description ? coupon.description : "",
+      discountType: coupon?.discountType ? coupon.discountType : "percentage",
+      discountValue: coupon?.discountValue ? String(coupon.discountValue) : "20",
+      maxDiscountAmount:
+        coupon?.maxDiscountAmount !== undefined &&
+        coupon?.maxDiscountAmount !== null
+          ? String(coupon.maxDiscountAmount)
+          : "",
+      minOrderAmount:
+        coupon?.minOrderAmount !== undefined && coupon?.minOrderAmount !== null
+          ? String(coupon.minOrderAmount)
+          : "0",
+      targetServices:
+        coupon?.targetServices && coupon.targetServices.length > 0
+          ? coupon.targetServices
+          : ["all"],
+      hasUsageLimit:
+        coupon?.usageLimitTotal !== undefined &&
+        coupon?.usageLimitTotal !== null
+          ? true
+          : coupon
+            ? false
+            : true,
+      usageLimitTotal:
+        coupon?.usageLimitTotal !== undefined &&
+        coupon?.usageLimitTotal !== null
+          ? String(coupon.usageLimitTotal)
+          : "500",
+      usageLimitPerUser:
+        coupon?.usageLimitPerUser !== undefined &&
+        coupon?.usageLimitPerUser !== null
+          ? String(coupon.usageLimitPerUser)
+          : "1",
+      status: coupon?.status ? coupon.status : "active",
+      startDate: coupon?.startDate ? coupon.startDate : defaultDates.todayStr,
+      endDate: coupon?.endDate ? coupon.endDate : defaultDates.nextMonthStr,
+      isPublic: coupon?.isPublic !== undefined ? coupon.isPublic : true,
     },
   });
 
-  const discountType = watch("discountType");
-  const hasUsageLimit = watch("hasUsageLimit");
+  const discountType = useWatch({
+    control,
+    name: "discountType",
+    defaultValue: "percentage",
+  });
+  const hasUsageLimit = useWatch({
+    control,
+    name: "hasUsageLimit",
+    defaultValue: true,
+  });
+  const startDate = useWatch({
+    control,
+    name: "startDate",
+  });
+  const endDate = useWatch({
+    control,
+    name: "endDate",
+  });
+  const busy = isSubmitting || isSaving;
+
+  function handleStartDateChange(newStartDate: string) {
+    setValue("startDate", newStartDate, { shouldValidate: true });
+    if (endDate && newStartDate > endDate) {
+      setValue("endDate", newStartDate, { shouldValidate: true });
+    }
+  }
+
+  function handleEndDateChange(newEndDate: string) {
+    setValue("endDate", newEndDate, { shouldValidate: true });
+  }
 
   function handleGenerateCode() {
     const generated = generateRandomCouponCode();
@@ -142,33 +284,8 @@ function CouponDialogForm({
     toast.info(`تم توليد رمز الكوبون تلقائياً: ${generated}`);
   }
 
-  function onSubmit(data: CouponFormData) {
-    onSave({
-      id: coupon?.id,
-      code: data.code.trim().toUpperCase(),
-      name: data.name.trim(),
-      description: data.description?.trim() || "",
-      discountType: data.discountType,
-      discountValue: Number(data.discountValue),
-      maxDiscountAmount:
-        data.discountType === "percentage" && data.maxDiscountAmount
-          ? Number(data.maxDiscountAmount)
-          : undefined,
-      minOrderAmount: Number(data.minOrderAmount) || 0,
-      targetServices: data.targetServices,
-      targetUserType: data.targetUserType,
-      usageLimitTotal:
-        data.hasUsageLimit && data.usageLimitTotal
-          ? Number(data.usageLimitTotal)
-          : undefined,
-      usageLimitPerUser: Number(data.usageLimitPerUser) || 1,
-      status: data.status,
-      startDate: data.startDate,
-      endDate: data.endDate,
-      isPublic: data.isPublic,
-    });
-
-    onClose();
+  async function onSubmit(data: CouponFormData) {
+    await onSave(data, coupon?.id ? coupon.id : undefined);
   }
 
   return (
@@ -205,7 +322,8 @@ function CouponDialogForm({
                 <button
                   type="button"
                   onClick={handleGenerateCode}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-700 hover:underline cursor-pointer transition-colors"
+                  disabled={busy}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-700 hover:underline cursor-pointer transition-colors disabled:opacity-50"
                 >
                   <RefreshCw className="size-3" />
                   <span>توليد تلقائي</span>
@@ -214,8 +332,8 @@ function CouponDialogForm({
               <div className="relative">
                 <Input
                   id="coupon-code"
-                  placeholder="مثال: RAMADAN2026"
-                  disabled={isSubmitting}
+                  placeholder="مثال: SAVE10"
+                  disabled={busy}
                   aria-invalid={Boolean(errors.code)}
                   className="font-mono text-base font-bold tracking-wider uppercase text-primary bg-muted/30 focus:bg-background transition-colors"
                   dir="ltr"
@@ -242,8 +360,8 @@ function CouponDialogForm({
               </Label>
               <Input
                 id="coupon-name"
-                placeholder="مثال: خصم شهر رمضان المبارك"
-                disabled={isSubmitting}
+                placeholder="مثال: خصم 10% على العقود"
+                disabled={busy}
                 aria-invalid={Boolean(errors.name)}
                 className="bg-muted/30 focus:bg-background transition-colors"
                 {...register("name")}
@@ -268,7 +386,7 @@ function CouponDialogForm({
               id="coupon-desc"
               rows={2}
               placeholder="اكتب نبذة توضيحية عن العرض والجمهور المستهدف..."
-              disabled={isSubmitting}
+              disabled={busy}
               className="resize-none bg-muted/30 focus:bg-background transition-colors text-xs sm:text-sm"
               {...register("description")}
             />
@@ -278,7 +396,7 @@ function CouponDialogForm({
           <div className="rounded-xl border border-border bg-muted/30 p-3.5 sm:p-4 space-y-3.5 sm:space-y-4">
             <div className="space-y-2">
               <Label className="text-xs sm:text-sm font-semibold">
-                نوع الخصم وقيمته
+                نوع الخصم وقيمته <span className="text-destructive">*</span>
               </Label>
               <Controller
                 control={control}
@@ -287,14 +405,14 @@ function CouponDialogForm({
                   <RadioGroup
                     value={field.value}
                     onValueChange={field.onChange}
-                    disabled={isSubmitting}
+                    disabled={busy}
                     className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3"
                   >
                     <label
                       htmlFor="type-percentage"
                       className={`flex cursor-pointer items-center justify-between rounded-lg border p-2.5 sm:p-3 transition-all ${
                         field.value === "percentage"
-                          ? "border-primary bg-primary-50 text-primary-900 font-semibold shadow-2xs"
+                          ? "border-primary bg-primary-50 text-primary-900 dark:bg-primary-950/40 dark:text-primary-200 font-semibold shadow-2xs"
                           : "border-border bg-card hover:bg-muted/60"
                       }`}
                     >
@@ -313,7 +431,7 @@ function CouponDialogForm({
                       htmlFor="type-fixed"
                       className={`flex cursor-pointer items-center justify-between rounded-lg border p-2.5 sm:p-3 transition-all ${
                         field.value === "fixed"
-                          ? "border-primary bg-primary-50 text-primary-900 font-semibold shadow-2xs"
+                          ? "border-primary bg-primary-50 text-primary-900 dark:bg-primary-950/40 dark:text-primary-200 font-semibold shadow-2xs"
                           : "border-border bg-card hover:bg-muted/60"
                       }`}
                     >
@@ -332,15 +450,17 @@ function CouponDialogForm({
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-3.5 sm:gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3.5 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {/* Discount Value */}
               <div className="space-y-1.5 sm:space-y-2">
                 <Label
                   htmlFor="discount-val"
                   className="text-xs font-semibold text-muted-foreground"
                 >
                   {discountType === "percentage"
-                    ? "نسبة الخصم المئوية (%)"
-                    : "قيمة الخصم المباشر (ر.س)"}
+                    ? "نسبة الخصم (%)"
+                    : "قيمة الخصم (ر.س)"}{" "}
+                  <span className="text-destructive">*</span>
                 </Label>
                 <div className="relative">
                   <Input
@@ -348,8 +468,8 @@ function CouponDialogForm({
                     type="number"
                     min={1}
                     max={discountType === "percentage" ? 100 : undefined}
-                    placeholder={discountType === "percentage" ? "20" : "50"}
-                    disabled={isSubmitting}
+                    placeholder={discountType === "percentage" ? "10" : "50"}
+                    disabled={busy}
                     aria-invalid={Boolean(errors.discountValue)}
                     className="font-bold pe-12 bg-card"
                     {...register("discountValue")}
@@ -365,13 +485,44 @@ function CouponDialogForm({
                 )}
               </div>
 
+              {/* Min Order Amount (Applies to both percentage and fixed) */}
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label
+                  htmlFor="min-order"
+                  className="text-xs font-semibold text-muted-foreground"
+                >
+                  الحد الأدنى لقيمة العقد (ر.س)
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="min-order"
+                    type="number"
+                    min={0}
+                    placeholder="0"
+                    disabled={busy}
+                    aria-invalid={Boolean(errors.minOrderAmount)}
+                    className="pe-12 bg-card"
+                    {...register("minOrderAmount")}
+                  />
+                  <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
+                    ر.س
+                  </span>
+                </div>
+                {errors.minOrderAmount && (
+                  <p className="text-xs text-destructive">
+                    {errors.minOrderAmount.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Max Discount Amount (Only for percentage) */}
               {discountType === "percentage" ? (
-                <div className="space-y-1.5 sm:space-y-2">
+                <div className="space-y-1.5 sm:space-y-2 sm:col-span-2 lg:col-span-1">
                   <Label
                     htmlFor="max-discount"
                     className="text-xs font-semibold text-muted-foreground"
                   >
-                    الحد الأقصى للخصم (ر.س) - اختياري
+                    أقصى مبلغ خصم (ر.س) - اختياري
                   </Label>
                   <div className="relative">
                     <Input
@@ -379,7 +530,8 @@ function CouponDialogForm({
                       type="number"
                       min={1}
                       placeholder="غير محدد"
-                      disabled={isSubmitting}
+                      disabled={busy}
+                      aria-invalid={Boolean(errors.maxDiscountAmount)}
                       className="pe-12 bg-card"
                       {...register("maxDiscountAmount")}
                     />
@@ -387,41 +539,18 @@ function CouponDialogForm({
                       ر.س
                     </span>
                   </div>
-                </div>
-              ) : (
-                <div className="space-y-1.5 sm:space-y-2">
-                  <Label
-                    htmlFor="min-order"
-                    className="text-xs font-semibold text-muted-foreground"
-                  >
-                    الحد الأدنى لقيمة العقد (ر.س)
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="min-order"
-                      type="number"
-                      min={0}
-                      placeholder="200"
-                      disabled={isSubmitting}
-                      aria-invalid={Boolean(errors.minOrderAmount)}
-                      className="pe-12 bg-card"
-                      {...register("minOrderAmount")}
-                    />
-                    <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
-                      ر.س
-                    </span>
-                  </div>
-                  {errors.minOrderAmount && (
+                  {errors.maxDiscountAmount && (
                     <p className="text-xs text-destructive">
-                      {errors.minOrderAmount.message}
+                      {errors.maxDiscountAmount.message}
                     </p>
                   )}
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
 
-          {/* Applicable Services */}
+          {/* Applicable Services & Target User Type (Added Missing Inputs) */}
+          {/* Target Services */}
           <div className="space-y-1.5 sm:space-y-2">
             <Label className="text-xs sm:text-sm font-semibold">
               العقود المشمولة بالخصم <span className="text-destructive">*</span>
@@ -430,42 +559,75 @@ function CouponDialogForm({
               control={control}
               name="targetServices"
               render={({ field }) => {
-                const services = field.value || [];
-                function toggleService(service: TargetService) {
-                  if (services.includes(service)) {
-                    if (services.length > 1) {
-                      field.onChange(services.filter((s) => s !== service));
-                    }
+                const services = field.value || ["all"];
+
+                function handleSelectMode(mode: "all" | "residential" | "commercial") {
+                  if (mode === "all") {
+                    field.onChange(["all"]);
+                    return;
+                  }
+
+                  // If currently "all", switch to selected specific
+                  if (services.includes("all")) {
+                    field.onChange([mode]);
+                    return;
+                  }
+
+                  // Toggle specific mode
+                  if (services.includes(mode)) {
+                    const next = services.filter((s) => s !== mode);
+                    field.onChange(next.length > 0 ? next : ["all"]);
                   } else {
-                    field.onChange([...services, service]);
+                    const next = [...services, mode];
+                    if (next.includes("residential") && next.includes("commercial")) {
+                      field.onChange(["all"]);
+                    } else {
+                      field.onChange(next);
+                    }
                   }
                 }
 
+                const isAll = services.includes("all");
+                const isRes = isAll || services.includes("residential");
+                const isCom = isAll || services.includes("commercial");
+
                 return (
-                  <div className="grid grid-cols-2 gap-2 pt-0.5">
+                  <div className="grid grid-cols-3 gap-1.5 pt-0.5">
                     <button
                       type="button"
-                      onClick={() => toggleService("residential")}
-                      disabled={isSubmitting}
-                      className={`rounded-lg border px-3 py-2 text-center text-xs font-medium cursor-pointer transition-all ${
-                        services.includes("residential")
+                      onClick={() => handleSelectMode("all")}
+                      disabled={busy}
+                      className={`rounded-lg border px-2 py-2 text-center text-xs font-medium cursor-pointer transition-all ${
+                        isAll
                           ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
                           : "border-border bg-card text-muted-foreground hover:bg-muted/70 hover:text-foreground"
                       }`}
                     >
-                      العقود السكنية
+                      الكل (سكني وتجاري)
                     </button>
                     <button
                       type="button"
-                      onClick={() => toggleService("commercial")}
-                      disabled={isSubmitting}
-                      className={`rounded-lg border px-3 py-2 text-center text-xs font-medium cursor-pointer transition-all ${
-                        services.includes("commercial")
+                      onClick={() => handleSelectMode("residential")}
+                      disabled={busy}
+                      className={`rounded-lg border px-2 py-2 text-center text-xs font-medium cursor-pointer transition-all ${
+                        !isAll && isRes
                           ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
                           : "border-border bg-card text-muted-foreground hover:bg-muted/70 hover:text-foreground"
                       }`}
                     >
-                      العقود التجارية
+                      سكني فقط
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectMode("commercial")}
+                      disabled={busy}
+                      className={`rounded-lg border px-2 py-2 text-center text-xs font-medium cursor-pointer transition-all ${
+                        !isAll && isCom
+                          ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
+                          : "border-border bg-card text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                      }`}
+                    >
+                      تجاري فقط
                     </button>
                   </div>
                 );
@@ -500,28 +662,28 @@ function CouponDialogForm({
                     id="limit-switch"
                     checked={field.value}
                     onCheckedChange={field.onChange}
-                    disabled={isSubmitting}
+                    disabled={busy}
                     className="shrink-0"
                   />
                 )}
               />
             </div>
 
-            {hasUsageLimit ? (
-              <div className="grid grid-cols-1 gap-3.5 sm:gap-4 sm:grid-cols-2 pt-3 border-t border-border">
+            <div className="grid grid-cols-1 gap-3.5 sm:gap-4 sm:grid-cols-2 pt-3 border-t border-border">
+              {hasUsageLimit ? (
                 <div className="space-y-1.5">
                   <Label
                     htmlFor="limit-total"
                     className="text-xs text-muted-foreground font-medium"
                   >
-                    إجمالي عدد مرات الاستخدام المتاحة
+                    إجمالي مرات الاستخدام المتاحة
                   </Label>
                   <Input
                     id="limit-total"
                     type="number"
                     min={1}
-                    placeholder="مثال: 500"
-                    disabled={isSubmitting}
+                    placeholder="مثال: 1000"
+                    disabled={busy}
                     aria-invalid={Boolean(errors.usageLimitTotal)}
                     {...register("usageLimitTotal")}
                   />
@@ -531,30 +693,40 @@ function CouponDialogForm({
                     </p>
                   )}
                 </div>
-                <div className="space-y-1.5">
-                  <Label
-                    htmlFor="limit-user"
-                    className="text-xs text-muted-foreground font-medium"
-                  >
-                    الحد الأقصى لكل مستخدم / عميل
-                  </Label>
-                  <Input
-                    id="limit-user"
-                    type="number"
-                    min={1}
-                    placeholder="مثال: 1"
-                    disabled={isSubmitting}
-                    aria-invalid={Boolean(errors.usageLimitPerUser)}
-                    {...register("usageLimitPerUser")}
-                  />
-                  {errors.usageLimitPerUser && (
-                    <p className="text-xs text-destructive">
-                      {errors.usageLimitPerUser.message}
-                    </p>
-                  )}
+              ) : (
+                <div className="space-y-1.5 flex flex-col justify-center">
+                  <span className="text-xs text-muted-foreground font-medium">
+                    إجمالي مرات الاستخدام
+                  </span>
+                  <span className="text-xs font-semibold text-primary">
+                    استخدام غير محدود (مفتوح)
+                  </span>
                 </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="limit-user"
+                  className="text-xs text-muted-foreground font-medium"
+                >
+                  الحد الأقصى لكل مستخدم <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="limit-user"
+                  type="number"
+                  min={1}
+                  placeholder="مثال: 1"
+                  disabled={busy}
+                  aria-invalid={Boolean(errors.usageLimitPerUser)}
+                  {...register("usageLimitPerUser")}
+                />
+                {errors.usageLimitPerUser && (
+                  <p className="text-xs text-destructive">
+                    {errors.usageLimitPerUser.message}
+                  </p>
+                )}
               </div>
-            ) : null}
+            </div>
           </div>
 
           {/* Dates & Status */}
@@ -566,12 +738,19 @@ function CouponDialogForm({
               >
                 تاريخ بدء الصلاحية <span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="start-date"
-                type="date"
-                disabled={isSubmitting}
-                aria-invalid={Boolean(errors.startDate)}
-                {...register("startDate")}
+              <Controller
+                control={control}
+                name="startDate"
+                render={({ field }) => (
+                  <CouponDatePicker
+                    id="start-date"
+                    value={field.value}
+                    onChange={handleStartDateChange}
+                    disabled={busy}
+                    placeholder="اختر تاريخ بدء الصلاحية"
+                    hasError={Boolean(errors.startDate)}
+                  />
+                )}
               />
               {errors.startDate && (
                 <p className="text-xs text-destructive">
@@ -588,12 +767,20 @@ function CouponDialogForm({
                 تاريخ انتهاء الصلاحية{" "}
                 <span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="end-date"
-                type="date"
-                disabled={isSubmitting}
-                aria-invalid={Boolean(errors.endDate)}
-                {...register("endDate")}
+              <Controller
+                control={control}
+                name="endDate"
+                render={({ field }) => (
+                  <CouponDatePicker
+                    id="end-date"
+                    value={field.value}
+                    onChange={handleEndDateChange}
+                    disabled={busy}
+                    minDate={startDate}
+                    placeholder="اختر تاريخ انتهاء الصلاحية"
+                    hasError={Boolean(errors.endDate)}
+                  />
+                )}
               />
               {errors.endDate && (
                 <p className="text-xs text-destructive">
@@ -616,13 +803,15 @@ function CouponDialogForm({
                   <Select
                     value={field.value}
                     onValueChange={field.onChange}
-                    disabled={isSubmitting}
+                    disabled={busy}
                   >
                     <SelectTrigger
                       id="coupon-status"
                       className="w-full bg-card h-9"
                     >
-                      <SelectValue placeholder="اختر حالة الكوبون" />
+                      <SelectValue placeholder="اختر حالة الكوبون">
+                        {COUPON_STATUS_LABELS[field.value] || "اختر حالة الكوبون"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="active">نشط ومفعل</SelectItem>
@@ -658,7 +847,7 @@ function CouponDialogForm({
                   id="public-switch"
                   checked={field.value}
                   onCheckedChange={field.onChange}
-                  disabled={isSubmitting}
+                  disabled={busy}
                   className="shrink-0"
                 />
               )}
@@ -671,17 +860,24 @@ function CouponDialogForm({
             type="button"
             variant="outline"
             onClick={onClose}
-            disabled={isSubmitting}
+            disabled={busy}
             className="w-full sm:w-auto cursor-pointer"
           >
             إلغاء
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={busy}
             className="w-full sm:w-auto gap-1.5 font-bold cursor-pointer"
           >
-            <span>{isEditing ? "حفظ التعديلات" : "إنشاء وتفعيل الكوبون"}</span>
+            {busy && <Loader2 className="size-4 animate-spin" />}
+            <span>
+              {busy
+                ? "جاري الحفظ..."
+                : isEditing
+                  ? "حفظ التعديلات"
+                  : "إنشاء وتفعيل الكوبون"}
+            </span>
           </Button>
         </DialogFooter>
       </form>

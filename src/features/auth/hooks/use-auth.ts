@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import {
+  clearLocalAuth,
   getAuthState,
   loginWithPassword,
   logoutAdmin,
@@ -14,5 +15,7 @@ export function useAuth() {
     ...auth,
     loginWithPassword: (creds: PasswordCredentials) => loginWithPassword(creds),
     logout: () => logoutAdmin(),
+    clearSession: () => clearLocalAuth(),
   };
 }
+

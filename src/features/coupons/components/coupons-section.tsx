@@ -1,5 +1,6 @@
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import {
+  AlertCircle,
   CheckCircle2,
   Plus,
   RefreshCw,
@@ -11,7 +12,6 @@ import {
   X,
 } from "lucide-react";
 import { useSearchParams } from "react-router";
-import { toast } from "sonner";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/animations";
 import PageHeader from "@/components/layout/page-header";
 import {
@@ -40,16 +40,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   COUPONS_METADATA,
-  INITIAL_COUPONS,
-  type Coupon,
+  type CouponDiscountType,
   type CouponStatus,
   type TargetService,
 } from "@/features/coupons/constants";
 import CouponCard from "@/features/coupons/components/coupon-card";
 import CouponDialog from "@/features/coupons/components/coupon-dialog";
 import CouponsStatCards from "@/features/coupons/components/coupons-stat-cards";
+import { useCoupons } from "@/features/coupons/hooks/use-coupons";
 
 const statusLabels: Record<string, string> = {
   all: "كل الحالات",
@@ -79,18 +80,41 @@ const discountTypeLabels: Record<string, ReactNode> = {
 export default function CouponsSection() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [coupons, setCoupons] = useState<Coupon[]>([...INITIAL_COUPONS]);
-
-  // Dialog States
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
   // Active filters from URL query parameters
   const searchQuery = searchParams.get("search") || "";
   const statusFilter = searchParams.get("status") || "all";
   const serviceFilter = searchParams.get("service") || "all";
   const discountTypeFilter = searchParams.get("discountType") || "all";
+
+  const {
+    coupons,
+    isLoading,
+    isSaving,
+    isDeleting,
+    error,
+    isDialogOpen,
+    setIsDialogOpen,
+    editingCoupon,
+    deletingId,
+    setDeletingId,
+    openCreate,
+    openEdit,
+    openDuplicate,
+    saveCoupon,
+    toggleStatus,
+    removeCoupon,
+    loadCoupons,
+  } = useCoupons({
+    search: searchQuery || undefined,
+    status:
+      statusFilter !== "all" ? (statusFilter as CouponStatus) : undefined,
+    service:
+      serviceFilter !== "all" ? (serviceFilter as TargetService) : undefined,
+    discount_type:
+      discountTypeFilter !== "all"
+        ? (discountTypeFilter as CouponDiscountType)
+        : undefined,
+  });
 
   // URL query parameter updater
   function handleFilterChange(key: string, value: string | null) {
@@ -104,7 +128,7 @@ export default function CouponsSection() {
         }
         return next;
       },
-      { replace: true },
+      { replace: true }
     );
   }
 
@@ -119,7 +143,7 @@ export default function CouponsSection() {
         next.delete("discountType");
         return next;
       },
-      { replace: true },
+      { replace: true }
     );
   }
 
@@ -127,135 +151,8 @@ export default function CouponsSection() {
     searchQuery ||
       statusFilter !== "all" ||
       serviceFilter !== "all" ||
-      discountTypeFilter !== "all",
+      discountTypeFilter !== "all"
   );
-
-  // Filtered list
-  const filteredCoupons = coupons.filter((coupon) => {
-    // Search query
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      const matchesCode = coupon.code.toLowerCase().includes(q);
-      const matchesName = coupon.name.toLowerCase().includes(q);
-      const matchesDesc = (coupon.description || "").toLowerCase().includes(q);
-      if (!matchesCode && !matchesName && !matchesDesc) return false;
-    }
-
-    // Status filter
-    if (statusFilter !== "all" && coupon.status !== statusFilter) {
-      return false;
-    }
-
-    // Target service filter
-    if (serviceFilter !== "all") {
-      if (
-        !coupon.targetServices.includes("all") &&
-        !coupon.targetServices.includes(serviceFilter as TargetService)
-      ) {
-        return false;
-      }
-    }
-
-    // Discount type filter
-    if (
-      discountTypeFilter !== "all" &&
-      coupon.discountType !== discountTypeFilter
-    ) {
-      return false;
-    }
-
-    return true;
-  });
-
-  // Handlers
-  function handleOpenCreate() {
-    setEditingCoupon(null);
-    setIsDialogOpen(true);
-  }
-
-  function handleOpenEdit(coupon: Coupon) {
-    setEditingCoupon(coupon);
-    setIsDialogOpen(true);
-  }
-
-  function handleSaveCoupon(
-    couponData: Omit<
-      Coupon,
-      "id" | "createdAt" | "createdBy" | "usedCount" | "totalDiscountedAmount"
-    > & {
-      id?: string;
-    },
-  ) {
-    if (couponData.id) {
-      setCoupons((prev) =>
-        prev.map((c) =>
-          c.id === couponData.id
-            ? {
-                ...c,
-                ...couponData,
-              }
-            : c,
-        ),
-      );
-      toast.success("تم تحديث بيانات الكوبون بنجاح");
-    } else {
-      const newCoupon: Coupon = {
-        ...couponData,
-        id: `CPN-${Date.now().toString().slice(-4)}`,
-        createdAt: new Date().toISOString().split("T")[0],
-        createdBy: "مدير النظام",
-        usedCount: 0,
-        totalDiscountedAmount: 0,
-      };
-      setCoupons((prev) => [newCoupon, ...prev]);
-      toast.success("تمت إضافة الكوبون الجديد بنجاح");
-    }
-  }
-
-  function handleToggleStatus(couponId: string) {
-    const target = coupons.find((c) => c.id === couponId);
-    if (!target) return;
-    const nextStatus: CouponStatus =
-      target.status === "active" ? "inactive" : "active";
-
-    setCoupons((prev) =>
-      prev.map((c) => (c.id === couponId ? { ...c, status: nextStatus } : c)),
-    );
-
-    if (nextStatus === "active") {
-      toast.success(`تم تفعيل الكوبون "${target.name}" بنجاح`);
-    } else {
-      toast.info(`تم إيقاف تفعيل الكوبون "${target.name}"`);
-    }
-  }
-
-  function handleDuplicate(coupon: Coupon) {
-    const duplicated: Coupon = {
-      ...coupon,
-      id: `CPN-${Date.now().toString().slice(-4)}`,
-      code: `${coupon.code}_COPY`,
-      name: `${coupon.name} (نسخة)`,
-      usedCount: 0,
-      totalDiscountedAmount: 0,
-      createdAt: new Date().toISOString().split("T")[0],
-      createdBy: "مدير النظام",
-      status: "inactive",
-    };
-    setCoupons((prev) => [duplicated, ...prev]);
-    toast.success("تم نسخ الكوبون كقالب جديد بنجاح");
-  }
-
-  function handleDeleteConfirm() {
-    if (!deletingId) return;
-    setCoupons((prev) => prev.filter((c) => c.id !== deletingId));
-    setDeletingId(null);
-    toast.success("تم حذف الكوبون بنجاح");
-  }
-
-  function handleResetDefaults() {
-    setCoupons([...INITIAL_COUPONS]);
-    toast.success("تمت استعادة الكوبونات الافتراضية بنجاح");
-  }
 
   return (
     <div className="page-shell space-y-3.5 sm:space-y-6 py-3 sm:py-6">
@@ -266,17 +163,7 @@ export default function CouponsSection() {
         actions={
           <div className="flex w-full sm:w-auto items-center gap-2">
             <Button
-              variant="outline"
-              size="sm"
-              onClick={handleResetDefaults}
-              className="flex-1 sm:flex-initial gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-            >
-              <RefreshCw className="size-3.5" />
-              <span className="hidden xs:inline">استعادة الافتراضي</span>
-              <span className="xs:hidden">استعادة</span>
-            </Button>
-            <Button
-              onClick={handleOpenCreate}
+              onClick={openCreate}
               size="sm"
               className="flex-1 sm:flex-initial gap-1.5 font-bold shadow-xs cursor-pointer"
             >
@@ -395,8 +282,7 @@ export default function CouponsSection() {
             <div className="flex items-center gap-2">
               <TicketPercent className="size-4 text-primary" />
               <span>
-                عرض <strong>{filteredCoupons.length}</strong> من أصل{" "}
-                <strong>{coupons.length}</strong> كوبون خصم
+                عرض <strong>{coupons.length}</strong> كوبون خصم
               </span>
             </div>
             {hasActiveFilters && (
@@ -408,21 +294,66 @@ export default function CouponsSection() {
         </div>
       </FadeIn>
 
-      {/* Coupons Cards Grid / Empty State */}
+      {/* Coupons Cards Grid / Loading / Error / Empty State */}
       <FadeIn duration={0.3} delay={0.15}>
-        {filteredCoupons.length === 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={`coupon-skeleton-${i}`}
+                className="rounded-2xl border border-border/80 bg-card p-4 space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-5 w-20 rounded-md" />
+                  <Skeleton className="size-7 rounded-lg" />
+                </div>
+                <Skeleton className="h-4 w-3/4 rounded-md" />
+                <Skeleton className="h-20 w-full rounded-xl" />
+                <div className="space-y-2">
+                  <Skeleton className="h-3.5 w-1/2 rounded-md" />
+                  <Skeleton className="h-3.5 w-2/3 rounded-md" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <Empty className="border border-destructive/20 bg-destructive/5 py-12">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <AlertCircle className="size-8 text-destructive" />
+              </EmptyMedia>
+              <EmptyTitle className="text-destructive">
+                تعذر تحميل كوبونات الخصم
+              </EmptyTitle>
+              <EmptyDescription>
+                {error.message ||
+                  "حدث خطأ أثناء جلب قائمة الكوبونات من الخادم، يرجى إعادة المحاولة."}
+              </EmptyDescription>
+            </EmptyHeader>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void loadCoupons()}
+              className="gap-1.5 cursor-pointer"
+            >
+              <RefreshCw className="size-3.5" />
+              <span>إعادة المحاولة</span>
+            </Button>
+          </Empty>
+        ) : coupons.length === 0 ? (
           <Empty className="border border-dashed border-border bg-card py-16">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <TicketPercent className="size-8 text-muted-foreground" />
               </EmptyMedia>
-              <EmptyTitle>لا توجد كوبونات تطابق البحث والتصفية</EmptyTitle>
+              <EmptyTitle>لا توجد كوبونات خصم حالياً</EmptyTitle>
               <EmptyDescription>
-                لم يتم العثور على أي كوبونات خصم تطابق معايير البحث أو التصفية
-                الحالية في النظام
+                {hasActiveFilters
+                  ? "لم يتم العثور على أي كوبونات خصم تطابق معايير البحث أو التصفية الحالية"
+                  : "لم يتم إنشاء أي كوبونات خصم بعد. يمكنك إضافة كوبون جديد للبدء."}
               </EmptyDescription>
             </EmptyHeader>
-            {hasActiveFilters && (
+            {hasActiveFilters ? (
               <Button
                 variant="outline"
                 size="sm"
@@ -431,6 +362,15 @@ export default function CouponsSection() {
               >
                 إعادة ضبط الفلاتر
               </Button>
+            ) : (
+              <Button
+                onClick={openCreate}
+                size="sm"
+                className="gap-1.5 cursor-pointer font-bold"
+              >
+                <Plus className="size-4" />
+                <span>إضافة أول كوبون</span>
+              </Button>
             )}
           </Empty>
         ) : (
@@ -438,13 +378,18 @@ export default function CouponsSection() {
             staggerDelay={0.04}
             className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
           >
-            {filteredCoupons.map((coupon) => (
+            {coupons.map((coupon) => (
               <StaggerItem key={coupon.id}>
                 <CouponCard
                   coupon={coupon}
-                  onEdit={handleOpenEdit}
-                  onToggleStatus={handleToggleStatus}
-                  onDuplicate={handleDuplicate}
+                  onEdit={openEdit}
+                  onToggleStatus={(id) => {
+                    const target = coupons.find((c) => c.id === id);
+                    if (target) {
+                      void toggleStatus(id, target.status);
+                    }
+                  }}
+                  onDuplicate={openDuplicate}
                   onDelete={(id) => setDeletingId(id)}
                 />
               </StaggerItem>
@@ -465,7 +410,8 @@ export default function CouponsSection() {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         coupon={editingCoupon}
-        onSave={handleSaveCoupon}
+        onSave={saveCoupon}
+        isSaving={isSaving}
       />
 
       {/* Delete Confirmation Alert */}
@@ -484,13 +430,16 @@ export default function CouponsSection() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="cursor-pointer">إلغاء</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting} className="cursor-pointer">
+              إلغاء
+            </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              onClick={() => void removeCoupon()}
               className="cursor-pointer"
             >
-              تأكيد الحذف
+              {isDeleting ? "جاري الحذف..." : "تأكيد الحذف"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

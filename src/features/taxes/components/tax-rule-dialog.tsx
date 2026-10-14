@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import type { TaxSetting } from "@/features/taxes/constants";
+import type { TaxSetting } from "../types";
 import {
   taxRuleSchema,
   type TaxRuleFormData,
@@ -38,12 +38,15 @@ interface TaxRuleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   tax: TaxSetting | null;
-  onSave: (taxData: Partial<TaxSetting>, id?: string) => void;
+  onSave: (
+    formData: TaxRuleFormData,
+    id?: string,
+  ) => Promise<boolean | void> | void;
+  isSaving?: boolean;
 }
 
 const defaultValues: TaxRuleFormData = {
   nameAr: "",
-  category: "vat",
   description: "",
   ratePercent: "15",
   fixedAmount: "0",
@@ -54,11 +57,23 @@ const defaultValues: TaxRuleFormData = {
   isActive: true,
 };
 
+const APPLIES_TO_LABELS: Record<string, string> = {
+  all: "جميع العقود الإلكترونية",
+  residential: "العقود السكنية فقط",
+  commercial: "العقود التجارية فقط",
+};
+
+const CALCULATION_TYPE_LABELS: Record<string, string> = {
+  percentage: "نسبة مئوية (%)",
+  fixed: "مبلغ ثابت مقطوع (﷼)",
+};
+
 export default function TaxRuleDialog({
   open,
   onOpenChange,
   tax,
   onSave,
+  isSaving = false,
 }: TaxRuleDialogProps) {
   const {
     register,
@@ -70,6 +85,8 @@ export default function TaxRuleDialog({
     resolver: zodResolver(taxRuleSchema),
     defaultValues,
   });
+
+  const isPending = isSubmitting || isSaving;
 
   const watchNameAr = useWatch({ control, name: "nameAr" });
   const watchAppliesTo = useWatch({ control, name: "appliesTo" });
@@ -83,7 +100,6 @@ export default function TaxRuleDialog({
     if (tax) {
       reset({
         nameAr: tax.nameAr,
-        category: tax.category,
         description: tax.description || "",
         ratePercent: String(tax.ratePercent ?? 0),
         fixedAmount: String(tax.fixedAmount ?? 0),
@@ -98,31 +114,8 @@ export default function TaxRuleDialog({
     }
   }, [tax, open, reset]);
 
-  function onSubmit(data: TaxRuleFormData) {
-    onSave(
-      {
-        nameAr: data.nameAr.trim(),
-        category: data.category,
-        appliesTo: data.appliesTo,
-        description: data.description?.trim() || "",
-        calculationType: data.calculationType,
-        ratePercent:
-          data.calculationType === "percentage"
-            ? Number(data.ratePercent) || 0
-            : 0,
-        fixedAmount:
-          data.calculationType === "fixed"
-            ? Number(data.fixedAmount) || 0
-            : 0,
-        isExempt: data.isExempt,
-        exemptionLabel: data.isExempt
-          ? data.exemptionLabel?.trim() || "معفى"
-          : "",
-        isActive: data.isActive,
-      },
-      tax?.id,
-    );
-    onOpenChange(false);
+  async function onSubmit(data: TaxRuleFormData) {
+    await onSave(data, tax?.id);
   }
 
   return (
@@ -166,19 +159,19 @@ export default function TaxRuleDialog({
                 <span className="flex size-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[11px]">
                   1
                 </span>
-                <span>البيانات الأساسية والتصنيف</span>
+                <span>البيانات الأساسية ونطاق السريان</span>
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5 sm:col-span-2">
+                <div className="space-y-1.5 sm:col-span-1">
                   <Label htmlFor="tax-name" className="text-xs font-semibold">
                     اسم الضريبة / الرسم{" "}
                     <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="tax-name"
-                    placeholder="مثال: ضريبة القيمة المضافة أو ضريبة العقد السكني"
-                    disabled={isSubmitting}
+                    placeholder="مثال: ضريبة القيمة المضافة"
+                    disabled={isPending}
                     aria-invalid={Boolean(errors.nameAr)}
                     className="h-9 text-xs sm:text-sm"
                     {...register("nameAr")}
@@ -190,49 +183,7 @@ export default function TaxRuleDialog({
                   )}
                 </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="tax-category" className="text-xs font-semibold">
-                    تصنيف البند <span className="text-destructive">*</span>
-                  </Label>
-                  <Controller
-                    control={control}
-                    name="category"
-                    render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        disabled={isSubmitting}
-                      >
-                        <SelectTrigger
-                          id="tax-category"
-                          aria-invalid={Boolean(errors.category)}
-                          className="w-full h-9 text-xs"
-                        >
-                          <SelectValue placeholder="اختر تصنيف البند" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="vat">
-                            ضريبة القيمة المضافة (VAT)
-                          </SelectItem>
-                          <SelectItem value="contract_tax">
-                            ضريبة عقد التوثيق
-                          </SelectItem>
-                          <SelectItem value="service_fee">
-                            رسوم خدمة وتشغيل
-                          </SelectItem>
-                          <SelectItem value="custom">بند مخصص</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  {errors.category && (
-                    <p className="text-[11px] font-medium text-destructive">
-                      {errors.category.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 sm:col-span-1">
                   <Label htmlFor="tax-applies" className="text-xs font-semibold">
                     نطاق السريان <span className="text-destructive">*</span>
                   </Label>
@@ -243,14 +194,16 @@ export default function TaxRuleDialog({
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
-                        disabled={isSubmitting}
+                        disabled={isPending}
                       >
                         <SelectTrigger
                           id="tax-applies"
                           aria-invalid={Boolean(errors.appliesTo)}
                           className="w-full h-9 text-xs"
                         >
-                          <SelectValue placeholder="اختر نطاق السريان" />
+                          <SelectValue placeholder="اختر نطاق السريان">
+                            {APPLIES_TO_LABELS[field.value] || field.value}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">
@@ -280,7 +233,7 @@ export default function TaxRuleDialog({
                   <Input
                     id="tax-desc"
                     placeholder="مثال: ضريبة القيمة المضافة الحكومية أو معفى للوحدات السكنية"
-                    disabled={isSubmitting}
+                    disabled={isPending}
                     className="h-9 text-xs"
                     {...register("description")}
                   />
@@ -309,14 +262,16 @@ export default function TaxRuleDialog({
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
-                        disabled={isSubmitting}
+                        disabled={isPending}
                       >
                         <SelectTrigger
                           id="calc-type"
                           aria-invalid={Boolean(errors.calculationType)}
                           className="w-full h-9 text-xs"
                         >
-                          <SelectValue placeholder="اختر نوع الاحتساب" />
+                          <SelectValue placeholder="اختر نوع الاحتساب">
+                            {CALCULATION_TYPE_LABELS[field.value] || field.value}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="percentage">نسبة مئوية (%)</SelectItem>
@@ -525,7 +480,7 @@ export default function TaxRuleDialog({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={isSubmitting}
+                disabled={isPending}
                 onClick={() => onOpenChange(false)}
                 className="cursor-pointer h-9 text-xs w-full sm:w-auto"
               >
@@ -534,10 +489,14 @@ export default function TaxRuleDialog({
               <Button
                 type="submit"
                 size="sm"
-                disabled={isSubmitting}
+                disabled={isPending}
                 className="bg-linear-to-r from-primary-800 via-primary to-primary-400 text-primary-foreground shadow-md shadow-inner-primary hover:brightness-105 active:scale-98 cursor-pointer h-9 text-xs font-semibold w-full sm:w-auto"
               >
-                {tax ? "حفظ التعديلات" : "إضافة البند الضريبي"}
+                {isPending
+                  ? "جاري الحفظ..."
+                  : tax
+                    ? "حفظ التعديلات"
+                    : "إضافة البند الضريبي"}
               </Button>
             </DialogFooter>
           </div>

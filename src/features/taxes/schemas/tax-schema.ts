@@ -1,12 +1,5 @@
 import { z } from "zod";
 
-export const taxCategories = [
-  "vat",
-  "contract_tax",
-  "service_fee",
-  "custom",
-] as const;
-
 export const taxAppliesToOptions = [
   "all",
   "residential",
@@ -24,9 +17,6 @@ export const taxRuleSchema = z
       .string()
       .trim()
       .min(1, "يرجى إدخال اسم الضريبة أو الرسم"),
-    category: z.enum(taxCategories, {
-      message: "يرجى اختيار تصنيف البند",
-    }),
     appliesTo: z.enum(taxAppliesToOptions, {
       message: "يرجى اختيار نطاق السريان",
     }),

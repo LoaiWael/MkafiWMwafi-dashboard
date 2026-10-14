@@ -49,17 +49,17 @@ export default function CouponsStatCards({ coupons }: CouponsStatCardsProps) {
   const activeCount = coupons.filter((c) => c.status === "active").length;
   const residentialCount = coupons.filter(
     (c) =>
-      c.targetServices.includes("all") ||
-      c.targetServices.includes("residential"),
+      c.targetServices?.includes("all") ||
+      c.targetServices?.includes("residential"),
   ).length;
   const commercialCount = coupons.filter(
     (c) =>
-      c.targetServices.includes("all") ||
-      c.targetServices.includes("commercial"),
+      c.targetServices?.includes("all") ||
+      c.targetServices?.includes("commercial"),
   ).length;
-  const totalRedemptions = coupons.reduce((sum, c) => sum + c.usedCount, 0);
+  const totalRedemptions = coupons.reduce((sum, c) => sum + (c.usedCount || 0), 0);
   const totalSavings = coupons.reduce(
-    (sum, c) => sum + c.totalDiscountedAmount,
+    (sum, c) => sum + (c.totalDiscountedAmount || 0),
     0,
   );
 

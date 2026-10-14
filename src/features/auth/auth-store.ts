@@ -146,11 +146,15 @@ export async function loginWithPassword(credentials: PasswordCredentials): Promi
   }
 }
 
-export function logoutAdmin(): void {
-  // Fire-and-forget backend revocation so local logout is never blocked
-  logoutAdminApi().catch(() => {
-    // Ignore revocation network failures
-  });
+/**
+ * Completely clears local auth state, cookies, and storage without calling the backend.
+ * Safe to call on 401 unauthorized errors or local resets.
+ */
+export function clearLocalAuth(): void {
+  const hadAuth =
+    state.isAuthenticated ||
+    Boolean(state.token) ||
+    Boolean(getCookie(COOKIE_KEYS.authToken));
 
   state = {
     isAuthenticated: false,
@@ -164,11 +168,60 @@ export function logoutAdmin(): void {
 
   purgeLocalStorageAuth();
 
-  emit();
+  if (hadAuth) {
+    emit();
+  }
+}
+
+let isLoggingOut = false;
+
+/**
+ * Initiates user-triggered logout: immediately clears local state and attempts
+ * backend revocation if a valid token was active.
+ */
+export async function logoutAdmin(): Promise<void> {
+  if (isLoggingOut) {
+    return;
+  }
+  isLoggingOut = true;
+
+  try {
+    const currentToken = state.token ?? getCookie(COOKIE_KEYS.authToken);
+
+    // Immediately clear local session so UI updates without delay
+    clearLocalAuth();
+
+    // Revoke on backend only if a token was active
+    if (currentToken) {
+      await logoutAdminApi().catch(() => {
+        // Ignore revocation network failures
+      });
+    }
+  } finally {
+    isLoggingOut = false;
+  }
 }
 
 if (typeof window !== "undefined") {
-  window.addEventListener("unauthorized-api-error", () => {
-    logoutAdmin();
-  });
+  window.addEventListener("unauthorized-api-error", ((event: Event) => {
+    const customEvent = event as CustomEvent<{ token?: string }>;
+    const rejectedToken = customEvent.detail?.token;
+    const currentToken = state.token ?? getCookie(COOKIE_KEYS.authToken);
+
+    // If the 401 error was from a stale token and the user has since logged in
+    // with a new token, ignore the stale 401 error.
+    if (rejectedToken && currentToken && rejectedToken !== currentToken) {
+      return;
+    }
+
+    // If already logged out with no token, nothing to clear
+    if (!state.isAuthenticated && !currentToken) {
+      return;
+    }
+
+    // On 401, clear local session only.
+    // NEVER call the backend logout API, preventing recursion and request spam.
+    clearLocalAuth();
+  }) as EventListener);
 }
+

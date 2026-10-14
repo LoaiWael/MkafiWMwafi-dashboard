@@ -3,7 +3,6 @@ import {
   Building2,
   CircleDollarSign,
   Clock,
-  Coins,
   Home,
   Percent,
   Receipt,
@@ -21,11 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FadeIn } from "@/components/animations";
-import type { TaxSetting } from "@/features/taxes/constants";
-import {
-  CONTRACT_PRICING_PLANS,
-  type PricingPlan,
-} from "@/features/pricing/constants";
+import type { TaxSetting } from "../types";
+import { usePricingPlans } from "@/features/pricing/hooks/use-pricing-plans";
 
 interface InvoicePreviewCardProps {
   taxes: TaxSetting[];
@@ -35,14 +31,17 @@ export default function InvoicePreviewCard({ taxes }: InvoicePreviewCardProps) {
   const [contractType, setContractType] = useState<
     "residential" | "commercial"
   >("residential");
-  const [selectedPlanId, setSelectedPlanId] = useState<string>("2-years");
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("");
 
-  const plans: readonly PricingPlan[] = CONTRACT_PRICING_PLANS;
+  const { plans: allPlans, isLoading: isPlansLoading } = usePricingPlans();
+  const plans = allPlans.filter(
+    (p) => p.contractType === contractType && p.isActive,
+  );
   const selectedPlan =
-    plans.find((p) => p.id === selectedPlanId) || plans[3] || plans[0];
+    plans.find((p) => p.id === selectedPlanId) || plans[0] || null;
 
-  const basePrice = selectedPlan?.amount || 399;
-  const durationLabel = selectedPlan?.duration || "سنتين";
+  const basePrice = selectedPlan ? selectedPlan.amount : 0;
+  const durationLabel = selectedPlan ? selectedPlan.duration : "—";
 
   // Filter applicable active taxes
   const applicableTaxes = taxes
@@ -52,8 +51,6 @@ export default function InvoicePreviewCard({ taxes }: InvoicePreviewCardProps) {
       return tax.appliesTo === contractType;
     })
     .sort((a, b) => a.order - b.order);
-
-  let calculatedTaxTotal = 0;
 
   const breakdown = applicableTaxes.map((tax) => {
     let taxAmount = 0;
@@ -65,12 +62,11 @@ export default function InvoicePreviewCard({ taxes }: InvoicePreviewCardProps) {
         taxAmount = tax.fixedAmount || 0;
       }
     }
-    calculatedTaxTotal += taxAmount;
 
     return {
       id: tax.id,
       name: tax.nameAr,
-      category: tax.category,
+      calculationType: tax.calculationType,
       description: tax.description,
       ratePercent: tax.ratePercent,
       isExempt: tax.isExempt,
@@ -78,6 +74,11 @@ export default function InvoicePreviewCard({ taxes }: InvoicePreviewCardProps) {
       amount: taxAmount,
     };
   });
+
+  const calculatedTaxTotal = breakdown.reduce(
+    (sum, item) => sum + item.amount,
+    0,
+  );
 
   const finalPrice = basePrice + calculatedTaxTotal;
 
@@ -135,16 +136,25 @@ export default function InvoicePreviewCard({ taxes }: InvoicePreviewCardProps) {
                   مدة العقد المعتمدة:
                 </Label>
                 <Select
-                  value={selectedPlanId}
+                  value={selectedPlan?.id || ""}
                   onValueChange={(val) => {
                     if (val) setSelectedPlanId(val);
                   }}
+                  disabled={isPlansLoading || plans.length === 0}
                 >
                   <SelectTrigger
                     id="plan-select"
                     className="h-9 sm:h-9.5 w-full sm:w-60 bg-background text-xs font-semibold"
                   >
-                    <SelectValue placeholder="اختر مدة العقد" />
+                    <SelectValue
+                      placeholder={
+                        isPlansLoading
+                          ? "جاري تحميل الباقات..."
+                          : plans.length === 0
+                            ? "لا توجد باقات متاحة"
+                            : "اختر مدة العقد"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent align="end">
                     {plans.map((p) => (
@@ -207,45 +217,7 @@ export default function InvoicePreviewCard({ taxes }: InvoicePreviewCardProps) {
 
             {/* Itemized Line Items */}
             <div className="divide-y divide-border/50 pt-1.5 sm:pt-2 text-start">
-              {/* General VAT Taxes (ضريبه) */}
-              {breakdown
-                .filter((tax) => tax.category === "vat")
-                .map((vat) => (
-                  <div
-                    key={vat.id}
-                    className="flex items-center justify-between gap-2 py-2 sm:py-3.5 transition-colors hover:bg-muted/20 px-1 sm:px-2 rounded-xl"
-                  >
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                      <span className="flex size-6 sm:size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <Percent className="size-3 sm:size-3.5" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-xs sm:text-sm font-semibold text-foreground truncate block">
-                          {vat.name}
-                        </span>
-                        <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
-                          {vat.description || "ضريبة القيمة المضافة الحكومية"}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                      <span className="inline-block rounded-md bg-muted/70 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground">
-                        {vat.isExempt
-                          ? vat.exemptionLabel || "0%"
-                          : `${vat.ratePercent}%`}
-                      </span>
-                      <div className="flex items-center gap-1 text-xs sm:text-base font-bold text-foreground">
-                        <span>{vat.amount.toLocaleString("en-US")}</span>
-                        <SaudiRiyal
-                          className="size-3 sm:size-4 text-foreground/80"
-                          aria-label="ريال سعودي"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-              {/* Duration and Fees (مدة العقد) - Featured active row */}
+              {/* Duration and Fees (مدة العقد) - Base price row */}
               <div className="flex items-center justify-between gap-2 py-2 sm:py-3 bg-primary-50/40 border border-primary-200/50 px-2 sm:px-3 rounded-xl my-1">
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                   <span className="flex size-6 sm:size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -269,84 +241,49 @@ export default function InvoicePreviewCard({ taxes }: InvoicePreviewCardProps) {
                 </div>
               </div>
 
-              {/* Contract Tax (ضريبة العقد السكني / التجاري) */}
-              {breakdown
-                .filter((tax) => tax.category === "contract_tax")
-                .map((contractTax) => (
-                  <div
-                    key={contractTax.id}
-                    className="flex items-center justify-between gap-2 py-2 sm:py-3.5 transition-colors hover:bg-muted/20 px-1 sm:px-2 rounded-xl"
-                  >
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                      <span className="flex size-6 sm:size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              {/* Dynamic Taxes & Fees */}
+              {breakdown.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-2 py-2 sm:py-3.5 transition-colors hover:bg-muted/20 px-1 sm:px-2 rounded-xl"
+                >
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <span className="flex size-6 sm:size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      {item.calculationType === "percentage" ? (
                         <Percent className="size-3 sm:size-3.5" />
+                      ) : (
+                        <SaudiRiyal className="size-3 sm:size-3.5" />
+                      )}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs sm:text-sm font-semibold text-foreground truncate block">
+                        {item.name}
                       </span>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-xs sm:text-sm font-semibold text-foreground truncate block">
-                          {contractTax.name}
-                        </span>
+                      {item.description && (
                         <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
-                          {contractTax.description ||
-                            (contractType === "residential"
-                              ? "معفى للوحدات والمنشآت السكنية"
-                              : "ضريبة توثيق العقد التجاري")}
+                          {item.description}
                         </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                      <span className="inline-block rounded-md bg-muted/70 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground">
-                        {contractTax.isExempt
-                          ? contractTax.exemptionLabel || "معفى"
-                          : `${contractTax.ratePercent}%`}
-                      </span>
-                      <div className="flex items-center gap-1 text-xs sm:text-base font-bold text-foreground">
-                        <span>
-                          {contractTax.amount.toLocaleString("en-US")}
-                        </span>
-                        <SaudiRiyal
-                          className="size-3 sm:size-4 text-foreground/80"
-                          aria-label="ريال سعودي"
-                        />
-                      </div>
+                      )}
                     </div>
                   </div>
-                ))}
-
-              {/* Other Custom Taxes/Fees */}
-              {breakdown
-                .filter(
-                  (tax) =>
-                    tax.category !== "vat" && tax.category !== "contract_tax",
-                )
-                .map((customTax) => (
-                  <div
-                    key={customTax.id}
-                    className="flex items-center justify-between gap-2 py-2 sm:py-3.5 transition-colors hover:bg-muted/20 px-1 sm:px-2 rounded-xl"
-                  >
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                      <span className="flex size-6 sm:size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <Coins className="size-3 sm:size-3.5" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-xs sm:text-sm font-semibold text-foreground truncate block">
-                          {customTax.name}
-                        </span>
-                        <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">
-                          {customTax.description}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                      <div className="flex items-center gap-1 text-xs sm:text-base font-bold text-foreground">
-                        <span>{customTax.amount.toLocaleString("en-US")}</span>
-                        <SaudiRiyal
-                          className="size-3 sm:size-4 text-foreground/80"
-                          aria-label="ريال سعودي"
-                        />
-                      </div>
+                  <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                    <span className="inline-block rounded-md bg-muted/70 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground">
+                      {item.isExempt
+                        ? item.exemptionLabel || "معفى"
+                        : item.calculationType === "percentage"
+                          ? `${item.ratePercent}%`
+                          : `${item.amount} ر.س`}
+                    </span>
+                    <div className="flex items-center gap-1 text-xs sm:text-base font-bold text-foreground">
+                      <span>{item.amount.toLocaleString("en-US")}</span>
+                      <SaudiRiyal
+                        className="size-3 sm:size-4 text-foreground/80"
+                        aria-label="ريال سعودي"
+                      />
                     </div>
                   </div>
-                ))}
+                </div>
+              ))}
             </div>
 
             {/* Total Box (الاجمالي) */}

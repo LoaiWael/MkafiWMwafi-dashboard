@@ -16,6 +16,7 @@ export class ApiError extends Error {
 interface FetchOptions extends RequestInit {
   data?: any;
   params?: Record<string, string | number | boolean | undefined | null>;
+  skipAuthErrorEvent?: boolean;
 }
 
 import { env } from "./env";
@@ -25,12 +26,14 @@ function getBaseUrl(): string {
   return env.API_BASE_URL;
 }
 
+let lastUnauthorizedDispatchTime = 0;
+
 /**
  * Core fetch wrapper with JSON, auth, and error handling.
  */
 export async function apiClient<T>(
   endpoint: string,
-  { data, params, headers: customHeaders, ...customConfig }: FetchOptions = {}
+  { data, params, headers: customHeaders, skipAuthErrorEvent, ...customConfig }: FetchOptions = {}
 ): Promise<T> {
   const token = getCookie(COOKIE_KEYS.authToken);
 
@@ -75,8 +78,21 @@ export async function apiClient<T>(
 
   if (!response.ok) {
     if (response.status === 401) {
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("unauthorized-api-error"));
+      const isAuthEndpoint =
+        path.includes("/admin/auth/login") ||
+        path.includes("/admin/auth/logout");
+
+      if (!isAuthEndpoint && !skipAuthErrorEvent && typeof window !== "undefined") {
+        const now = Date.now();
+        // Debounce unauthorized dispatch so concurrent 401s only fire a single event
+        if (now - lastUnauthorizedDispatchTime > 1000) {
+          lastUnauthorizedDispatchTime = now;
+          window.dispatchEvent(
+            new CustomEvent("unauthorized-api-error", {
+              detail: { token },
+            })
+          );
+        }
       }
     }
 

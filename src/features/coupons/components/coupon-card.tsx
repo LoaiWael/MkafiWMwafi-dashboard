@@ -15,7 +15,6 @@ import {
   Tag,
   Trash2,
   TrendingUp,
-  Users,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -31,10 +30,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  TARGET_USERS_MAP,
-  type Coupon,
-} from "@/features/coupons/constants";
+import { type Coupon } from "@/features/coupons/constants";
 
 interface CouponCardProps {
   coupon: Coupon;
@@ -157,9 +153,13 @@ export default function CouponCard({
         </div>
 
         {/* Description */}
-        <p className="mt-2 line-clamp-2 text-[11px] sm:text-xs leading-relaxed text-muted-foreground min-h-[28px] sm:min-h-[32px]">
-          {coupon.description || "كود خصم حصري لتسجيل وتوثيق عقود الإيجار في شبكة إيجار"}
-        </p>
+        {coupon.description ? (
+          <p className="mt-2 line-clamp-2 text-[11px] sm:text-xs leading-relaxed text-muted-foreground min-h-[28px] sm:min-h-[32px]">
+            {coupon.description}
+          </p>
+        ) : (
+          <div className="mt-2 min-h-[28px] sm:min-h-[32px]" />
+        )}
 
         {/* Coupon Ticket Box */}
         <div className="relative my-3 sm:my-4 rounded-xl border border-dashed border-primary-200 dark:border-primary-900/60 bg-primary-50/50 dark:bg-primary-950/20 p-2.5 sm:p-3.5">
@@ -248,23 +248,13 @@ export default function CouponCard({
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-2 text-muted-foreground text-[11px] sm:text-xs">
-            <span className="flex items-center gap-1.5">
-              <Users className="size-3.5 text-primary" />
-              <span>المستفيدين:</span>
-            </span>
-            <span className="font-medium text-foreground">
-              {TARGET_USERS_MAP[coupon.targetUserType]?.label || "الجميع"}
-            </span>
-          </div>
-
           {/* Usage Progress */}
           {coupon.usageLimitTotal ? (
             <div className="space-y-1.5 pt-0.5">
               <div className="flex items-center justify-between text-[10px] sm:text-[11px]">
                 <span className="text-muted-foreground">نسبة الاستخدام:</span>
                 <span className="font-semibold text-foreground">
-                  {coupon.usedCount.toLocaleString("en-US")} من {coupon.usageLimitTotal.toLocaleString("en-US")} ({usagePercent}%)
+                  {(coupon.usedCount || 0).toLocaleString("en-US")} من {coupon.usageLimitTotal.toLocaleString("en-US")} ({usagePercent}%)
                 </span>
               </div>
               <Progress value={usagePercent} className="h-1.5 bg-muted" />
@@ -272,7 +262,7 @@ export default function CouponCard({
           ) : (
             <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-muted-foreground">
               <span>مرات الاستخدام:</span>
-              <span className="font-semibold text-foreground">{coupon.usedCount.toLocaleString("en-US")} مرة</span>
+              <span className="font-semibold text-foreground">{(coupon.usedCount || 0).toLocaleString("en-US")} مرة</span>
             </div>
           )}
         </div>
@@ -282,11 +272,11 @@ export default function CouponCard({
       <div className="mt-3 sm:mt-4 flex items-center justify-between border-t border-border/80 pt-2.5 sm:pt-3 text-[10px] sm:text-[11px] text-muted-foreground">
         <div className="flex items-center gap-1.5">
           <Calendar className="size-3.5 text-muted-foreground" />
-          <span>ينتهي: {coupon.endDate}</span>
+          <span>ينتهي: {coupon.endDate || "غير محدد"}</span>
         </div>
         <div className="inline-flex items-center gap-1 font-semibold text-primary">
           <TrendingUp className="size-3.5" />
-          <span>وفر {coupon.totalDiscountedAmount.toLocaleString("en-US")}</span>
+          <span>وفر {(coupon.totalDiscountedAmount || 0).toLocaleString("en-US")}</span>
           <SaudiRiyal className="size-3" />
         </div>
       </div>
