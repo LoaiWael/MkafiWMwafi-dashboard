@@ -16,7 +16,7 @@ import {
   Zap,
 } from "lucide-react";
 import PageHeader from "@/components/layout/page-header";
-import { FadeIn, StaggerContainer, StaggerItem } from "@/components/animations";
+import { FadeIn } from "@/components/animations";
 import { AnimatePresence, motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
@@ -120,20 +120,6 @@ export default function PricingSection() {
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => refetch()}
-                disabled={isLoading || isSaving}
-                className="gap-1.5 cursor-pointer text-xs"
-              >
-                <RefreshCw
-                  className={cn("size-3.5", isLoading && "animate-spin")}
-                />
-                <span>تحديث</span>
-              </Button>
-
-              <Button
-                type="button"
                 size="sm"
                 className="gap-1.5 font-bold cursor-pointer text-xs"
                 onClick={() => setIsAddDialogOpen(true)}
@@ -215,7 +201,6 @@ export default function PricingSection() {
               onSave={handleCardSave}
               onDelete={deletePlan}
               onToggleActive={toggleActive}
-              onRefresh={refetch}
             />
           </motion.div>
         ) : (
@@ -313,10 +298,7 @@ export default function PricingSection() {
                 </EmptyContent>
               </Empty>
             ) : (
-              <StaggerContainer
-                staggerDelay={0.04}
-                className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-              >
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {filteredPlans.map((plan) => {
                   const isLongTerm =
                     plan.durationUnit === "years" && plan.durationValue >= 5;
@@ -328,17 +310,19 @@ export default function PricingSection() {
                         : CalendarDays;
 
                   return (
-                    <StaggerItem key={plan.id} className="h-full">
-                      <motion.div
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className={cn(
-                          "group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border bg-card p-5 shadow-2xs transition-all duration-200 hover:shadow-md",
-                          plan.isPopular
-                            ? "border-primary/50 bg-linear-to-b from-primary-50/30 via-card to-card ring-1 ring-primary/30 dark:from-primary-950/20"
-                            : "border-border/80 hover:border-primary/40",
-                          !plan.isActive && "opacity-75 bg-muted/20 border-dashed",
-                        )}
-                      >
+                    <motion.div
+                      key={plan.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      className={cn(
+                        "group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border bg-card p-5 shadow-2xs transition-all duration-200 hover:shadow-md",
+                        plan.isPopular
+                          ? "border-primary/50 bg-linear-to-b from-primary-50/30 via-card to-card ring-1 ring-primary/30 dark:from-primary-950/20"
+                          : "border-border/80 hover:border-primary/40",
+                        !plan.isActive && "opacity-75 bg-muted/20 border-dashed",
+                      )}
+                    >
                         <div className="space-y-4">
                           {/* Header: Icon + Duration + Badges */}
                           <div className="flex items-start justify-between gap-2">
@@ -434,10 +418,9 @@ export default function PricingSection() {
                           )}
                         </div>
                       </motion.div>
-                    </StaggerItem>
                   );
                 })}
-              </StaggerContainer>
+              </div>
             )}
           </motion.div>
         )}

@@ -738,14 +738,7 @@ export default function ContractDetailsView({
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
-                      <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
-                        الغرض من التأجير:
-                      </span>
-                      <span className="font-semibold text-foreground text-end text-[11px] sm:text-xs truncate">
-                        {contract.purposeLabel || "—"}
-                      </span>
-                    </div>
+
 
                     <div className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 sm:py-2">
                       <span className="text-muted-foreground text-[11px] sm:text-xs shrink-0">
@@ -1159,20 +1152,7 @@ export default function ContractDetailsView({
                       </div>
                     </div>
 
-                    <div>
-                      <span className="block text-[11px] text-muted-foreground">
-                        البريد الإلكتروني:
-                      </span>
-                      <div className="flex items-center gap-1 font-medium text-foreground text-xs min-w-0">
-                        <span className="truncate">
-                          {contract.lessee.email}
-                        </span>
-                        <CopyButton
-                          value={contract.lessee.email}
-                          label="نسخ البريد"
-                        />
-                      </div>
-                    </div>
+
                   </div>
                 </div>
               </div>
