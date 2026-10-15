@@ -16,7 +16,7 @@ import { Link } from "react-router";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { CopyButton } from "@/components/ui/copy-button";
-import { cn } from "@/lib/utils";
+import { cn, formatIban } from "@/lib/utils";
 import type { Property, PropertyOwner } from "../types";
 
 interface PropertyOwnerCardProps {
@@ -233,33 +233,29 @@ export default function PropertyOwnerCard({
         <div className="space-y-1.5 pt-0.5">
           <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
             <CreditCard className="size-3.5 text-primary" />
-            <span>رقم الآيبان البنكي للمالك (المكون من 22 رقم)</span>
+            <span>رقم الآيبان البنكي للمالك (IBAN)</span>
           </label>
 
           {(() => {
             const rawIban = owner.iban || "";
-            const cleanIban = rawIban.startsWith("SA") ? rawIban.slice(2) : rawIban;
-            const fullIban = rawIban ? (rawIban.startsWith("SA") ? rawIban : `SA${rawIban}`) : "";
+            const formattedIban = formatIban(rawIban);
 
             return (
               <div
-                className="flex items-stretch rounded-xl border border-border bg-card overflow-hidden shadow-2xs"
+                className="flex items-center justify-between rounded-xl border border-border bg-card px-3 sm:px-4 py-2 sm:py-2.5 shadow-2xs min-w-0"
                 dir="ltr"
               >
-                <div className="flex items-center justify-center bg-primary px-2.5 sm:px-4 text-primary-foreground font-mono font-bold text-xs sm:text-sm select-none">
-                  SA
-                </div>
-                <div className="flex-1 px-2.5 sm:px-4 py-2 sm:py-2.5 font-mono text-[11px] sm:text-xs md:text-sm font-bold tracking-normal sm:tracking-wider text-foreground flex items-center justify-between min-w-0">
-                  <span className="truncate">{cleanIban || "غير مسجل"}</span>
-                  {fullIban ? (
-                    <CopyButton
-                      value={fullIban}
-                      itemId={`owner-iban-${owner.idNumber}`}
-                      label="نسخ رقم الآيبان كاملاً"
-                      className="size-6 sm:size-7 shrink-0"
-                    />
-                  ) : null}
-                </div>
+                <span className="font-mono text-xs sm:text-sm font-bold tracking-wide text-foreground truncate">
+                  {formattedIban || "غير مسجل"}
+                </span>
+                {formattedIban ? (
+                  <CopyButton
+                    value={formattedIban}
+                    itemId={`owner-iban-${owner.idNumber}`}
+                    label="نسخ رقم الآيبان"
+                    className="size-6 sm:size-7 shrink-0"
+                  />
+                ) : null}
               </div>
             );
           })()}

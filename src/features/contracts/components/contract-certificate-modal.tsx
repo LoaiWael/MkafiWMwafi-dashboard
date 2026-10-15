@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { formatIban } from "@/lib/utils";
 import type { Contract } from "../types";
 
 interface ContractCertificateModalProps {
@@ -141,7 +142,7 @@ export default function ContractCertificateModal({
                 <p className="text-muted-foreground">رقم الهوية / السجل: <span className="font-mono text-foreground">{contract.lessor.idNumber}</span></p>
                 <p className="text-muted-foreground">رقم الجوال: <span className="font-mono text-foreground">{contract.lessor.phone}</span></p>
                 {contract.lessor.iban && (
-                  <p className="text-muted-foreground">الآيبان: <span className="font-mono text-[11px] text-foreground">{contract.lessor.iban}</span></p>
+                  <p className="text-muted-foreground">الآيبان: <span className="font-mono text-[11px] text-foreground" dir="ltr">{formatIban(contract.lessor.iban)}</span></p>
                 )}
               </div>
             </div>

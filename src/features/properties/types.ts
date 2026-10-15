@@ -50,7 +50,7 @@ export interface PropertyOwner {
   idNumber: string; // رقم هوية المالك *
   birthDate: string; // تاريخ ميلاد المالك *
   phone: string; // رقم جوال المالك *
-  iban: string; // رقم الآيبان البنكي للمالك (22 رقم) *
+  iban?: string | null; // رقم الآيبان البنكي للمالك (اختياري / 24 خانة)
   hasAgent: boolean; // هل تود أن تضيف وكيل لمالك العقار؟ (نعم / لا)
   agent?: PropertyAgent; // بيانات الوكيل
   // Optional / compatibility properties

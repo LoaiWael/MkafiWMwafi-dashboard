@@ -45,7 +45,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { cn, formatIban } from "@/lib/utils";
 import {
   CONTRACT_STATUS_OPTIONS,
   PAYMENT_STATUS_OPTIONS,
@@ -1036,10 +1036,10 @@ export default function ContractDetailsView({
                         <span className="block text-[10px] sm:text-[11px] font-medium text-muted-foreground">
                           الحساب البنكي لتحصيل الإيجار (IBAN):
                         </span>
-                        <div className="flex items-center gap-1 font-mono text-xs font-semibold text-foreground break-all">
-                          <span>{contract.lessor.iban}</span>
+                        <div className="flex items-center gap-1.5 font-mono text-xs font-semibold text-foreground break-all" dir="ltr">
+                          <span>{formatIban(contract.lessor.iban)}</span>
                           <CopyButton
-                            value={contract.lessor.iban}
+                            value={formatIban(contract.lessor.iban)}
                             label="نسخ الآيبان"
                           />
                         </div>
