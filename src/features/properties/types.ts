@@ -81,7 +81,7 @@ export interface PropertyDeed {
   deedNumber: string;
   deedDate: string;
   issuerNotary: string; // e.g. "كتابة العدل الأولى بالرياض"
-  deedType?: "electronic" | "paper" | "ownership" | "istihkam";
+  deedType?: "electronic" | "paper" | "real_estate_registry" | "ownership" | "istihkam";
   deedTypeLabel?: string;
   status: DeedStatus;
   statusLabel: string;

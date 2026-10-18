@@ -171,7 +171,7 @@ export default function PropertiesTable({
               variant="outline"
               className="font-medium px-1.5 py-0 border-border bg-muted/60 text-foreground"
             >
-              {item.deed.deedTypeLabel || "صك إلكتروني"}
+              {item.deed.deedTypeLabel || "صك ملكية الكتروني"}
             </Badge>
           </div>
         </div>

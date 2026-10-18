@@ -44,7 +44,7 @@ export default function PropertyDeedCard({
                 variant="outline"
                 className="border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 text-[11px] sm:text-xs font-semibold"
               >
-                {deed.deedTypeLabel || "صك إلكتروني"}
+                {deed.deedTypeLabel || "صك ملكية الكتروني"}
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground">
